@@ -1,0 +1,31 @@
+dialog[data-panel="facility"] { width: min(610px, calc(100% - 18px)); }
+.station-purpose { font-size: 17px; margin-bottom: 10px; }
+.station-flow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; gap: 8px; margin: 0 0 10px; }
+.station-flow > div { align-self: stretch; padding: 8px 10px; border: 1px solid #c7d8fb; border-radius: 9px; background: #eef5ff; }
+.station-flow > div:last-child { background: #e9faf4; border-color: #bce7d8; }
+.station-flow dt { color: #435b9a; font: 600 10px/1.2 var(--mono); letter-spacing: .08em; }
+.station-flow dd { margin: 3px 0 0; font-size: 15px; line-height: 1.2; font-weight: 800; }
+.station-status { display: flex; gap: 5px 14px; flex-wrap: wrap; align-items: baseline; justify-content: space-between; padding: 7px 2px; color: var(--muted); font-size: 13px; margin-bottom: 4px; }
+.station-status strong { color: #293370; }
+.station-action { min-height: 60px; justify-content: space-between; }
+.station-controls { display: grid; grid-template-columns: 68px 50px 68px; align-items: stretch; gap: 5px; }
+.station-action .button { min-height: 38px; padding-inline: 4px; }
+.transfer-quantity { width: 100%; min-width: 0; min-height: 38px; border: 1px solid #b7c8ed; border-radius: 7px; padding: 0 3px; text-align: center; background: white; color: var(--text); font: 700 16px/1 var(--sans); }
+.transfer-quantity:focus-visible { outline: 2px solid var(--mint); outline-offset: 1px; }
+.transfer-quantity:disabled { background: #e9ecf7; color: #5c628b; }
+.station-action .station-match { color: #22734e; font-weight: 700; }
+.station-feedback { margin-top: 6px; color: #216752; font-size: 13px; font-weight: 700; }
+.station-feedback:empty { display: none; }
+.yard-bar .inventory-item b { margin-inline-start: 2px; }
+.inventory-name { font: 700 11px/1 var(--sans); white-space: nowrap; }
+@media (max-width: 1010px) { .inventory-name { display: none; } }
+@media (max-width: 760px) { .directive-copy p { display: block; font-size: 10px; } }
+@media (max-width: 460px) {
+  dialog[data-panel="facility"] { padding: 12px; }
+  .station-flow > div { padding: 7px; }
+  .station-flow dd { font-size: 13px; }
+  .station-action { padding: 6px; gap: 4px; }
+  .station-action h3 { font-size: 14px; }
+  .station-action p { font-size: 11px; }
+  .station-controls { grid-template-columns: 52px 43px 52px; gap: 4px; }
+}

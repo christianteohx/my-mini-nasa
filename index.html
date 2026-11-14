@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f9fcff">
+  <meta name="game-version" content="v10">
+  <meta name="description" content="Run a pocket-sized spaceport and launch missions to Earth orbit, the Moon, Mars, and the Sun.">
+  <title>My Mini NASA</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='11' fill='%235052f4'/%3E%3Ccircle cx='20' cy='20' r='8' fill='%23eff3ff'/%3E%3Cellipse cx='20' cy='20' rx='15' ry='5' transform='rotate(-35 20 20)' fill='none' stroke='%23ffde77' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css?v=10">
+  <link rel="stylesheet" href="campaign.css?v=8">
+  <link rel="stylesheet" href="stations.css?v=8">
+  <link rel="stylesheet" href="upgrades.css?v=10">
+  <script defer src="rules.js?v=8"></script>
+  <script defer src="machines.js?v=5"></script>
+  <script defer src="yard.js?v=10"></script>
+  <script defer src="stations.js?v=8"></script>
+  <script defer src="app.js?v=10"></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="wrap masthead-inner">
+      <a class="brand" href="./" aria-label="My Mini NASA home">
+        <span class="brand-icon" aria-hidden="true"><i></i></span>
+        <strong>My Mini<span> NASA</span></strong>
+      </a>
+      <div class="header-actions">
+        <a class="challenge" href="https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/" target="_blank" rel="noopener">NASA SPACE APPS <span>2026</span> <b aria-hidden="true">↗</b></a>
+        <button type="button" class="quiet header-button upgrades-shortcut" data-open="upgrades" aria-label="Upgrades" title="Upgrades">↟ <span>Upgrades</span></button>
+        <button type="button" class="quiet header-button" data-open="guide" aria-label="Field guide">? <span>Guide</span></button>
+        <button type="button" class="quiet header-button" data-open="settings" aria-label="Settings">⚙ <span>Settings</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="overview">
+      <h1>Spaceport yard</h1>
+      <div class="telemetry" aria-label="Spaceport resources">
+          <div class="stat" id="wallet-stat"><span class="stat-symbol money-symbol">$</span><div><span>CASH</span><strong id="wallet">$0</strong></div></div>
+          <div class="stat"><span class="stat-symbol cube-symbol"><i></i></span><div><span>DATA INCOMING</span><strong id="rate">0.50<small>/s</small></strong></div></div>
+          <div class="stat"><span class="stat-symbol orbit-symbol">◉</span><div><span>SATELLITES</span><strong id="satellites">0</strong></div></div>
+      </div>
+    </div>
+
+    <div class="console">
+        <div class="stage" id="stage" aria-label="Spaceport yard">
+          <canvas id="yard" width="1020" height="650" tabindex="0" aria-label="Spaceport yard. Move with WASD, arrows, or drag. You can also use the station list."></canvas>
+          <div class="order-card" aria-label="Grant Bonus. Sell four Data Cubes at the Grant Office to earn five dollars extra.">
+            <div class="order-icon" aria-hidden="true">◆</div>
+            <div class="order-copy"><strong>Grant Bonus</strong><span id="order-progress">0 / 4 cubes sold</span></div><span class="order-bonus" id="order-bonus">+$5</span>
+          </div>
+          <div class="notice" id="notice" role="status" hidden><span aria-hidden="true">✦</span><div id="notice-text"></div></div>
+          <button type="button" class="map-button quiet" id="directory-toggle" aria-haspopup="dialog" data-open="stations"><span aria-hidden="true">⌘</span> Stations</button>
+          <button type="button" id="yard-launch" class="yard-launch" hidden>▲ Launch mission</button>
+        </div>
+      <section class="game" aria-label="Spaceport controls">
+        <section class="directive" aria-label="Current objective">
+          <div class="directive-icon" aria-hidden="true">↗</div>
+          <div class="directive-copy"><span class="eyebrow">NEXT TASK <span aria-hidden="true">·</span> <span id="yard-tier">ORBITAL YARD</span></span><strong id="objective">Collect Data Cubes</strong><p id="objective-detail">Select Ground Station to see what it produces.</p></div>
+          <button class="quiet button locate" id="locate" type="button" aria-label="Walk to objective">Go there <span aria-hidden="true">→</span></button>
+        </section>
+        <div class="yard-bar">
+          <div class="inventory-summary" id="inventory-summary"><span class="eyebrow">CARRYING</span><strong id="carry">0 / 4</strong></div>
+          <div id="inventory" class="inventory" aria-label="Carried supplies"></div>
+          <div class="control-hint"><span class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span class="desktop-hint">Move</span><span class="touch-hint">Drag to move</span></div>
+        </div>
+      </section>
+
+      <aside class="mission" id="mission-control" aria-label="Mission Control">
+        <div class="mission-strip">
+          <span class="eyebrow"><i></i> MISSION CONTROL</span>
+          <button type="button" class="quiet board-button" id="mission-board" data-open="missions">Choose mission <span aria-hidden="true">↗</span></button>
+          <button type="button" class="quiet mission-toggle" id="mission-toggle" aria-expanded="true" aria-controls="mission-content mission-primary" aria-label="Collapse Mission Control"><span aria-hidden="true">−</span></button>
+        </div>
+        <div class="mission-content" id="mission-content">
+          <div class="mission-heading"><span class="mission-tag" id="mission-tag">EARTH ORBIT</span><h2 id="mission-title">First Light</h2><p id="mission-description">Put your first CubeSat in orbit.</p></div>
+          <div class="mission-perk" id="mission-perk" hidden><span aria-hidden="true">✦</span><div><strong id="mission-perk-title"></strong><small id="mission-perk-detail"></small></div></div>
+          <div class="odds-panel">
+            <div class="odds-summary"><span>CHANCE TO REACH DESTINATION</span><strong id="launch-odds">—</strong></div>
+            <div class="odds-meter" aria-hidden="true"><span id="odds-fill"></span></div>
+            <p class="status-line" id="status-line"></p>
+          </div>
+          <div class="vehicle"><span class="vehicle-icon" aria-hidden="true">↟</span><div><span>LAUNCH VEHICLE</span><strong id="rocket">Rideshare</strong></div><span id="rocket-limit">6 mass limit</span></div>
+          <div class="gauge-top"><span class="eyebrow">PAYLOAD MANIFEST</span><span id="manifest-note">PLAN LOCKED</span><button type="button" id="manifest-button" class="manifest-button" data-open="manifest" hidden>MANAGE LOADOUT ↗</button></div>
+          <div class="gauges" id="gauges"></div>
+          <button type="button" class="quiet expansion-button" id="expansion-button" data-open="missions" hidden><span>Next destination</span><strong id="expansion-label"></strong><span aria-hidden="true">↗</span></button>
+          <div class="mission-actions"><button class="quiet button" type="button" data-open="log"><span aria-hidden="true">≡</span> Flight log</button></div>
+        </div>
+        <div class="mission-primary" id="mission-primary">
+          <button class="launch button" type="button" id="launch" disabled><span class="launch-icon" aria-hidden="true">▲</span><strong id="launch-label">Launch mission</strong><small id="launch-fee">FREE</small></button>
+          <button type="button" class="quiet recipe-button" id="recipe-button" data-open="recipe"><strong>Payload plan</strong><small id="recipe-price"></small></button>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="foot"><span><span class="signal"></span> <span id="save-status">PROGRESS SAVED ON THIS DEVICE</span></span><a href="https://www.nasa.gov/wp-content/uploads/2025/04/250323-design-and-develop-science-mission.pdf" target="_blank" rel="noopener">MISSION DESIGN RESOURCES <b aria-hidden="true">↗</b></a></footer>
+  </main>
+
+  <dialog id="panel" aria-labelledby="panel-title">
+    <div class="panel-top"><span id="panel-kicker" class="eyebrow">SPACEPORT OPERATIONS</span><button type="button" class="quiet close" id="close-panel" aria-label="Close panel" autofocus>×</button></div>
+    <h2 id="panel-title"></h2>
+    <div id="panel-content"></div>
+  </dialog>
+</body>
+</html>

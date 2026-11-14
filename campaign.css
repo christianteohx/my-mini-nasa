@@ -1,0 +1,83 @@
+.board-button, .mission-toggle { min-height: 31px; padding: 3px 8px; white-space: nowrap; font-size: 12px; font-weight: 700; }
+.board-button span { color: #4939bc; }
+.mission-toggle { min-width: 32px; font-size: 19px; line-height: 1; }
+.odds-panel { margin-top: 9px; padding: 8px; border: 1px solid #dce3fc; border-radius: 8px; background: #f4f6ff; }
+.odds-summary { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+.odds-summary span { font: 600 9px/1.2 var(--mono); color: #45548d; letter-spacing: .04em; }
+.odds-summary strong { color: #3736b8; font-size: 20px; line-height: 1; }
+.odds-meter { height: 6px; border-radius: 8px; overflow: hidden; background: #e1e6f7; margin-top: 6px; }
+.odds-meter span { display: block; background: #8a59df; width: 0; height: 100%; border-radius: inherit; transition: width .17s ease; }
+.odds-meter[data-tone="fair"] span { background: #e89c29; }
+.odds-meter[data-tone="poor"] span { background: #dd6356; }
+.odds-meter[data-tone="good"] span { background: #36aa82; }
+.odds-panel .status-line { min-height: 0; border: 0; background: transparent; padding: 5px 0 0; }
+.recipe-button, .expansion-button { width: 100%; display: flex; align-items: center; text-align: left; gap: 8px; min-height: 35px; padding: 5px 9px; margin-top: 7px; font-size: 12px; font-weight: 700; }
+.recipe-button > span, .expansion-button > :last-child { color: #5546c2; }
+.recipe-button strong, .expansion-button > :first-child { flex: 1; }
+.recipe-button small, .expansion-button strong { font: 600 10px/1 var(--mono); color: #6451b3; }
+.expansion-button { background: #fff7db; border-color: #ead69b; }
+.expansion-button:hover { background: #ffefb3; border-color: #dfbd64; }
+.expansion-button strong { color: #795103; }
+.mission-primary { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 6px; align-items: stretch; flex: 0 0 auto; padding: 7px 9px 9px; border-top: 1px solid var(--line); background: #fcfdff; }
+.mission[data-collapsed='true'] .mission-primary { display: none; }
+.mission-primary .launch, .mission-primary .recipe-button { min-height: 39px; margin: 0; gap: 4px; padding-inline: 6px; }
+.mission-primary .launch strong { font-size: 13px; white-space: nowrap; }
+.mission-primary .launch small { padding-inline: 4px; }
+.mission-primary .recipe-button small { white-space: nowrap; }
+dialog[data-panel="missions"] { width: min(630px, calc(100% - 24px)); }
+.board-stage + .board-stage { margin-top: 18px; }
+.board-heading { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; margin: 0 0 8px; border-bottom: 1px solid var(--line); padding-bottom: 5px; }
+.board-heading h3 { margin: 0; color: #293370; font-size: 18px; }
+.board-heading span { color: #4959a1; font: 600 10px/1 var(--mono); letter-spacing: .045em; }
+.mission-offers { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+.mission-offer { display: flex; flex-direction: column; background: #f2f5ff; border: 1px solid #d9e0fb; border-radius: 10px; padding: 10px; }
+.offer-top { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+.offer-top h3 { margin: 0; font-size: 17px; line-height: 1.1; color: #253171; }
+.offer-stars { flex: none; color: #986000; letter-spacing: .04em; font-size: 13px; }
+.mission-offer p { color: var(--muted); font-size: 13px; line-height: 1.28; margin: 5px 0 8px; flex: 1; }
+.offer-terms { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; color: #4c5e9e; font: 500 10px/1.1 var(--mono); }
+.offer-actions { display: flex; justify-content: space-between; gap: 5px; margin-top: 4px; }
+.offer-actions button { min-height: 31px; padding: 3px 6px; white-space: nowrap; font-size: 12px; }
+.mission-perk { display: grid; grid-template-columns: 21px minmax(0, 1fr); gap: 6px; align-items: center; padding: 5px 7px; margin-block: 5px; border: 1px solid #e8d393; border-radius: 8px; background: #fff6d8; color: #5f450b; }
+.mission-perk > span { display: grid; place-items: center; height: 21px; border-radius: 5px; background: #efd27d; font-size: 13px; font-weight: 800; }
+.mission-perk strong, .mission-perk small { display: block; line-height: 1.18; }
+.mission-perk strong { font-size: 12px; }
+.mission-perk small { font-size: 11px; margin-top: 2px; }
+.mission-perk[data-earned="true"] { border-color: #addfc7; background: #e9fbf1; color: #1d644a; }
+.mission-perk[data-earned="true"] > span { background: #c0edd3; }
+.report-perk { margin-top: 10px; padding: 8px; }
+.report-perk strong { font-size: 15px; }
+.report-perk small { font-size: 13px; }
+.report-next { margin: 10px 0; padding: 10px; color: #383679; border: 1px solid #d4c8f9; border-radius: 9px; background: #f0e9ff; }
+.report-next h3 { font-size: 16px; margin: 0 0 3px; }
+.report-next p { font-size: 13px; }
+.report-next-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.report-next-actions .button { min-height: 34px; padding-inline: 9px; font-weight: 700; }
+button.primary { background: #514fe8; color: #fff; border: 1px solid #5e59ed; border-radius: 7px; box-shadow: inset 0 -2px #3a35bd; }
+button.primary:hover:not(:disabled) { background: #3935c4; }
+button.primary:disabled { color: #5c628b; background: #e9ecf7; border-color: #cdd5ed; box-shadow: none; }
+.expansion-card { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; margin-bottom: 8px; border: 1px solid #e4d294; background: #fff7d8; color: #564723; padding: 9px; border-radius: 9px; }
+.expansion-card strong { color: #5b4306; }
+.expansion-card p { font-size: 12px; margin-top: 3px; line-height: 1.3; }
+.expansion-card button { white-space: nowrap; }
+.stage-savings { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; font: 600 10px/1 var(--mono); }
+.stage-savings progress { flex: 1; accent-color: #a97318; height: 11px; min-width: 40px; }
+.recipe-hidden { display: flex; gap: 11px; align-items: flex-start; background: #eee9ff; border: 1px solid #dbcef8; border-radius: 9px; padding: 11px; color: #453a86; }
+.recipe-hidden > span { display: grid; place-items: center; min-width: 32px; height: 32px; font-weight: 800; font-size: 19px; border-radius: 7px; color: #5c45bc; background: #e2d7ff; }
+.recipe-hidden h3 { margin: 0 0 3px; }
+.recipe-hidden p { line-height: 1.35; }
+.recipe-funds { margin-top: 12px; }
+.recipe-items { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 6px; }
+.recipe-item { display: grid; justify-items: center; gap: 3px; padding: 7px 3px; background: #f8f9ff; border: 1px solid #dce1f6; border-radius: 9px; text-align: center; }
+.recipe-item strong { color: var(--item); font-size: 21px; line-height: 1; }
+.recipe-item span { font-size: 11px; color: var(--muted); }
+.recipe-peak, .report-chance { display: flex; gap: 8px; align-items: baseline; background: #e7f8f2; color: #216752; border-radius: 7px; padding: 8px; margin-top: 10px; font-size: 14px; }
+.recipe-peak strong { font-size: 23px; }
+.report-discovery { background: #f1ecff; border-radius: 8px; color: #4d3e92; padding: 8px; margin-top: 8px; }
+.report-discovery strong:first-child { display: block; margin-bottom: 5px; }
+@media (max-width: 500px) {
+  .mission-offers { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .odds-meter span { transition: none; }
+}

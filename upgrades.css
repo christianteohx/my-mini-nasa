@@ -1,0 +1,139 @@
+.upgrades-shortcut { background: #e4ddff; border-color: #c7b6f4; color: #42329d; }
+.upgrades-shortcut:hover { background: #d8ccff; border-color: #a489ed; }
+
+dialog[data-panel="upgrades"] {
+  width: min(676px, calc(100% - 24px));
+  padding: var(--panel-pad);
+  background: #f6f8ff;
+  border-color: #bfcaea;
+  scrollbar-color: #aebae0 #f6f8ff;
+}
+dialog[data-panel="upgrades"] .panel-top {
+  position: absolute;
+  top: var(--panel-pad);
+  right: var(--panel-pad);
+}
+dialog[data-panel="upgrades"] .panel-top .eyebrow { display: none; }
+dialog[data-panel="upgrades"] h2 {
+  min-height: 34px;
+  margin: 0 42px 14px 0;
+  font-size: clamp(27px, 5vw, 34px);
+}
+
+.upgrades-toolbar {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 4px 0 9px;
+  margin-bottom: 6px;
+  background: #f6f8ff;
+  border-bottom: 1px solid var(--line);
+}
+.upgrade-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  padding: 3px;
+  border-radius: 9px;
+  background: #e9eefb;
+}
+.upgrade-tabs button {
+  min-height: 35px;
+  padding: 4px 13px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+.upgrade-tabs button:hover { color: var(--text); background: #dfe7fa; }
+.upgrade-tabs button[aria-pressed="true"] {
+  border-color: #c9d4f1;
+  background: #fff;
+  color: #332f89;
+  box-shadow: 0 1px 1px #20365a18;
+}
+.upgrade-balance {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.upgrade-balance strong { color: var(--text); font: 600 14px/1 var(--mono); }
+
+.upgrade-cards { display: grid; gap: 8px; }
+.upgrade-card {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #d9e1f5;
+  border-radius: 10px;
+  background: #fff;
+}
+.upgrade-card-head { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 9px; }
+.upgrade-emblem {
+  display: grid;
+  place-items: center;
+  height: 34px;
+  border-radius: 8px;
+  background: #edf1ff;
+  color: #514abc;
+  font: 800 19px/1 var(--sans);
+}
+.upgrade-card-head h3 { margin: 0; font-size: 17px; line-height: 1.1; }
+.upgrade-card-head p { margin-top: 3px; font-size: 13px; line-height: 1.26; color: var(--muted); }
+.upgrade-worker-actions { display: flex; align-items: center; gap: 7px; }
+.crew-status { color: var(--muted); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.crew-status[data-on="true"] { color: #116947; }
+.upgrade-card .button { min-height: 36px; padding: 4px 10px; white-space: nowrap; font-size: 13px; }
+.upgrade-card button.primary { box-shadow: none; }
+.upgrade-card button.primary:disabled { color: var(--muted); }
+
+.upgrade-stats { margin-top: 8px; }
+.upgrade-stat {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid #e7ecf8;
+}
+.upgrade-stat:last-child { padding-bottom: 0; }
+.upgrade-stat-heading { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.upgrade-stat-name { font-size: 13px; font-weight: 700; }
+.upgrade-level { color: var(--muted); font: 600 10px/1.2 var(--mono); white-space: nowrap; }
+.upgrade-stat progress { width: 42px; height: 5px; accent-color: #6259d5; }
+.upgrade-values { display: flex; flex-wrap: wrap; gap: 2px 5px; margin-top: 3px; font-size: 14px; line-height: 1.15; }
+.upgrade-next { white-space: nowrap; color: #514abc; }
+.upgrade-next > span { color: var(--muted); padding-right: 2px; }
+.upgrade-unavailable { padding: 3px 2px; color: var(--muted); font-size: 12px; font-weight: 600; white-space: nowrap; }
+
+@media (min-width: 540px) {
+  .upgrade-cards:not([data-category="crew"]) .upgrade-card {
+    display: grid;
+    grid-template-columns: 164px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+  }
+  .upgrade-cards:not([data-category="crew"]) .upgrade-card-head { grid-template-columns: 34px minmax(0, 1fr); }
+  .upgrade-cards:not([data-category="crew"]) .upgrade-stats { margin: 0; }
+  .upgrade-cards:not([data-category="crew"]) .upgrade-stat { padding: 0; border: 0; }
+}
+@media (max-width: 420px) {
+  dialog[data-panel="upgrades"] { --panel-pad: 12px; }
+  .upgrade-tabs button { padding-inline: 7px; }
+  .upgrade-card { padding: 9px; }
+  .upgrade-card-head { grid-template-columns: 28px minmax(0, 1fr) auto; gap: 7px; }
+  .upgrade-emblem { height: 28px; font-size: 16px; }
+  .upgrade-worker-actions { flex-direction: column; gap: 3px; }
+  .upgrade-card .button { padding-inline: 6px; font-size: 12px; }
+  .upgrade-stat progress { width: 28px; }
+}
