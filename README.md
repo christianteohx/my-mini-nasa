@@ -8,15 +8,19 @@ Open `index.html` in a browser, or serve this directory with any static web serv
 
 Use **WASD** or the **arrow keys** to move. On a touchscreen, drag to steer. The camera follows your astronaut. Pad signs show what a facility accepts, the cost per batch, and its ready stock out of capacity. Walk onto a pad to pick up or deliver supplies automatically. At the Launch Pad, set a quantity between **Unload** and **Load** for each item. Walk onto the Return Supplies pad to put extras back into stock.
 
-The Grant Officer pays an extra $5 for every four Data Cubes. In **Upgrades**, the Grant Intern delivers cubes, the Cargo Runner stocks the Cargo Shelf, the Materials Intern supplies factories for your selected mission, and the Credit Clerk banks grant payouts. Workers can be paused separately and take a short break between trips. The Crew, Machines, and Player cards show the current level, current stat, and next gain.
+The Grant Office pays $8 per Data Cube and an extra $3 every four cubes. In **Upgrades**, the Grant Intern delivers cubes, the Cargo Runner stocks the Cargo Shelf, the Materials Intern supplies factories for your selected mission, and the Credit Clerk banks grant payouts. Workers can be paused separately and take a short break between trips. The Crew, Machines, and Player cards show the current level, current stat, and next gain.
 
 **Choose mission** opens the mission board. First Light and Earth Watch are available from the start. Each mission's first three-star clear earns a permanent perk. For example, Earth Watch pays $2 more per Data Cube, Lunar Relay opens and expands the Cargo Shelf, and Mars Surveyor refunds half the launch fee on failed flights. After a three-star flight, the report lets you replay, select the next mission, or open the next section when it is within budget. The route goes from Earth orbit through the Moon and Mars to Solar Probe, the final mission. The Launch Pad keeps its loaded supplies when you choose another mission.
+
+Improving your best result earns the remaining portion of that mission's grant. The Ground Station receives only the strongest downlink from each mission. The mission board shows how much grant money is still available.
+
+Open **Challenges** in Mission Control or the mission board and pick Flight, Operations, or Research. Recent launches and manual factory orders can suggest a focus using only the game save on your device. Completing a goal earns a personal best level and opens a harder goal. Flight and Research goals can ease after two flights that miss the goal's star or science requirement. Each focus saves its own progress, and you can switch or pause it at any time. Challenges use the same prices and launch odds as the main game.
 
 Each mission has an optimal payload plan. Extra and missing supplies both reduce the odds. A three-star success unlocks the plan for free, as does flying the exact payload on a failed attempt. You can also buy a plan before flying. Use the Mission Control toggle to free up more of the yard.
 
 ## Development
 
-`rules.js` owns the economy, station timers, seeded launch evaluation and saves. `yard.js` handles movement and rendering, `machines.js` draws the facilities, `stations.js` renders the station controls, and `app.js` connects the yard to the control panels.
+`rules.js` owns the economy, station timers, seeded launch evaluation and saves. `challenges.js` sets personal goals and tracks progress. `yard.js` handles movement and rendering, `machines.js` draws the facilities, `stations.js` renders the station controls, and `app.js` connects the yard to the control panels.
 
 Run the rules tests with:
 
@@ -34,6 +38,7 @@ The missions use simplified game units. Flight reports link to the NASA material
 
 | Release | Sites version | Changes |
 | --- | --- | --- |
+| v11 | 11 | Rebalanced income and added adaptive challenges for Flight, Operations, and Research. |
 | v10 | 10 | Spaced out the yard and station labels, removed the Grant Officer tag, and simplified the Upgrades menu. |
 | v9 | 9 | Renamed the game to My Mini NASA. |
 | v8 | 8 | Centered follow camera, station signs, staffed Grant Office, four upgradeable crew roles, mission perks, and one-row payload transfers. |

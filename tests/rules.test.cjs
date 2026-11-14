@@ -248,7 +248,7 @@ test("upgrades, station caps, helper transfers and save restoration work", () =>
   assert.equal(state.facilities.fuel.output, 1);
   R.tick(state, 2.6);
   R.tick(state, 2.6);
-  R.tick(state, 0.5);
+  R.tick(state, 0.7);
   assert.ok(state.facilities.grant.output > 0);
   assert.ok(state.stats.sold > 0);
 
@@ -277,24 +277,24 @@ test("Grant Office scientist orders pay a bonus and pause at six receipts", () =
   const state = R.createState();
   R.interact(state, "ground", "output");
   R.interact(state, "grant", "input");
-  R.tick(state, 1.5);
+  R.tick(state, 2.1);
   assert.equal(state.customers.filled, 3);
-  assert.equal(state.facilities.grant.output, 30);
-  R.tick(state, 0.5);
+  assert.equal(state.facilities.grant.output, 24);
+  R.tick(state, 0.7);
   assert.equal(state.customers.completed, 1);
   assert.equal(state.customers.filled, 0);
-  assert.equal(state.facilities.grant.output, 45);
+  assert.equal(state.facilities.grant.output, 35);
 
   R.tick(state, 6);
   R.interact(state, "ground", "output");
   R.interact(state, "grant", "input");
   R.tick(state, 10);
   assert.equal(state.facilities.grant.stock, 6);
-  assert.equal(state.facilities.grant.output, 65);
+  assert.equal(state.facilities.grant.output, 51);
   assert.equal(state.facilities.grant.input, 2);
-  assert.equal(R.interact(state, "grant", "output").count, 65);
-  R.tick(state, 1);
-  assert.equal(state.facilities.grant.output, 25);
+  assert.equal(R.interact(state, "grant", "output").count, 51);
+  R.tick(state, 1.4);
+  assert.equal(state.facilities.grant.output, 19);
   assert.equal(state.customers.completed, 2);
 });
 
@@ -501,10 +501,10 @@ test("a Grant Office visit pays ready cash and accepts cubes in one stop", () =>
   const visit = R.interact(state, "grant", "both");
   assert.equal(visit.type, "batch");
   assert.deepEqual(visit.events.map(({ type, item, count }) => ({ type, item, count })), [
-    { type: "cash", item: "cash", count: 45 },
+    { type: "cash", item: "cash", count: 35 },
     { type: "deposit", item: "data", count: 4 },
   ]);
-  assert.equal(state.wallet, 65);
+  assert.equal(state.wallet, 55);
   assert.equal(state.facilities.grant.input, 4);
   assert.equal(state.facilities.grant.output, 0);
 });
@@ -579,11 +579,11 @@ test("selectable Ground and Grant quantities preserve leftovers and reject inval
   assert.equal(state.stats.collected, 3);
   assert.equal(transfer("grant", "deposit:data", 2).count, 2);
   assert.equal(state.inventory.data, 1);
-  R.tick(state, 1);
-  assert.equal(R.getStationActions(state, "grant").find(({ id }) => id === "collect:cash").amount, 20);
+  R.tick(state, 1.4);
+  assert.equal(R.getStationActions(state, "grant").find(({ id }) => id === "collect:cash").amount, 16);
   assert.equal(transfer("grant", "collect:cash", 2), null);
-  assert.equal(transfer("grant", "collect:cash", 1).count, 20);
-  assert.equal(state.wallet, 40);
+  assert.equal(transfer("grant", "collect:cash", 1).count, 16);
+  assert.equal(state.wallet, 36);
 });
 
 test("selectable factory batches charge the exact recipe and support storing excess", () => {
@@ -717,7 +717,7 @@ test("the intern waits with cubes when the Grant Office cash or input is full", 
   assert.equal(state.helper.progress, 1);
   assert.equal(state.helper.cargo, 2);
   assert.equal(grant.input, 10);
-  R.tick(state, 1);
+  R.tick(state, 1.4);
   assert.deepEqual(state.helper, { phase: "collect", progress: 0, cargo: 0 });
   assert.equal(state.stats.sold, 3);
 });

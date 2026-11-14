@@ -59,7 +59,7 @@ test("v7 flight records restore earned rewards without any extra payouts", () =>
   assert.equal(restored.completed, true);
   assert.equal(R.getRates(restored).carry, 6);
   assert.equal(R.getRates(restored).data, 1.5);
-  assert.equal(R.getGrantPayout(restored), 12);
+  assert.equal(R.getGrantPayout(restored), 10);
   assert.equal(restored.facilities.cargo.unlocked, true);
   assert.equal(R.getCargoCapacity(restored), 12);
   assert.equal(R.getCargoItemCapacity(restored), 6);
@@ -74,8 +74,8 @@ test("v7 flight records restore earned rewards without any extra payouts", () =>
   assert.equal(restored.facilities.fuel.output, 8);
   assert.ok(R.transferAtStation(restored, "ground", "take:data", 4));
   assert.ok(R.transferAtStation(restored, "grant", "deposit:data", 4));
-  R.tick(restored, 2);
-  assert.equal(R.transferAtStation(restored, "grant", "collect:cash", 1).count, 53);
+  R.tick(restored, 2.8);
+  assert.equal(R.transferAtStation(restored, "grant", "collect:cash", 1).count, 43);
 });
 
 test("flight insurance refunds half the fee on failures after the first Mars Surveyor clear", () => {

@@ -5,7 +5,7 @@
   const payload = 'Fuel, Parts, Research Papers, Astronauts';
   const descriptions = {
     ground: ['Walk onto the pad to pick up Data Cubes.', 'Satellite signals', 'Data Cubes'],
-    grant: ['Walk onto the pad to sell Data Cubes. Wait there to collect cash and the $5 bonus for every four cubes sold.', '1 Data Cube', '$10 cash'],
+    grant: [`Walk onto the pad to sell Data Cubes. Wait there to collect cash and the $${rules.GRANT_BONUS} bonus for every four cubes sold.`, '1 Data Cube', 'Cash'],
     fuel: ['Step onto the pad to order one Fuel unit when idle. Wait on the pad to pick it up.', '$15', '1 Fuel'],
     engineering: ['Walk onto the pad to deliver Data Cubes and collect parts that power onboard systems.', '2 Data Cubes + $20', '1 Part'],
     research: ['Walk onto the pad to deliver Data Cubes and collect Research Papers.', '3 Data Cubes + $25', '1 Research Paper'],

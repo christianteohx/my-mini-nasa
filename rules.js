@@ -11,6 +11,7 @@
   const CARGO_CAPACITY = 8;
   const CARGO_ITEM_CAPACITY = 4;
   const CARGO_PRIORITY = ["paper", "crew", "part", "fuel"];
+  const GRANT_BONUS = 3;
 
   const ITEMS = {
     data: { name: "Data Cube", plural: "Data Cubes", color: "#6dd5ff", mass: 0 },
@@ -23,7 +24,7 @@
 
   const FACILITIES = {
     ground: { id: "ground", name: "Ground Station", item: "data", cubes: 0, cash: 0, cycle: 2, unlock: 0, after: 0 },
-    grant: { id: "grant", name: "Grant Office", item: "cash", cubes: 1, cash: 0, cycle: 0.5, unlock: 0, after: 0 },
+    grant: { id: "grant", name: "Grant Office", item: "cash", cubes: 1, cash: 0, cycle: 0.7, unlock: 0, after: 0 },
     fuel: { id: "fuel", name: "Fuel Plant", item: "fuel", cubes: 0, cash: 15, cycle: 3, unlock: 40, after: 0 },
     engineering: { id: "engineering", name: "Engineering", item: "part", cubes: 2, cash: 20, cycle: 4, unlock: 100, after: 0 },
     research: { id: "research", name: "Research Lab", item: "paper", cubes: 3, cash: 25, cycle: 5, unlock: 200, after: 0 },
@@ -187,7 +188,7 @@
   }
 
   function makeCustomers() {
-    return { order: 4, filled: 0, bonus: 5, completed: 0 };
+    return { order: 4, filled: 0, bonus: GRANT_BONUS, completed: 0 };
   }
 
   function makeRunner() {
@@ -250,6 +251,7 @@
       if (saved?.version === 1 && saved.facilities && Array.isArray(saved.satellites)) {
         saved.history ??= saved.report ? [saved.report] : [];
         saved.customers ??= makeCustomers();
+        saved.customers.bonus = GRANT_BONUS;
         saved.runner ??= makeRunner();
         saved.runner.cargoCount ??= Number(Boolean(saved.runner.cargo));
         saved.upgrades = { ...STARTING_UPGRADES, ...saved.upgrades };
@@ -273,6 +275,10 @@
         for (const { missionId, stars } of saved.satellites) {
           if (missionId && stars) saved.bestStars[missionId] = Math.max(saved.bestStars[missionId] ?? 0, stars);
         }
+        saved.satellites = saved.satellites.reduce((fleet, satellite) => {
+          updateDownlink(fleet, satellite);
+          return fleet;
+        }, []);
         if (saved.completed && saved.stageIndex === 1 && !STAGES[1].missionIds.some((id) => saved.bestStars[id] === 3)) {
           saved.bestStars.m4 = 3;
         }
@@ -331,7 +337,7 @@
   }
 
   function getGrantPayout(state) {
-    return 10 + 2 * Number(hasThreeStars(state, "m2"));
+    return 8 + 2 * Number(hasThreeStars(state, "m2"));
   }
 
   function getProductionCycle(state, id) {
@@ -381,6 +387,13 @@
 
   function findMission(idOrIndex) {
     return typeof idOrIndex === "number" ? MISSIONS[idOrIndex] : MISSIONS.find((mission) => mission.id === idOrIndex);
+  }
+
+  function getMissionGrant(state, idOrIndex = state.missionIndex) {
+    const mission = findMission(idOrIndex);
+    if (!mission) return null;
+    const earned = Math.round(mission.reward * (state.bestStars[mission.id] ?? 0) / 3);
+    return { earned, maximum: mission.reward, remaining: mission.reward - earned };
   }
 
   function hasThreeStars(state, missionId) {
@@ -1203,12 +1216,26 @@
     }
   }
 
+  function updateDownlink(fleet, satellite) {
+    const previous = satellite.missionId ? fleet.findIndex(({ missionId }) => missionId === satellite.missionId) : -1;
+    if (previous === -1) {
+      fleet.push(satellite);
+      return satellite.output;
+    }
+    const gain = satellite.output - fleet[previous].output;
+    if (gain <= 0) return 0;
+    fleet[previous] = satellite;
+    return gain;
+  }
+
   function launch(state) {
     const inspection = inspectLaunch(state);
     if (!inspection.ready) return null;
     const { mission } = inspection;
     const report = evaluateLaunch(state.loadout, mission, () => nextRandom(state));
+    const { earned } = getMissionGrant(state, mission.id);
     const firstClear = report.stars === 3 && (state.bestStars[mission.id] ?? 0) < 3;
+    const grant = Math.max(0, report.grant - earned);
     const feeRefund = report.status === "failed" && hasThreeStars(state, "m6") ? Math.floor(mission.fee / 2) : 0;
     const recipeDiscovered = (report.exact || report.status === "success") && !state.recipes[mission.id];
     if (recipeDiscovered) state.recipes[mission.id] = "flight";
@@ -1216,19 +1243,22 @@
       report.gauges.fuel.status = "good";
       report.gauges.fuel.message = `The calibrated fuel reserve improves the odds of reaching ${mission.arrival}.`;
     }
-    state.wallet += report.grant + feeRefund - mission.fee;
+    state.wallet += grant + feeRefund - mission.fee;
     state.discovered[mission.id] = true;
     state.bestStars[mission.id] = Math.max(state.bestStars[mission.id] ?? 0, report.stars);
     if (firstClear && mission.id === "m5") state.facilities.cargo.unlocked = true;
     state.loadout = emptyLoadout();
     state.stats.attempts++;
-    if (report.stars > 0) state.satellites.push({ missionId: mission.id, name: mission.name, stars: report.stars, output: report.output });
+    const signalOutput = report.output;
+    const output = report.stars > 0 ? updateDownlink(state.satellites, {
+      missionId: mission.id, name: mission.name, stars: report.stars, output: signalOutput,
+    }) : 0;
     const campaignCompleted = firstClear && mission.id === "m8";
     if (campaignCompleted) state.completed = true;
     if (mission.id === "m1" && firstClear && firstTip(state, "free")) report.tip = TIPS.free;
     restockTutorialPart(state);
     state.report = {
-      ...report, firstClear, recipeDiscovered, feeRefund,
+      ...report, grant, output, signalOutput, firstClear, recipeDiscovered, feeRefund,
       ...(firstClear ? { unlockedReward: { ...mission.perk } } : {}),
       ...(recipeDiscovered ? { discoveredPlan: { ...RECIPES[mission.id].ingredients } } : {}),
       campaignCompleted, completed: state.completed,
@@ -1246,9 +1276,10 @@
 
   globalThis.SpaceportRules = {
     SAVE_KEY, ITEMS, INGREDIENTS, FACILITIES, MISSIONS, STAGES, UPGRADES, WORKERS, TIPS,
-    INPUT_CAPACITY, OUTPUT_CAPACITY, CARGO_CAPACITY,
+    INPUT_CAPACITY, OUTPUT_CAPACITY, CARGO_CAPACITY, GRANT_BONUS,
     createState, loadState, saveState, getInventoryCount, getRates, tick, getUnlock,
     getStage, getExpansion, buyExpansion, isMissionAvailable, getRecipe, buyRecipe, getMissionReward,
+    getMissionGrant,
     getGrantPayout, getProductionCycle, getFacilityOutputCapacity, getCargoCapacity, getCargoItemCapacity,
     getStationActions, transferAtStation, getReturnsCount, returnSupplies,
     getWorker, setWorkerEnabled,
