@@ -6,7 +6,7 @@ Check out the link: https://mymininasa.wiki/
 
 ## Play
 
-Open `index.html` in a browser, or serve this directory with any static web server. There are no runtime packages to install. The game saves your progress in the current browser. An HTTP server gives the game a stable browser origin for saving.
+Open `index.html` in a browser, or serve this directory with any static web server. There are no runtime packages to install. The game saves your progress in the current browser. Background music is an original theme synthesized in the browser with the Web Audio API; it starts with the **Start mission** button, changes arrangement for Earth, the Moon, Mars, and the Sun, and can be turned off in Settings. An HTTP server gives the game a stable browser origin for saving.
 
 Use **WASD** or the **arrow keys** to move. On a touchscreen, drag to steer. The camera follows your astronaut. Pad signs show what a facility accepts, the cost per batch, and its ready stock out of capacity. Walk onto a pad to pick up or deliver supplies automatically. At the Launch Pad, set a quantity between **Unload** and **Load** for each item. Walk onto the Return Supplies pad to put extras back into stock.
 

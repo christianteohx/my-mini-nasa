@@ -48,6 +48,16 @@
   const smallScreen = window.matchMedia('(max-width: 760px)');
 
   try { sound = localStorage.getItem('pocket-spaceport-sound') === 'on'; } catch {}
+  let music = true;
+  try { music = localStorage.getItem('pocket-spaceport-music') !== 'off'; } catch {}
+  const Music = window.SpaceportMusic;
+
+  function setMusic(on) {
+    music = on;
+    try { localStorage.setItem('pocket-spaceport-music', on ? 'on' : 'off'); } catch {}
+    if (on) Music?.start();
+    else Music?.stop();
+  }
   const money = value => '$' + Number(value || 0).toLocaleString('en-US');
   const decimal = value => Number(value || 0).toFixed(2);
   const percent = value => `${Math.round((value || 0) * 100)}%`;
@@ -73,6 +83,47 @@
     oscillator.connect(gain).connect(audioContext.destination);
     oscillator.start(now);
     oscillator.stop(now + duration + .01);
+  }
+
+  // Engine rumble and a rising roar for the launch show.
+  function launchRumble() {
+    if (!sound || !window.AudioContext) return;
+    if (!audioContext) audioContext = new AudioContext();
+    if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
+    const now = audioContext.currentTime;
+    const length = 3;
+    const buffer = audioContext.createBuffer(1, Math.floor(audioContext.sampleRate * length), audioContext.sampleRate);
+    const data = buffer.getChannelData(0);
+    let brown = 0;
+    for (let i = 0; i < data.length; i++) {
+      brown = (brown + 0.02 * (Math.random() * 2 - 1)) / 1.02;
+      data[i] = brown * 3.5;
+    }
+    const noise = audioContext.createBufferSource();
+    noise.buffer = buffer;
+    const filter = audioContext.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(180, now);
+    filter.frequency.exponentialRampToValueAtTime(900, now + 0.7);
+    filter.frequency.exponentialRampToValueAtTime(260, now + length);
+    const gain = audioContext.createGain();
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.5, now + 0.6);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + length);
+    noise.connect(filter).connect(gain).connect(audioContext.destination);
+    noise.start(now);
+    noise.stop(now + length);
+    const tone = audioContext.createOscillator();
+    const toneGain = audioContext.createGain();
+    tone.type = 'triangle';
+    tone.frequency.setValueAtTime(70, now);
+    tone.frequency.exponentialRampToValueAtTime(240, now + 2.4);
+    toneGain.gain.setValueAtTime(0.0001, now);
+    toneGain.gain.exponentialRampToValueAtTime(0.05, now + 0.6);
+    toneGain.gain.exponentialRampToValueAtTime(0.0001, now + 2.6);
+    tone.connect(toneGain).connect(audioContext.destination);
+    tone.start(now);
+    tone.stop(now + 2.7);
   }
 
   // A short brass "ta-da" for successful flights. Three stars get the full fanfare.
@@ -365,6 +416,7 @@
     }
 
     setText('yard-tier', stage.name.toUpperCase());
+    Music?.setTheme(stage.destination);
     setText('mission-tag', mission ? `${mission.destination || 'Earth'} · ${mission.crewMin ? 'Crewed' : 'Uncrewed'}`.toUpperCase() : 'MISSION CONTROL');
     setText('mission-title', mission?.name || 'Choose a mission');
     setText('mission-description', mission?.objective || mission?.description || 'Visit the mission board to plan another flight.');
@@ -715,6 +767,7 @@
     } else if (activePanel === 'settings') {
       byId('panel-kicker').textContent = `${document.title.toUpperCase()} ${version}`;
       panel.innerHTML = `<div class="dialog-list">
+        ${row('Music', 'Play the background theme. It changes for each destination.', action(music ? 'On' : 'Off', 'music'))}
         ${row('Sound effects', 'Play short sounds for collecting, building and launching.', action(sound ? 'On' : 'Off', 'sound'))}
         ${row('Start a new spaceport', confirmReset ? 'This will erase the flight history and upgrades on this device.' : 'Erase the local save and begin with First Light.', action(confirmReset ? 'Erase and restart' : 'New game', 'reset', '', false, confirmReset))}
         </div>${confirmReset ? '<p class="inline-note danger">The previous save will be removed.</p>' : ''}`;
@@ -758,16 +811,18 @@
     preparingReplay = false;
     loadedReport = report;
     yard.burstLaunch();
-    chirp('launch');
+    Music?.duck(3.2);
+    launchRumble();
     flightTimer = window.setTimeout(() => {
       flightTimer = 0;
       openDialog('report', byId('launch'));
       if (report.stars) {
+        if (sound) Music?.duck(report.stars === 3 ? 2.4 : 1.4);
         fanfare(report.stars);
         window.SpaceportCelebrate?.burst(report.stars);
       }
       updateHUD();
-    }, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 100 : 1100);
+    }, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 100 : 2700);
     updateHUD();
     store();
   }
@@ -917,6 +972,9 @@
     } else if (command === 'past-report') {
       loadedReport = (state.history || state.log || [])[Number(id)];
       if (loadedReport) openDialog('report');
+    } else if (command === 'music') {
+      setMusic(!music);
+      drawPanel();
     } else if (command === 'sound') {
       sound = !sound;
       try { localStorage.setItem('pocket-spaceport-sound', sound ? 'on' : 'off'); } catch {}
@@ -976,6 +1034,18 @@
     }
   });
   updateHUD();
+  // Browsers only allow audio after a click or key press, so music starts with the splash button.
+  const startMusic = () => { if (music) Music?.start(); };
+  if (window.SpaceportSplash?.open) window.addEventListener('splash:closed', startMusic, {once: true});
+  else {
+    const firstInput = () => {
+      startMusic();
+      window.removeEventListener('pointerdown', firstInput);
+      window.removeEventListener('keydown', firstInput);
+    };
+    window.addEventListener('pointerdown', firstInput);
+    window.addEventListener('keydown', firstInput);
+  }
   if (state.report) {
     const showReport = () => {
       loadedReport = state.report;
