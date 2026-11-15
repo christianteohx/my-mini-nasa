@@ -4,6 +4,7 @@
   const I = window.NasaIcons;
   const R = window.SpaceportRules;
   const C = window.SpaceportChallenges;
+  const S = window.SpaceportSkins;
   const stations = window.SpaceportStations;
   const byId = id => document.getElementById(id);
   const canvas = byId('yard');
@@ -24,6 +25,7 @@
   const resultLabels = {failed:'Launch failed', partial:'Partial success', success:'Mission success'};
   let state = R.loadState() || R.createState();
   state.challenge = C.normalize(state.challenge);
+  state.cosmetics = S.normalize(state.cosmetics);
   let objective;
   let activePanel = '';
   let loadedReport;
@@ -45,6 +47,8 @@
   let manualMissionToggle = false;
   let facilitySelection = null;
   let upgradeCategory = 'crew';
+  let skinCategory = 'ship';
+  let skinRole = 'player';
   let pendingDialogAction = null;
   const smallScreen = window.matchMedia('(max-width: 760px)');
 
@@ -738,7 +742,7 @@
 
   function drawPanel() {
     byId('panel-kicker').textContent = 'SPACEPORT OPERATIONS';
-    const headings = {guide:'Field guide', stations:'Facilities', settings:'Settings', upgrades:'Upgrades', challenges:'Challenges', log:'Flight log', missions:'Choose a mission', recipe:'Payload plan'};
+    const headings = {guide:'Field guide', stations:'Facilities', settings:'Settings', skins:'Appearance', upgrades:'Upgrades', challenges:'Challenges', log:'Flight log', missions:'Choose a mission', recipe:'Payload plan'};
     byId('panel-title').textContent = headings[activePanel] || '';
     if (activePanel === 'facility') {
       const atPad = yard.nearby === facilitySelection;
@@ -778,9 +782,13 @@
       const entries = state.history || [];
       const flights = entries.slice().reverse().slice(0, 15).map((report, index) => row(report.mission?.name || 'Mission', report.cause, action('Report', 'past-report', String(entries.length - 1 - index)))).join('');
       panel.innerHTML = flights ? '<div class="dialog-list">' + flights + '</div>' : '<p class="dialog-lead">Your first report will appear after launch.</p>';
+    } else if (activePanel === 'skins') {
+      panel.innerHTML = skinsPanel();
+      paintSkins();
     } else if (activePanel === 'settings') {
       byId('panel-kicker').textContent = `${document.title.toUpperCase()} ${version}`;
       panel.innerHTML = `<div class="dialog-list">
+        ${row('Appearance', 'Spaceship & crew skins', action('Customize', 'open-skins'))}
         ${row('Music', 'Play the background theme. It changes for each destination.', action(music ? 'On' : 'Off', 'music'))}
         ${row('Sound effects', 'Play short sounds for collecting, building and launching.', action(sound ? 'On' : 'Off', 'sound'))}
         ${row('Start a new spaceport', confirmReset ? 'This will erase the flight history and upgrades on this device.' : 'Erase the local save and begin with First Light.', action(confirmReset ? 'Erase and restart' : 'New game', 'reset', '', false, confirmReset))}
@@ -789,6 +797,31 @@
       panel.innerHTML = renderReport(loadedReport);
     }
   }
+
+  function skinsPanel() {
+    const ship = skinCategory === 'ship';
+    const selected = ship ? state.cosmetics.ship : state.cosmetics.crew[skinRole];
+    return `<div class="skin-tabs" role="group" aria-label="Appearance category">${['ship','crew'].map(id => `<button class="quiet button" data-action="skin-category" data-value="${id}" aria-pressed="${skinCategory === id}">${id === 'ship' ? 'Spaceship' : 'Crew'}</button>`).join('')}</div>
+      ${ship ? '' : `<label class="skin-role">Dress<select id="skin-role">${Object.entries(S.roles).map(([id,name]) => `<option value="${id}" ${id === skinRole ? 'selected' : ''}>${name}</option>`).join('')}</select></label>`}
+      <div class="skin-grid">${(ship ? S.ships : S.suits).map(skin => `<button class="skin-card" type="button" data-action="skin-select" data-value="${skin.id}" aria-pressed="${selected === skin.id}"><canvas width="280" height="304" data-skin="${skin.id}" aria-hidden="true"></canvas><strong>${skin.name}</strong><small>${skin.detail}</small><span class="skin-state">${selected === skin.id ? 'Equipped' : 'Equip'}</span></button>`).join('')}</div>
+      <p class="skin-note">Cosmetic only. Original tributes, not official endorsements.</p>`;
+  }
+
+  function paintSkins() {
+    for (const canvas of panel.querySelectorAll('[data-skin]')) {
+      const ctx = canvas.getContext('2d');
+      const ship = skinCategory === 'ship';
+      ctx.translate(140, ship ? 282 : 240);
+      ctx.scale(ship ? 1.7 : 3.6, ship ? 1.7 : 3.6);
+      if (ship) window.SpaceportMachines.rocket(ctx, {shipSkin:canvas.dataset.skin,time:0,thrust:0});
+      else window.SpaceportYard.drawSkinPreview(ctx,canvas.dataset.skin,skinRole);
+    }
+  }
+  panel.addEventListener('change', event => {
+    if (event.target.id !== 'skin-role' || !Object.hasOwn(S.roles,event.target.value)) return;
+    skinRole = event.target.value;
+    drawPanel(); byId('skin-role').focus({preventScroll:true});
+  });
 
   function refreshUpgrades(command, value) {
     const scroll = command === 'upgrade-category' ? 0 : dialog.scrollTop;
@@ -892,7 +925,17 @@
     const {action: command, value = ''} = button.dataset;
     const [id, qualifier] = value.split(':');
     if (command === 'close') dialog.close();
-    else if (command === 'goto') {
+    else if (command === 'open-skins') openDialog('skins');
+    else if (command === 'skin-category') {
+      if (!['ship','crew'].includes(value)) return;
+      skinCategory = value; drawPanel();
+      panel.querySelector(`[data-action="skin-category"][data-value="${value}"]`)?.focus({preventScroll:true});
+    } else if (command === 'skin-select') {
+      const target = skinCategory === 'ship' ? 'ship' : skinRole;
+      state.cosmetics = S.select(state.cosmetics, target, value);
+      store(); drawPanel();
+      panel.querySelector(`[data-action="skin-select"][data-value="${value}"]`)?.focus({preventScroll:true});
+    } else if (command === 'goto') {
       afterClose(() => yard.sendTo(id, qualifier));
     } else if (command === 'open-challenges') {
       openDialog('challenges');
@@ -1070,3 +1113,4 @@
   }
   if (!document.hidden) animationFrame = requestAnimationFrame(frame);
 })();
+

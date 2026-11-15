@@ -631,6 +631,7 @@
         p.closePath();
       });
     }
+    if (window.SpaceportSkins?.rocket(ctx, state.shipSkin)) return;
     shape(ctx, '#e0503f', p => {
       p.moveTo(10, -43);
       p.quadraticCurveTo(24, -31, 29, -6);
@@ -754,7 +755,7 @@
     ctx.lineCap = 'round';
     const opacity = ctx.globalAlpha;
     if (locked) ctx.globalAlpha = opacity * 0.39;
-    machine(ctx, { active: active && !locked, ready: ready && !locked, time, liftoff, ignition });
+    machine(ctx, { active: active && !locked, ready: ready && !locked, time, liftoff, ignition, shipSkin: options.shipSkin });
     if (locked) {
       ctx.globalAlpha = opacity;
       gate(ctx, machineId === 'scrap' ? 58 : 76);
@@ -764,5 +765,6 @@
     ctx.restore();
   }
 
-  window.SpaceportMachines = Object.freeze({ draw });
+  window.SpaceportMachines = Object.freeze({ draw, rocket });
 })();
+

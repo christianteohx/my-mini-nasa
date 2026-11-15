@@ -853,11 +853,11 @@
     clerk: { accent: '#f69dc4', dark: '#b56da5', visor: '#76588b', shine: '#ffe1ef', outline: '#714875' },
   };
 
-  function drawAstronaut(ctx, player, inventory, time, moving, role = 'player', capacity = 0) {
+  function drawAstronaut(ctx, player, inventory, time, moving, role = 'player', capacity = 0, skin = 'classic') {
     const p = point(player.u, player.v);
     const step = moving ? Math.sin(time * 17) : 0;
     const sway = moving ? Math.sin(time * 11) * 3.4 : 0;
-    const { accent, dark, visor, shine, outline } = SUITS[role];
+    const { accent, dark, visor, shine, outline } = window.SpaceportSkins?.suit(skin, SUITS[role]) || SUITS[role];
     const playerRole = role === 'player';
     ctx.save();
     ctx.translate(p.x, p.y);
@@ -885,6 +885,16 @@
       polygon(ctx, [[-3, -20], [0, -23], [3, -20], [0, -17]], '#ffe58a');
     } else {
       round(ctx, -3, -20, 6, 4, 1.5, '#fff3b8');
+    }
+    if (skin === 'armstrong') {
+      round(ctx, -11, -12, 22, 3, 1, '#b54b4b');
+      round(ctx, -14 - step * 2, -17, 6, 3, 1, '#b54b4b');
+      round(ctx, 9 + step * 2, -17, 6, 3, 1, '#b54b4b');
+      round(ctx, -5, -23, 10, 9, 2, '#d8dfdf', outline, 1);
+      line(ctx, -4, -16, -8, -10, '#587c99', 2);
+    } else if (skin === 'ride') {
+      line(ctx, 0, -23, 0, -8, '#c1d9ec', 1.3);
+      round(ctx, 3, -21, 5, 4, 1, '#e6bd5d');
     }
     line(ctx, -9, -25, -12, -27, accent, 2.1);
     line(ctx, 9, -25, 12, -27, accent, 2.1);
@@ -1411,6 +1421,7 @@
           if (id === 'cargo') drawCargoShelf(ctx, x, y, state.runner.shelf);
           else if (id === 'returns') drawReturnsCrate(ctx, x, y);
           else window.SpaceportMachines?.draw(ctx, id, x, y, id === 'launch' ? 1.03 : 0.96, {
+            shipSkin: state.cosmetics?.ship,
             active: facility.active || id === 'ground',
             locked: !facility.unlocked,
             ready: id === 'grant' && facility.output > 0,
@@ -1446,7 +1457,7 @@
       }
       this.drawTraffic(state, drawables);
       const capacity = window.SpaceportRules.getRates(state).carry;
-      const drawPlayer = () => drawAstronaut(ctx, this.player, state.inventory, this.time, moving, 'player', capacity);
+      const drawPlayer = () => drawAstronaut(ctx, this.player, state.inventory, this.time, moving, 'player', capacity, state.cosmetics?.crew?.player);
       drawables.push({ y: point(this.player.u, this.player.v).y, draw: drawPlayer });
       drawables.sort((a, b) => a.y - b.y);
       for (const object of drawables) object.draw();
@@ -1470,7 +1481,7 @@
         const view = this.view;
         if (view && (x * view.scale + view.x < -45 || x * view.scale + view.x > view.width + 45
           || y * view.scale + view.y < -15 || y * view.scale + view.y > view.height + 130)) return false;
-        drawables.push({ y, draw: () => drawAstronaut(ctx, worker, inventory, this.time, moving, role) });
+        drawables.push({ y, draw: () => drawAstronaut(ctx, worker, inventory, this.time, moving, role, 0, state.cosmetics?.crew?.[role]) });
         return true;
       };
       const canWalk = id => state.workerEnabled?.[id] !== false && !(state.workerRest?.[id] > 0);
@@ -1655,6 +1666,13 @@
     }
   }
 
+  SpaceportYard.drawSkinPreview = (ctx, skin, role = 'player') => {
+    const p = point(0, 0);
+    ctx.save();ctx.translate(-p.x, -p.y);
+    drawAstronaut(ctx, {u:0,v:0,facing:1}, {}, 0, false, role, 4, skin);
+    ctx.restore();
+  };
   SpaceportYard.stations = STATIONS;
   window.SpaceportYard = SpaceportYard;
 })();
+
