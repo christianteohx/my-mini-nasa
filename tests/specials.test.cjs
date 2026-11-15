@@ -168,3 +168,81 @@ test("specials load, unload and survive a save", () => {
   assert.equal(migrated.facilities.academy.quality, 0);
   assert.ok(migrated.qualitySeed > 0);
 });
+
+for (const [factory, item] of Object.entries(R.SPECIALS)) {
+  test(`Scrap pad discards carried ${item}`, () => {
+    const state = R.createState(5);
+    state.facilities.scrap.unlocked = true;
+    state.inventory[item] = 2;
+    assert.equal(R.interact(state, 'scrap', 'input').item, item);
+    assert.equal(state.inventory[item], 1);
+    assert.equal(R.interact(state, 'scrap', 'input').item, item);
+    assert.equal(state.inventory[item], 0);
+    assert.equal(R.interact(state, 'scrap', 'input'), null);
+  });
+
+  test(`Returns preserve ${item} identity and save round-trip`, () => {
+    const state = R.createState(5);
+    state.facilities[factory].unlocked = true;
+    state.facilities[factory].output = 0;
+    state.inventory[item] = 2;
+    const normalBefore = state.facilities[factory].output;
+    assert.equal(R.getReturnsCount(state), 2);
+    assert.equal(R.interact(state, 'returns', 'input').count, 2);
+    assert.equal(state.inventory[item], 0);
+    assert.equal(state.facilities[factory].special, 2);
+    assert.equal(state.facilities[factory].output, normalBefore);
+    const restored = R.loadState({getItem: () => JSON.stringify(state)});
+    assert.equal(restored.facilities[factory].special, 2);
+    assert.equal(R.transferAtStation(restored, factory, `take:${item}`, 2).count, 2);
+    assert.equal(restored.inventory[item], 2);
+  });
+
+  test(`${factory} returns and Store enforce shared capacity without losing specials`, () => {
+    const state = R.createState(5);
+    const facility = state.facilities[factory];
+    facility.unlocked = true;
+    const regular = R.FACILITIES[factory].item;
+    const capacity = R.getFacilityOutputCapacity(state, factory);
+    facility.output = capacity - 2;
+    facility.special = 1;
+    state.inventory[regular] = 1;
+    state.inventory[item] = 2;
+    assert.equal(R.getReturnsCount(state), 1);
+    R.returnSupplies(state);
+    assert.equal(facility.output + facility.special, capacity);
+    assert.equal(state.inventory[item], 2);
+    assert.equal(R.transferAtStation(state, factory, `store:${item}`, 1), null);
+    assert.equal(R.getReturnsCount(state), 0);
+    assert.equal(R.returnSupplies(state), null);
+    facility.output--;
+    assert.equal(R.transferAtStation(state, factory, `store:${item}`, 1).count, 1);
+    assert.equal(facility.special, 2);
+    assert.equal(facility.output + facility.special, capacity);
+    assert.equal(state.inventory[item], 1);
+    state.inventory[regular] = 1;
+    assert.equal(R.transferAtStation(state, factory, `store:${regular}`, 1), null);
+  });
+}
+
+test('specials are retained when their factory is locked, including with Cargo unlocked', () => {
+  const state = R.createState(5);
+  state.facilities.cargo.unlocked = true;
+  for (const item of R.SPECIAL_ITEMS) state.inventory[item] = 1;
+  assert.equal(R.getReturnsCount(state), 0);
+  assert.equal(R.returnSupplies(state), null);
+  for (const item of R.SPECIAL_ITEMS) assert.equal(state.inventory[item], 1);
+  assert.equal(state.facilities.cargo.output, 0);
+});
+
+test('Scrap retains ordinary-item priority and does not alter loaded specials', () => {
+  const state = R.createState(5);
+  state.facilities.scrap.unlocked = true;
+  state.inventory.data = 1;
+  state.inventory.prizePaper = 1;
+  state.specialLoadout.primePart = 1;
+  assert.equal(R.interact(state, 'scrap', 'input').item, 'data');
+  assert.equal(R.interact(state, 'scrap', 'input').item, 'prizePaper');
+  assert.equal(R.interact(state, 'scrap', 'input'), null);
+  assert.equal(state.specialLoadout.primePart, 1);
+});

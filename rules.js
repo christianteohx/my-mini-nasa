@@ -994,7 +994,7 @@
   }
 
   function scrapItem(state, requested, count = 1) {
-    const item = requested ?? [...INGREDIENTS].reverse().concat("data").find((id) => state.inventory[id] > 0);
+    const item = requested ?? [...INGREDIENTS].reverse().concat("data", SPECIAL_ITEMS).find((id) => state.inventory[id] > 0);
     if (!validQuantity(count, state.inventory[item])) return null;
     state.inventory[item] -= count;
     if (item === "part") restockTutorialPart(state);
@@ -1066,7 +1066,8 @@
         take(spec.item, facility.output),
         ...(SPECIALS[id] ? [take(SPECIALS[id], facility.special ?? 0)] : []),
         stationAction("make", "Order", spec.item, orderCapacity(state, id), { unitPrice: spec.cash, unitCubes: spec.cubes }),
-        store("store", "Store", spec.item, getFacilityOutputCapacity(state, id) - facility.output),
+        store("store", "Store", spec.item, getFacilityOutputRoom(state, id)),
+        ...(SPECIALS[id] ? [store("store", "Store", SPECIALS[id], getFacilityOutputRoom(state, id))] : []),
       ];
     }
     if (id === "cargo") {
@@ -1089,10 +1090,16 @@
     return [];
   }
 
+  function getFacilityOutputRoom(state, id) {
+    const facility = state.facilities[id];
+    return Math.max(0, getFacilityOutputCapacity(state, id) - facility.output - (facility.special ?? 0));
+  }
+
   function storeAtStation(state, id, item, count, type) {
     state.inventory[item] -= count;
     const facility = state.facilities[id];
-    facility.output += count;
+    if (SPECIALS[id] === item) facility.special = (facility.special ?? 0) + count;
+    else facility.output += count;
     if (id === "ground") facility.returned = (facility.returned ?? 0) + count;
     if (id === "cargo") state.runner.shelf[item] += count;
     return { type, facility: id, item, count };
@@ -1129,9 +1136,13 @@
       const { item } = FACILITIES[destination];
       const facility = state.facilities[destination];
       const starter = destination === "engineering" && !facility.unlocked;
-      const facilityRoom = facility.unlocked ? getFacilityOutputCapacity(state, destination) - facility.output : starter ? 1 - facility.output : 0;
+      const facilityRoom = facility.unlocked ? getFacilityOutputRoom(state, destination) : starter ? Math.max(0, 1 - facility.output) : 0;
       const returned = Math.min(state.inventory[item], Math.max(0, facilityRoom));
       if (returned > 0) operations.push({ item, count: returned, destination, starter });
+      const special = SPECIALS[destination];
+      const returnedSpecial = facility.unlocked && special
+        ? Math.min(state.inventory[special] ?? 0, Math.max(0, facilityRoom - returned)) : 0;
+      if (returnedSpecial > 0) operations.push({ item: special, count: returnedSpecial, destination, starter: false });
       if (!state.facilities.cargo.unlocked) continue;
       const itemRoom = getCargoItemCapacity(state) - state.runner.shelf[item] - (cargo === item ? inTransit : 0);
       const stored = Math.min(state.inventory[item] - returned, shelfRoom, itemRoom);
