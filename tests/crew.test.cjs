@@ -25,9 +25,9 @@ test("upgrade previews show live levels, effect, next improvement, and hiring re
   assert.equal(R.getUpgrade(state, "internCarry").nextLabel, null);
 
   assert.ok(R.unlockFacility(state, "fuel"));
-  assert.equal(R.getUpgrade(state, "facility", "fuel").currentLabel, "3 s / batch");
-  assert.equal(R.getUpgrade(state, "facility", "fuel").nextLabel, "2.4 s / batch");
-  assert.equal(R.getUpgrade(state, "facility", "fuel").gain, "0.6 s shorter cycle");
+  assert.equal(R.getUpgrade(state, "facility", "fuel").currentLabel, "4.5 s / batch");
+  assert.equal(R.getUpgrade(state, "facility", "fuel").nextLabel, "3.6 s / batch");
+  assert.equal(R.getUpgrade(state, "facility", "fuel").gain, "0.9 s shorter cycle");
 });
 
 test("Materials Intern uses fresh Ground cubes to queue only mission deficits and preserves cash", () => {

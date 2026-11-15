@@ -9,8 +9,11 @@
   const MOBILE_BREAKPOINT = 760;
   const PAINT_INTERVAL = 1 / 30;
   const PIXEL_RATIO_LIMIT = 1.5;
-  const PICKUP_INTERVAL = 0.25;
-  const SCRAP_HOLD = 0.65;
+  const PICKUP_INTERVAL = 0.45;
+  const SCRAP_HOLD = 0.85;
+  const PAD_SETTLE = 0.35;
+  const TRANSFER_TIME = 0.45;
+  const TRANSFER_STAGGER = 0.07;
   const EARTH = { x: 874, y: 102, padding: 120 };
   const SCENE_THEMES = {
     Earth: { sky: ['#78cef8', '#bdf3ef', '#a4dff4'], soil: ['#cfe97f', '#b6e875', '#a8df71'], edge: '#eaf8ab', wall: ['#8cb97e', '#64a28a', '#5b9b79'], crater: ['#8ac56e', '#a6d668', '#dbef8d', '#79b772', '#95ce76'] },
@@ -27,7 +30,21 @@
     paper: ['#f8d9ff', '#ba7aff', '#7746b5'],
     crew: ['#ffe3d6', '#ff8ca9', '#ba4d79'],
     crate: ['#fff2b4', '#ffbd62', '#a46439'],
+    primePart: ['#fff6c2', '#ffcc33', '#b57a12'],
+    prizePaper: ['#fff6c2', '#ffd23f', '#b57a12'],
+    eliteCrew: ['#fff6c2', '#ffcc33', '#b57a12'],
   };
+  const SPECIAL_SHAPE = { primePart: 'part', prizePaper: 'paper', eliteCrew: 'crew' };
+
+  function specialStar(ctx, x, y, r) {
+    const points = [];
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 5;
+      const radius = i % 2 ? r * 0.45 : r;
+      points.push([x + Math.cos(a) * radius, y + Math.sin(a) * radius]);
+    }
+    polygon(ctx, points, '#ffe14d', '#2b2350', 1.2);
+  }
   const STATIONS = {
     launch: { u: 332, v: 61, label: 'Launch Pad', tint: '#f67b68', input: [0, 40] },
     scrap: { u: 630, v: 57, label: 'Scrap Bin', tint: '#64dfaf', input: [0, 32] },
@@ -151,8 +168,9 @@
     ctx.fillText(content, x, y);
   }
 
-  function drawItem(ctx, x, y, name, scale = 1) {
-    const [light, main, dark] = COLORS[name] || COLORS.data;
+  function drawItem(ctx, x, y, item, scale = 1) {
+    const [light, main, dark] = COLORS[item] || COLORS.data;
+    const name = SPECIAL_SHAPE[item] || item;
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(scale, scale);
@@ -185,6 +203,7 @@
         line(ctx, 3.2, -4.4, 5.8, -5.8, light, 1.3);
       }
     }
+    if (SPECIAL_SHAPE[item]) specialStar(ctx, 7, -11, 4.6);
     ctx.restore();
   }
 
@@ -966,10 +985,14 @@
       this.puff = [];
       this.transfers = [];
       this.time = 0;
+      this.specialSeen = {};
+      this.specialFlash = {};
       this.player = { ...START, facing: 1 };
       this.nearby = null;
       this.nearZone = null;
       this.padHold = 0;
+      this.padHoldTotal = 0;
+      this.padAction = undefined;
       this.pickupDelay = 0;
       this.paused = false;
       this.target = null;
@@ -1120,6 +1143,8 @@
       this.nearby = null;
       this.nearZone = null;
       this.padHold = 0;
+      this.padHoldTotal = 0;
+      this.padAction = undefined;
       this.pickupDelay = 0;
       this.puff = [];
       this.transfers = [];
@@ -1148,7 +1173,7 @@
 
     noteEvent(event) {
       if (event?.type === 'batch') {
-        event.events.forEach((action, index) => this.noteTransfer(action, index * 0.1));
+        event.events.forEach((action, index) => this.noteTransfer(action, index * 0.16));
         return;
       }
       this.noteTransfer(event);
@@ -1167,7 +1192,7 @@
         const from = deposit ? p : q;
         const to = deposit ? q : p;
         for (let i = 0; i < Math.min(event.count, 6); i += 1) {
-          this.transfers.push({ from, to, age: -delay - i * 0.036, item: event.item, deposit });
+          this.transfers.push({ from, to, age: -delay - i * TRANSFER_STAGGER, item: event.item, deposit });
         }
       }
     }
@@ -1234,15 +1259,19 @@
         this.nearby = pad?.id || null;
         this.nearZone = pad?.zone || null;
         this.callbacks.onFocus?.(this.nearby, this.nearZone);
-        this.padHold = pad?.id === 'scrap' ? SCRAP_HOLD : HOLD_ZONES.includes(pad?.zone) ? 0.50 : 0;
+        this.padHoldTotal = pad?.id === 'scrap' ? SCRAP_HOLD : HOLD_ZONES.includes(pad?.zone) ? 0.50 : pad ? PAD_SETTLE : 0;
+        this.padHold = this.padHoldTotal;
+        this.padAction = this.target?.action;
         this.pickupDelay = PICKUP_INTERVAL;
-        if (pad && this.padHold === 0) this.doInteract(pad, this.target?.action);
       } else if (pad && this.padHold > 0) {
         this.padHold -= dt;
-        if (this.padHold <= 0) this.doInteract(pad);
+        if (this.padHold <= 0) {
+          const settle = pad.id !== 'scrap' && !HOLD_ZONES.includes(pad.zone);
+          this.doInteract(pad, settle ? this.padAction : undefined);
+        }
       } else if (pad && (pad.zone === 'both' || pad.zone === 'output')) {
         this.pickupDelay -= dt;
-        if (this.pickupDelay <= 0 && this.state.facilities[pad.id].output > 0) {
+        if (this.pickupDelay <= 0 && (this.state.facilities[pad.id].output > 0 || this.state.facilities[pad.id].special > 0)) {
           this.pickupDelay = PICKUP_INTERVAL;
           this.doInteract(pad, 'output');
         }
@@ -1343,6 +1372,16 @@
       const obstacles = this.getHudObstacles(r, view);
       for (const { id, station, x, y, pad, info } of stationSprites) {
         const facility = state.facilities[id];
+        const made = facility.specialMade ?? 0;
+        const seen = this.specialSeen[id];
+        if (seen === undefined || made < seen) this.specialSeen[id] = made;
+        else if (made > seen) {
+          this.specialSeen[id] = made;
+          this.specialFlash[id] = this.time;
+          this.sparkle(TARGET_BY_ID.get(id) || STATIONS[id], '#ffd23f');
+          this.callbacks.onSpecial?.(id);
+        }
+        const flash = this.specialFlash[id] === undefined ? Infinity : this.time - this.specialFlash[id];
         drawables.push({ y, draw: () => {
           if (id === 'cargo') drawCargoShelf(ctx, x, y, state.runner.shelf);
           else if (id === 'returns') drawReturnsCrate(ctx, x, y);
@@ -1350,6 +1389,8 @@
             active: facility.active || id === 'ground',
             locked: !facility.unlocked,
             ready: id === 'grant' && facility.output > 0,
+            special: facility.special > 0,
+            flash,
             time: this.time,
             liftoff: id === 'launch' ? lift : 0,
           });
@@ -1357,7 +1398,7 @@
         const focused = id === this.nearby && pad.zone === this.nearZone;
         const guided = id === guide?.id && pad.zone === guide?.zone;
         const hovered = id === this.hovered;
-        const holdProgress = focused && id === 'scrap' && this.padHold > 0 ? 1 - this.padHold / SCRAP_HOLD : 0;
+        const holdProgress = focused && this.padHold > 0 && this.padHoldTotal ? 1 - this.padHold / this.padHoldTotal : 0;
         drawables.push({ y: info.y - 7, draw: () => drawPad(ctx, pad, station, info, state, focused, guided, next, this.time, hovered, holdProgress) });
       }
       for (const pad of UPGRADE_PADS) {
@@ -1465,7 +1506,7 @@
       ctx.globalAlpha = 1;
       for (const transfer of this.transfers) {
         if (transfer.age < 0) continue;
-        const progress = clamp(transfer.age / 0.29, 0, 1);
+        const progress = clamp(transfer.age / TRANSFER_TIME, 0, 1);
         const x = transfer.from.x + (transfer.to.x - transfer.from.x) * progress;
         const y = transfer.from.y + (transfer.to.y - transfer.from.y) * progress - (transfer.deposit ? 30 * (1 - progress) : 42 * progress) - Math.sin(progress * Math.PI) * 26;
         ctx.globalAlpha = 1 - Math.max(0, (progress - 0.75) * 2);
@@ -1475,7 +1516,7 @@
       for (const particle of this.puff) particle.age += dt;
       for (const transfer of this.transfers) transfer.age += dt;
       this.puff = this.puff.filter(particle => particle.age < particle.life);
-      this.transfers = this.transfers.filter(transfer => transfer.age < 0.29);
+      this.transfers = this.transfers.filter(transfer => transfer.age < TRANSFER_TIME);
     }
 
     frame(state, dt = 0) {
