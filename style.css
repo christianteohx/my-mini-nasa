@@ -268,13 +268,13 @@ dialog h2 { color: #263371; }
   :root { --hud-gap: 9px; --drawer-height: min(44dvh, 370px); --drawer-strip: 48px; }
   .console { --drawer-clearance: var(--drawer-strip); }
   .console:has(.mission:not([data-collapsed='true'])) { --drawer-clearance: var(--drawer-height); }
-  .masthead-inner { height: 38px; }
+  .masthead-inner { height: auto; min-height: 38px; }
   .masthead .brand { padding: 4px 9px 4px 5px; border-radius: 10px; }
   .brand { gap: 6px; font-size: 19px; }
   .brand-icon { transform: scale(.8); margin: -4px; }
   .header-actions { padding: 3px; }
   .header-button { min-width: 35px; height: 30px; }
-  .overview { top: calc(var(--hud-top) + 46px); left: var(--hud-left); right: var(--hud-right); height: auto; transform: none; }
+  .overview { top: calc(var(--hud-top) + var(--hud-header-height, 48px) + 12px); left: var(--hud-left); right: var(--hud-right); height: auto; transform: none; }
   .telemetry { width: 100%; }
   .stat { flex: 1; min-width: 0; padding: 5px 6px; border-radius: 9px; }
   .stat-symbol { width: 21px; height: 21px; font-size: 13px; }
@@ -301,8 +301,8 @@ dialog h2 { color: #263371; }
   .directive-copy p { display: none; }
   .directive-copy .eyebrow { font-size: 7px; }
   .locate { min-height: 32px; padding: 4px 6px; }
-  .map-button { top: calc(var(--hud-top) + 91px); min-height: 30px; padding: 3px 6px; font-size: 11px; }
-  .order-card { top: calc(var(--hud-top) + 91px); gap: 5px; padding: 4px 5px; border-radius: 8px; }
+  .map-button { top: calc(var(--hud-top) + var(--hud-header-height, 48px) + var(--hud-resources-height, 52px) + 24px); min-height: 30px; padding: 3px 6px; font-size: 11px; }
+  .order-card { top: calc(var(--hud-top) + var(--hud-header-height, 48px) + var(--hud-resources-height, 52px) + 24px); gap: 5px; padding: 4px 5px; border-radius: 8px; }
   .order-icon { width: 20px; height: 20px; font-size: 11px; }
   .order-copy strong { font-size: 11px; }
   .order-copy span { font-size: 9px; }

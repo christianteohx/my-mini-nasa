@@ -294,6 +294,19 @@
   });
   setMissionOpen(!smallScreen.matches);
 
+  // Stack mobile HUD rows using their rendered heights, including late-loading fonts.
+  // The cartoon borders/buttons are taller than the original fixed row offsets.
+  const hudHeader = document.querySelector('.masthead-inner');
+  const hudResources = document.querySelector('.overview');
+  function sizeMobileHud() {
+    document.documentElement.style.setProperty('--hud-header-height', `${hudHeader.getBoundingClientRect().height}px`);
+    document.documentElement.style.setProperty('--hud-resources-height', `${hudResources.getBoundingClientRect().height}px`);
+  }
+  const hudObserver = new ResizeObserver(sizeMobileHud);
+  hudObserver.observe(hudHeader);
+  hudObserver.observe(hudResources);
+  sizeMobileHud();
+
   const route = (title, detail, id, zone = 'input', panelName = '') => ({title, detail, id, zone, panelName});
 
   function currentObjective(info) {
