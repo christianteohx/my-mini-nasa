@@ -648,7 +648,7 @@
     const {data,question:q,complete}=T.current(state);
     const last=data.last;
     const reward=last?last.reward:T.rewardForState(state);
-    if(complete && !last) return `<div class="trivia"><p class="eyebrow">6 / 6 COMPLETE</p><h3>Nice exploring!</h3><p>You earned ${money(T.QUESTIONS.length*T.REWARD)}. Each question pays once.</p>${action('Back to missions','back-to-board')}</div>`;
+    if(complete && !last) return `<div class="trivia"><p class="eyebrow">6 / 6 COMPLETE</p><h3>Nice exploring!</h3><p>All question rewards claimed.</p>${action('Back to missions','back-to-board')}</div>`;
     return `<div class="trivia"><div class="trivia-meta"><span>${data.claimed.length} / ${T.QUESTIONS.length} rewards earned</span><strong>+${money(reward)}</strong></div>
       <h3>${escapeHTML(q.prompt)}</h3>
       <div class="trivia-options">${q.options.map((option,i)=>`<button class="quiet button${last ? (i === q.answer ? ' trivia-correct' : i === last.choice ? ' trivia-wrong' : '') : ''}" data-action="trivia-answer" data-value="${q.id}:${i}" ${last?'disabled':''}>${escapeHTML(option)}${last&&i===q.answer?' · Correct':''}${last&&i===last.choice&&i!==q.answer?' · Your answer (incorrect)':''}</button>`).join('')}</div>
@@ -849,6 +849,7 @@
   }
 
   function openDialog(name, source) {
+    if (name === 'trivia' && T.finish(state)) store();
     if (!dialog.open) {
       originButton = source || document.activeElement;
       dialog.showModal();

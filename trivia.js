@@ -24,8 +24,9 @@ function answer(state,id,choice){const {data,question,complete}=current(state);
 if(complete||data.last||id!==question.id||!Number.isInteger(choice)||choice<0||choice>=question.options.length)return null;
 const correct=choice===question.answer,reward=correct&&!data.claimed.includes(id)?rewardForState(state):0;
 if(reward){data.claimed.push(id);state.wallet+=reward;}data.last={id,choice,reward};state.trivia=data;return {correct,reward};}
+function finish(state){const {data,complete}=current(state);if(!complete||!data.last)return false;data.last=null;state.trivia=data;return true;}
 function next(state){const data=normalize(state.trivia);if(!data.last)return false;
 for(let offset=1;offset<=QUESTIONS.length;offset++){const i=(data.index+offset)%QUESTIONS.length;if(!data.claimed.includes(QUESTIONS[i].id)){data.index=i;data.last=null;state.trivia=data;return true;}}
 state.trivia=data;return false;}
-globalThis.SpaceportTrivia={QUESTIONS,REWARD,rewardForState,normalize,current,answer,next};
+globalThis.SpaceportTrivia={QUESTIONS,REWARD,rewardForState,normalize,current,answer,next,finish};
 })();
