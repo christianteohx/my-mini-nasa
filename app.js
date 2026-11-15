@@ -22,7 +22,21 @@
   const production = {fuel:'fuel', part:'engineering', paper:'research', crew:'academy'};
   const nasaMissionDesign = 'https://www.nasa.gov/wp-content/uploads/2025/04/250323-design-and-develop-science-mission.pdf';
   const resultLabels = {failed:'Launch failed', partial:'Partial success', success:'Mission success'};
-  let state = R.loadState() || R.createState();
+  // Preview-only fixture: fresh special items on each reload; never reads or writes saves.
+  const specialScrapPreview = location.hostname.endsWith('.my-mini-nasa.pages.dev')
+    && new URLSearchParams(location.search).get('preview') === 'special-scrap';
+  function createSpecialScrapPreview() {
+    const fixture = R.createState(151126);
+    for (const facility of Object.values(fixture.facilities)) facility.unlocked = true;
+    fixture.expanded = true;
+    fixture.stageIndex = 1;
+    fixture.inventory.primePart = 1;
+    fixture.inventory.prizePaper = 1;
+    fixture.inventory.eliteCrew = 1;
+    fixture.wallet = 500;
+    return fixture;
+  }
+  let state = specialScrapPreview ? createSpecialScrapPreview() : R.loadState() || R.createState();
   state.challenge = C.normalize(state.challenge);
   let objective;
   let activePanel = '';
@@ -187,6 +201,7 @@
   }
 
   function store() {
+    if (specialScrapPreview) return;
     const saved = R.saveState(state);
     if (saved === false) byId('save-status').textContent = 'SAVE UNAVAILABLE IN THIS BROWSER';
   }
@@ -232,6 +247,13 @@
       }
     }
   });
+
+  if (specialScrapPreview) {
+    yard.player = { u: 590, v: 120, facing: 1 };
+    document.title = 'Special scrap preview · My Mini NASA';
+    byId('splash-title').textContent = 'Special scrap preview';
+    byId('splash-start').textContent = 'Test special items';
+  }
 
   function usePad(id, action) {
     if (flightTimer || state.report) return null;
