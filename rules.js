@@ -219,7 +219,7 @@
   }
 
   function makeRunner() {
-    return { phase: "search", progress: 0, from: null, cargo: null, cargoCount: 0, shelf: emptyLoadout() };
+    return { phase: "search", progress: 0, from: null, cargo: null, cargoCount: 0, shelf: { ...emptyLoadout(), ...emptySpecials() } };
   }
 
   function makeMaterials() {
@@ -282,6 +282,7 @@
         saved.customers ??= makeCustomers();
         saved.customers.bonus = GRANT_BONUS;
         saved.runner ??= makeRunner();
+        saved.runner.shelf = { ...emptyLoadout(), ...emptySpecials(), ...saved.runner.shelf };
         saved.runner.cargoCount ??= Number(Boolean(saved.runner.cargo));
         saved.upgrades = { ...STARTING_UPGRADES, ...saved.upgrades };
         saved.workerEnabled ??= {};
@@ -721,10 +722,21 @@
     return state.facilities.cargo.output;
   }
 
+  function getSupplyCount(items, base) {
+    return (items[base] ?? 0) + SPECIAL_ITEMS.reduce((sum, item) => sum + (ITEMS[item].base === base ? items[item] ?? 0 : 0), 0);
+  }
+
+  function cargoItemRoom(state, item) {
+    const base = ITEMS[item].base ?? item;
+    const { runner } = state;
+    const reserved = runner.cargo && (ITEMS[runner.cargo].base ?? runner.cargo) === base ? runnerCargoCount(runner) : 0;
+    return Math.max(0, getCargoItemCapacity(state) - getSupplyCount(runner.shelf, base) - reserved);
+  }
+
   function cargoNeeds(state) {
     const mission = MISSIONS[state.missionIndex];
     if (!mission) return emptyLoadout();
-    const have = Object.fromEntries(INGREDIENTS.map((id) => [id, state.inventory[id] + state.loadout[id]]));
+    const have = Object.fromEntries(INGREDIENTS.map((id) => [id, getSupplyCount(state.inventory, id) + getSupplyCount({ ...state.loadout, ...state.specialLoadout }, id)]));
     if (state.recipes[mission.id]) {
       const ingredients = RECIPES[mission.id].ingredients;
       return Object.fromEntries(INGREDIENTS.map((id) => [id, Math.max(0, ingredients[id] - have[id])]));
@@ -740,16 +752,17 @@
   function getShelfItem(state, needs = cargoNeeds(state)) {
     const { shelf } = state.runner;
     const active = Boolean(MISSIONS[state.missionIndex]);
-    return CARGO_PRIORITY.find((id) => shelf[id] > 0 && (!active || needs[id] > 0)) ?? null;
+    return CARGO_PRIORITY.flatMap(base => [...SPECIAL_ITEMS.filter(item => ITEMS[item].base === base), base])
+      .find(item => shelf[item] > 0 && (!active || needs[ITEMS[item].base ?? item] > 0)) ?? null;
   }
 
   function collectCargo(state, requested, quantity) {
     if (!state.facilities.cargo.unlocked || state.report) return null;
     const needs = cargoNeeds(state);
     const item = requested ?? getShelfItem(state, needs);
-    if (!INGREDIENTS.includes(item)) return null;
+    if (![...INGREDIENTS, ...SPECIAL_ITEMS].includes(item)) return null;
     const max = Math.min(state.runner.shelf[item], carryRoom(state));
-    const count = quantity ?? Math.min(max, requested ? 1 : needs[item] || 1);
+    const count = quantity ?? Math.min(max, requested ? 1 : needs[ITEMS[item].base ?? item] || 1);
     if (!validQuantity(count, max)) return null;
     state.runner.shelf[item] -= count;
     state.facilities.cargo.output -= count;
@@ -770,10 +783,10 @@
       const needs = cargoNeeds(state);
       let bestPriority = -Infinity;
       for (const id of FACTORIES) {
-        const { unlocked, output } = state.facilities[id];
+        const { unlocked, output, special = 0 } = state.facilities[id];
         const item = FACILITIES[id].item;
-        const stocked = runner.shelf[item];
-        if (!unlocked || output === 0 || stocked >= itemCapacity) continue;
+        const stocked = getSupplyCount(runner.shelf, item);
+        if (!unlocked || output + special === 0 || stocked >= itemCapacity) continue;
         const priority = (needs[item] > stocked ? 10 : 0) - stocked;
         if (priority <= bestPriority) continue;
         bestPriority = priority;
@@ -788,19 +801,21 @@
     runner.progress = 0;
     if (runner.phase === "pickup") {
       const factory = state.facilities[runner.from];
-      const item = FACILITIES[runner.from].item;
-      const count = Math.min(factory.output, capacity - getCargoCount(state), itemCapacity - runner.shelf[item], workerCapacity(state, "runner"));
+      const base = FACILITIES[runner.from].item;
+      const item = factory.special > 0 && SPECIALS[runner.from] ? SPECIALS[runner.from] : base;
+      const field = item === base ? "output" : "special";
+      const count = Math.min(factory[field], capacity - getCargoCount(state), cargoItemRoom(state, item), workerCapacity(state, "runner"));
       if (count > 0) {
         runner.cargo = item;
         runner.cargoCount = count;
-        factory.output -= count;
+        factory[field] -= count;
       }
       runner.phase = "deliver";
       return;
     }
     if (runner.cargo) {
       const count = runnerCargoCount(runner);
-      runner.shelf[runner.cargo] += count;
+      runner.shelf[runner.cargo] = (runner.shelf[runner.cargo] ?? 0) + count;
       state.facilities.cargo.output += count;
     }
     runner.phase = "search";
@@ -814,12 +829,12 @@
     const spec = FACILITIES[id];
     const facility = state.facilities[id];
     const mission = MISSIONS[state.missionIndex];
-    if (!mission || !spec.cubes || !facility.unlocked || facility.output >= getFacilityOutputCapacity(state, id)) return 0;
+    if (!mission || !spec.cubes || !facility.unlocked || facility.output + (facility.special ?? 0) >= getFacilityOutputCapacity(state, id)) return 0;
 
     const runner = state.runner;
     const pending = Math.floor(facility.input / spec.cubes) + Number(facility.active);
-    const stored = runner.shelf[spec.item] + (runner.cargo === spec.item ? runnerCargoCount(runner) : 0);
-    const deficit = needs[spec.item] - facility.output - pending - stored;
+    const stored = getSupplyCount(runner.shelf, spec.item) + (runner.cargo && (ITEMS[runner.cargo].base ?? runner.cargo) === spec.item ? runnerCargoCount(runner) : 0);
+    const deficit = needs[spec.item] - facility.output - (facility.special ?? 0) - pending - stored;
     const budget = Math.max(0, state.wallet - mission.fee - 160);
     return Math.max(0, Math.min(deficit, Math.floor(budget / spec.cash), Math.floor(cubes / spec.cubes),
       Math.floor((INPUT_CAPACITY - facility.input) / spec.cubes)));
@@ -1074,9 +1089,9 @@
       const { shelf, cargo } = state.runner;
       const inTransit = runnerCargoCount(state.runner);
       const shelfRoom = getCargoCapacity(state) - getCargoCount(state) - inTransit;
-      return INGREDIENTS.flatMap((item) => [
-        take(item, shelf[item]),
-        store("store", "Store", item, Math.min(shelfRoom, getCargoItemCapacity(state) - shelf[item] - (cargo === item ? inTransit : 0))),
+      return [...INGREDIENTS, ...SPECIAL_ITEMS].flatMap((item) => [
+        take(item, shelf[item] ?? 0),
+        store("store", "Store", item, Math.min(shelfRoom, cargoItemRoom(state, item))),
       ]);
     }
     if (id === "launch" && MISSIONS[state.missionIndex]) {
@@ -1101,7 +1116,7 @@
     if (SPECIALS[id] === item) facility.special = (facility.special ?? 0) + count;
     else facility.output += count;
     if (id === "ground") facility.returned = (facility.returned ?? 0) + count;
-    if (id === "cargo") state.runner.shelf[item] += count;
+    if (id === "cargo") state.runner.shelf[item] = (state.runner.shelf[item] ?? 0) + count;
     return { type, facility: id, item, count };
   }
 
@@ -1144,7 +1159,7 @@
         ? Math.min(state.inventory[special] ?? 0, Math.max(0, facilityRoom - returned)) : 0;
       if (returnedSpecial > 0) operations.push({ item: special, count: returnedSpecial, destination, starter: false });
       if (!state.facilities.cargo.unlocked) continue;
-      const itemRoom = getCargoItemCapacity(state) - state.runner.shelf[item] - (cargo === item ? inTransit : 0);
+      const itemRoom = cargoItemRoom(state, item);
       const stored = Math.min(state.inventory[item] - returned, shelfRoom, itemRoom);
       if (stored > 0) {
         shelfRoom -= stored;
@@ -1443,7 +1458,7 @@
     SAVE_KEY, ITEMS, INGREDIENTS, FACILITIES, MISSIONS, STAGES, UPGRADES, WORKERS, TIPS,
     SPECIALS, SPECIAL_ITEMS, SPECIAL_CHANCE, SPECIAL_QUALITY, SPEED_SPECIALS, SPECIAL_REWARDS, getSpecialChance,
     INPUT_CAPACITY, OUTPUT_CAPACITY, CARGO_CAPACITY, GRANT_BONUS,
-    createState, loadState, saveState, getInventoryCount, getRates, tick, getUnlock,
+    getSupplyCount, createState, loadState, saveState, getInventoryCount, getRates, tick, getUnlock,
     getStage, getExpansion, buyExpansion, isMissionAvailable, getRecipe, buyRecipe, getMissionReward,
     getMissionGrant,
     getGrantPayout, getProductionCycle, getFacilityOutputCapacity, getCargoCapacity, getCargoItemCapacity,
