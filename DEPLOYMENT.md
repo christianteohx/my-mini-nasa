@@ -1,6 +1,6 @@
 # Deployment
 
-Cloudflare Pages hosts the game at https://mymininasa.wiki and https://www.mymininasa.wiki.
+Cloudflare Pages hosts the game at https://mymininasa.wiki. The www hostname redirects to the apex, preserving paths and query strings.
 
 - Git repository: christianteohx/my-mini-nasa
 - Production branch: main; pushes automatically deploy.
@@ -11,4 +11,4 @@ Cloudflare Pages hosts the game at https://mymininasa.wiki and https://www.mymin
 
 Tests must pass before publishing. GitHub Actions independently runs the same tests and packaging on pushes and pull requests. No deployment token is needed in this repository: Pages uses its GitHub App connection.
 
-Vercel remains configured as a rollback option during migration; production DNS points to Cloudflare Pages.
+The Vercel project has been removed. Cloudflare Pages is the active host; the retained `vercel.json` is inactive legacy configuration, not a running fallback.

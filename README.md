@@ -181,7 +181,7 @@ Earn three stars on **Solar Probe**, the final mission, flying a heat-shielded p
 | Saving | `localStorage`, with migrations for older saves. |
 | Randomness | Seeded xorshift generators, so launches and special products are reproducible in tests. |
 | Testing | Node's built-in test runner (`node --test`), with no test libraries. |
-| Hosting | Cloudflare Pages at mymininasa.wiki. Vercel is configured as a fallback. |
+| Hosting | Cloudflare Pages at mymininasa.wiki. |
 | CI | GitHub Actions runs the tests and the static build on every push and pull request. |
 
 ### Architecture
@@ -224,7 +224,7 @@ my-mini-nasa/
 ├── tests/              Node tests for rules, economy, crew, campaign, challenges, and specials
 ├── scripts/build.mjs   Copies the static game into dist/ for deployment
 ├── .github/workflows/  CI: tests and build on every push and pull request
-├── vercel.json         Fallback hosting configuration
+├── vercel.json         Legacy Vercel configuration (inactive)
 └── DEPLOYMENT.md       Hosting and deployment notes
 ```
 
