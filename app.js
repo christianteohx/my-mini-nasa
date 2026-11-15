@@ -817,15 +817,50 @@
   }
 
   function skinsPanel() {
+    skinInfo = null;
     state.cosmetics = S.normalize(state.cosmetics, state);
     const ship = skinCategory === 'ship';
     const selected = ship ? state.cosmetics.ship : state.cosmetics.crew[skinRole];
     return `<div class="skin-tabs" role="group" aria-label="Appearance category">${['ship','crew'].map(id => `<button class="quiet button" data-action="skin-category" data-value="${id}" aria-pressed="${skinCategory === id}">${id === 'ship' ? 'Spaceship' : 'Crew'}</button>`).join('')}</div>
       ${ship ? '' : `<label class="skin-role">Dress<select id="skin-role">${Object.entries(S.roles).map(([id,name]) => `<option value="${id}" ${id === skinRole ? 'selected' : ''}>${name}</option>`).join('')}</select></label>`}
-      <div class="skin-grid">${(ship ? S.ships : S.suits).map(skin => `<div class="skin-tile"><button class="skin-info-toggle" type="button" data-action="skin-info" data-value="${skin.id}" aria-label="About ${skin.name}" aria-expanded="${skinInfo === skin.id}" aria-controls="skin-intro"><span aria-hidden="true">!</span></button><button class="skin-card" type="button" data-action="skin-select" data-value="${skin.id}" aria-pressed="${selected === skin.id}" ${S.unlocked(state, skinCategory, skin.id) ? '' : 'disabled'}><canvas width="280" height="304" data-skin="${skin.id}" aria-hidden="true"></canvas><strong>${skin.name}</strong><small>${skin.detail}</small><span class="skin-state">${S.unlocked(state, skinCategory, skin.id) ? (selected === skin.id ? 'Equipped' : 'Equip') : 'Locked'}</span>${S.unlocked(state, skinCategory, skin.id) ? '' : `<small class="skin-requirement">${skin.requirement}</small>`}</button></div>`).join('')}</div>
-      <div id="skin-intro" class="skin-intro" aria-live="polite" ${skinInfo ? '' : 'hidden'}>${skinInfo ? `<strong>${(ship ? S.ships : S.suits).find(s => s.id === skinInfo).name}</strong><p>${(ship ? S.ships : S.suits).find(s => s.id === skinInfo).intro}</p><button class="quiet button" data-action="skin-info" data-value="${skinInfo}" aria-label="Close skin introduction">Close</button>` : ''}</div>
+      <div class="skin-grid">${(ship ? S.ships : S.suits).map(skin => `<div class="skin-tile"><button class="skin-info-toggle" type="button" data-action="skin-info" data-value="${skin.id}" aria-label="About ${skin.name}" aria-expanded="false" aria-controls="skin-intro-${skin.id}" aria-describedby="skin-intro-${skin.id}"><span aria-hidden="true">!</span></button><div id="skin-intro-${skin.id}" class="skin-tooltip" role="tooltip" hidden><strong>${skin.name}</strong><p>${skin.intro}</p></div><button class="skin-card" type="button" data-action="skin-select" data-value="${skin.id}" aria-pressed="${selected === skin.id}" ${S.unlocked(state, skinCategory, skin.id) ? '' : 'disabled'}><canvas width="280" height="304" data-skin="${skin.id}" aria-hidden="true"></canvas><strong>${skin.name}</strong><small>${skin.detail}</small><span class="skin-state">${S.unlocked(state, skinCategory, skin.id) ? (selected === skin.id ? 'Equipped' : 'Equip') : 'Locked'}</span>${S.unlocked(state, skinCategory, skin.id) ? '' : `<small class="skin-requirement">${skin.requirement}</small>`}</button></div>`).join('')}</div>
       <p class="skin-note">Cosmetic only. Original tributes, not official endorsements.</p>`;
   }
+
+  function showSkinInfo(id) {
+    skinInfo = id;
+    for (const control of panel.querySelectorAll('.skin-info-toggle')) {
+      const open = control.dataset.value === id;
+      control.setAttribute('aria-expanded', String(open));
+      panel.querySelector(`#skin-intro-${control.dataset.value}`).hidden = !open;
+    }
+  }
+  // Mouse hover and keyboard focus reveal the same small textbox; taps toggle it.
+  panel.addEventListener('pointerover', event => {
+    if (event.pointerType !== 'mouse') return;
+    const control = event.target.closest('.skin-info-toggle');
+    if (control) showSkinInfo(control.dataset.value);
+  });
+  panel.addEventListener('pointerout', event => {
+    if (event.pointerType !== 'mouse') return;
+    const tile = event.target.closest('.skin-tile');
+    if (tile && !tile.contains(event.relatedTarget)) showSkinInfo(null);
+  });
+  panel.addEventListener('focusin', event => {
+    const control = event.target.closest('.skin-info-toggle');
+    if (control?.matches(':focus-visible')) showSkinInfo(control.dataset.value);
+  });
+  panel.addEventListener('focusout', event => {
+    if (event.target.closest('.skin-info-toggle')) showSkinInfo(null);
+  });
+  panel.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && skinInfo) {
+      showSkinInfo(null); event.preventDefault(); event.stopPropagation();
+    }
+  });
+  panel.addEventListener('pointerdown', event => {
+    if (!event.target.closest('.skin-info-toggle, .skin-tooltip')) showSkinInfo(null);
+  });
 
   function paintSkins() {
     for (const canvas of panel.querySelectorAll('[data-skin]')) {
@@ -959,9 +994,7 @@
       skinCategory = value; skinInfo = null; drawPanel();
       panel.querySelector(`[data-action="skin-category"][data-value="${value}"]`)?.focus({preventScroll:true});
     } else if (command === 'skin-info') {
-      if (!(skinCategory === 'ship' ? S.ships : S.suits).some(s => s.id === value)) return;
-      skinInfo = skinInfo === value ? null : value; drawPanel();
-      panel.querySelector(`.skin-info-toggle[data-value="${value}"]`)?.focus({preventScroll:true});
+      showSkinInfo(skinInfo === value ? null : value);
     } else if (command === 'skin-select') {
       const target = skinCategory === 'ship' ? 'ship' : skinRole;
       state.cosmetics = S.select(state.cosmetics, target, value, state);

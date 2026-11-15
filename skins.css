@@ -25,7 +25,9 @@
 .skin-info-toggle span {display:grid;place-items:center;width:22px;height:22px;border:1.5px solid currentColor;border-radius:50%;font-weight:800;font-size:15px;line-height:1;}
 #panel .skin-info-toggle:focus-visible {outline:3px solid #d67e24;border-radius:12px;outline-offset:1px;}
 #panel .skin-info-toggle[aria-expanded="true"] span {background:#334b80;color:white;}
-.skin-intro {margin-top:12px;padding:14px;border:1px solid #c5d0e2;border-radius:14px;background:#f3f6fc;color:#263957;}
-.skin-intro[hidden] {display:none;}
-.skin-intro p {margin:6px 0 10px;font-size:14px;line-height:1.5;}
-.skin-intro button {min-height:44px;}
+/* Keep the textbox inside the grid on narrow screens. */
+.skin-tooltip {position:absolute;top:42px;left:5px;z-index:4;width:min(220px,calc(100vw - 72px));box-sizing:border-box;padding:11px 12px;border:1px solid #aab9d0;border-radius:10px;background:#fffdf6;color:#263957;box-shadow:0 5px 16px #26395726;font-size:12px;line-height:1.45;cursor:default;}
+.skin-tooltip[hidden] {display:none;}
+.skin-tooltip p {margin:4px 0 0;}
+.skin-tile:nth-child(2) .skin-tooltip {left:50%;transform:translateX(-50%);}
+.skin-tile:last-child .skin-tooltip {left:auto;right:5px;}
