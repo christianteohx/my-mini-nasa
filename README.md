@@ -34,6 +34,23 @@ The missions use simplified game units. Flight reports link to the NASA material
 - [NASA Design and Develop Science Missions](https://www.nasa.gov/wp-content/uploads/2025/04/250323-design-and-develop-science-mission.pdf)
 - [My Mini Mart by Supersonic Studios](https://apps.apple.com/us/app/my-mini-mart/id1592004814)
 
+### NASA photos
+
+Each facility panel ends with a "Real NASA" card: a photo and a short note on the NASA work the facility stands for. The photos in `assets/nasa/` are the small renditions from the [NASA Image and Video Library](https://images.nasa.gov/) and follow the [NASA Images and Media Usage Guidelines](https://www.nasa.gov/nasa-brand-center/images-and-media/). Credits and library IDs live with the captions in `stations.js`.
+
+| Facility | NASA counterpart | Library ID |
+| --- | --- | --- |
+| Ground Station | Deep Space Network, Goldstone | PIA23214 |
+| Grant Office | Mary W. Jackson NASA Headquarters | NHQ202102260022 |
+| Fuel Plant | Liquid hydrogen sphere, Pad 39B | KSC-20230613-PH-KLS02_0033 |
+| Engineering | Webb telescope in the Goddard clean room | GSFC_20171208_Archive_e000270 |
+| Research Lab | Combustion Integrated Rack, space station | iss058e026380 |
+| Academy | Neutral Buoyancy Laboratory spacewalk training | jsc2005e04330 |
+| Scrap Bin | Space station water recovery system | iss072e143163 |
+| Launch Pad | Artemis I at Launch Complex 39B | KSC-20220915-PH-JNP01_0001 |
+| Cargo Shelf | Cygnus cargo craft arriving at the station | iss071e416851 |
+| Returns | CRS-21 science unpacked after splashdown | KSC-20210114-ILW02_0044 |
+
 ## Releases
 
 | Release | Sites version | Changes |
