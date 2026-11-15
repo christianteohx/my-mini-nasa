@@ -13,22 +13,41 @@
   const CARGO_PRIORITY = ["paper", "crew", "part", "fuel"];
   const GRANT_BONUS = 3;
 
+  // Special products: each finished batch has a small chance to come out as a special.
+  const SPECIALS = { engineering: "primePart", research: "prizePaper", academy: "eliteCrew" };
+  const SPECIAL_ITEMS = Object.values(SPECIALS);
+  const SPECIAL_SOURCE = Object.fromEntries(Object.entries(SPECIALS).map(([facility, item]) => [item, facility]));
+  const SPECIAL_CHANCE = [0.1, 0.2];
+  const SPECIAL_QUALITY = {
+    engineering: { price: 300, mission: "m2" },
+    research: { price: 500, mission: "m4" },
+    academy: { price: 800, mission: "m5" },
+  };
+  // Machine speed upgrades also need a special product from the next factory in the chain.
+  const SPEED_SPECIALS = { fuel: "primePart", engineering: "prizePaper", research: "eliteCrew", academy: "primePart" };
+  const SPEED_SPECIAL_COUNTS = [1, 2];
+  const SPECIAL_REWARDS = { primePart: 0.05, prizePaper: 0.3, eliteCrew: 0.5 };
+  const MAX_ODDS = 0.98;
+
   const ITEMS = {
     data: { name: "Data Cube", plural: "Data Cubes", color: "#6dd5ff", mass: 0 },
     fuel: { name: "Fuel", plural: "Fuel", color: "#ffad62", mass: 2 },
     part: { name: "Part", plural: "Parts", color: "#81d6ff", mass: 1 },
     paper: { name: "Research Paper", plural: "Research Papers", color: "#b9a0ff", mass: 1 },
     crew: { name: "Astronaut", plural: "Astronauts", color: "#e6fa83", mass: 3 },
+    primePart: { name: "Prime Part", plural: "Prime Parts", color: "#ffd23f", mass: 1, base: "part", special: true },
+    prizePaper: { name: "Prize Paper", plural: "Prize Papers", color: "#ffd23f", mass: 1, base: "paper", special: true },
+    eliteCrew: { name: "Elite Astronaut", plural: "Elite Astronauts", color: "#ffd23f", mass: 3, base: "crew", special: true },
     cash: { name: "Cash", plural: "Cash", color: "#bfe98a", mass: 0 },
   };
 
   const FACILITIES = {
     ground: { id: "ground", name: "Ground Station", item: "data", cubes: 0, cash: 0, cycle: 2, unlock: 0, after: 0 },
     grant: { id: "grant", name: "Grant Office", item: "cash", cubes: 1, cash: 0, cycle: 0.7, unlock: 0, after: 0 },
-    fuel: { id: "fuel", name: "Fuel Plant", item: "fuel", cubes: 0, cash: 15, cycle: 3, unlock: 40, after: 0 },
-    engineering: { id: "engineering", name: "Engineering", item: "part", cubes: 2, cash: 20, cycle: 4, unlock: 100, after: 0 },
-    research: { id: "research", name: "Research Lab", item: "paper", cubes: 3, cash: 25, cycle: 5, unlock: 200, after: 0 },
-    academy: { id: "academy", name: "Academy", item: "crew", cubes: 4, cash: 40, cycle: 8, unlock: 400, after: 0, stage: "expansion" },
+    fuel: { id: "fuel", name: "Fuel Plant", item: "fuel", cubes: 0, cash: 15, cycle: 4.5, unlock: 40, after: 0 },
+    engineering: { id: "engineering", name: "Engineering", item: "part", cubes: 2, cash: 20, cycle: 4.5, unlock: 100, after: 0 },
+    research: { id: "research", name: "Research Lab", item: "paper", cubes: 3, cash: 25, cycle: 6.5, unlock: 200, after: 0 },
+    academy: { id: "academy", name: "Academy", item: "crew", cubes: 4, cash: 40, cycle: 10, unlock: 400, after: 0, stage: "expansion" },
     scrap: { id: "scrap", name: "Scrap Bin", item: null, cubes: 0, cash: 0, cycle: 0, unlock: 0, after: 0 },
     launch: { id: "launch", name: "Launch Pad", item: null, cubes: 0, cash: 0, cycle: 0, unlock: 0, after: 0 },
     cargo: { id: "cargo", name: "Cargo Shelf", item: null, cubes: 0, cash: 0, cycle: 0, unlock: 0, after: 0 },
@@ -121,6 +140,7 @@
     m8: { price: 5800, peakOdds: 0.76, ingredients: { fuel: 5, part: 6, paper: 5, crew: 0 } },
   };
   const ODDS_PENALTY = { fuel: 0.12, part: 0.09, paper: 0.08, crew: 0.14 };
+  const LOADABLE = [...INGREDIENTS, ...SPECIAL_ITEMS];
   const THIN_MARGIN_PENALTY = 0.2;
 
   const WORKERS = {
@@ -176,6 +196,10 @@
     return { fuel: 0, part: 0, paper: 0, crew: 0 };
   }
 
+  function emptySpecials() {
+    return Object.fromEntries(SPECIAL_ITEMS.map((item) => [item, 0]));
+  }
+
   function makeFacility(id) {
     return {
       unlocked: ["ground", "grant", "launch", "returns"].includes(id),
@@ -184,6 +208,9 @@
       progress: 0,
       active: false,
       speed: 0,
+      special: 0,
+      specialMade: 0,
+      quality: 0,
     };
   }
 
@@ -215,8 +242,9 @@
     return {
       version: 1,
       wallet: 20,
-      inventory: { data: 0, ...emptyLoadout() },
+      inventory: { data: 0, ...emptyLoadout(), ...emptySpecials() },
       loadout: emptyLoadout(),
+      specialLoadout: emptySpecials(),
       facilities,
       missionIndex: 0,
       furthestMissionIndex: 1,
@@ -241,6 +269,7 @@
       time: 0,
       completed: false,
       rngSeed: (seed >>> 0) || 1,
+      qualitySeed: ((seed ^ 0x9e3779b9) >>> 0) || 7,
     };
   }
 
@@ -262,6 +291,14 @@
         saved.facilities.grant.stock ??= Math.floor(saved.facilities.grant.output / 10);
         saved.facilities.cargo ??= makeFacility("cargo");
         saved.facilities.returns ??= makeFacility("returns");
+        saved.inventory = { ...emptySpecials(), ...saved.inventory };
+        saved.specialLoadout = { ...emptySpecials(), ...saved.specialLoadout };
+        for (const facility of Object.values(saved.facilities)) {
+          facility.special ??= 0;
+          facility.specialMade ??= 0;
+          facility.quality ??= 0;
+        }
+        saved.qualitySeed ??= ((saved.rngSeed ^ 0x9e3779b9) >>> 0) || 7;
         if (!Number.isInteger(saved.stageIndex) || !STAGES[saved.stageIndex]) {
           const hadAnnex = saved.expanded ?? Boolean(saved.completed
             || saved.furthestMissionIndex >= 2 || saved.missionIndex >= 2 || saved.facilities.academy?.unlocked
@@ -461,7 +498,54 @@
     return value + " " + stat;
   }
 
+  function availableSpecials(state, item) {
+    const source = state.facilities[SPECIAL_SOURCE[item]];
+    return state.inventory[item] + (source?.unlocked ? source.special ?? 0 : 0);
+  }
+
+  function spendSpecials(state, item, count) {
+    const fromBag = Math.min(state.inventory[item], count);
+    state.inventory[item] -= fromBag;
+    const source = state.facilities[SPECIAL_SOURCE[item]];
+    if (count > fromBag) source.special -= count - fromBag;
+  }
+
+  function speedSpecialCost(state, facilityId, level) {
+    const item = SPEED_SPECIALS[facilityId];
+    const count = SPEED_SPECIAL_COUNTS[level];
+    if (!item || !count) return null;
+    const have = availableSpecials(state, item);
+    return { item, count, have, met: have >= count };
+  }
+
+  function getQualityUpgrade(state, facilityId) {
+    const spec = SPECIAL_QUALITY[facilityId];
+    const facility = state.facilities[facilityId];
+    if (!spec || !facility) return null;
+    const level = facility.quality ?? 0;
+    const maxLevel = SPECIAL_CHANCE.length - 1;
+    const cost = level < maxLevel ? spec.price : null;
+    const mission = findMission(spec.mission);
+    const missionMet = hasThreeStars(state, spec.mission);
+    const current = SPECIAL_CHANCE[level];
+    const next = SPECIAL_CHANCE[level + 1] ?? null;
+    const label = (value) => value === null ? null : Math.round(value * 100) + "% chance";
+    const unlocked = Boolean(facility.unlocked);
+    return {
+      id: "quality", facilityId, label: ITEMS[SPECIALS[facilityId]].name + " chance", role: null, category: "facility",
+      level, maxLevel, cost, unlocked,
+      available: unlocked && cost !== null,
+      affordable: unlocked && cost !== null && missionMet && state.wallet >= cost,
+      current, next, currentLabel: label(current), nextLabel: label(next),
+      gain: next === null ? null : "+" + Math.round((next - current) * 100) + "% chance",
+      maxed: cost === null,
+      items: null,
+      requirement: cost === null ? null : { mission: mission.name, met: missionMet },
+    };
+  }
+
   function getUpgrade(state, id, facilityId) {
+    if (id === "quality") return getQualityUpgrade(state, facilityId);
     const spec = UPGRADES[id];
     if (!spec) return null;
     const facility = state.facilities[facilityId];
@@ -481,9 +565,12 @@
       : spec.stat === "cycle" ? displayNumber(cycle / current - cycle / next) + " s shorter cycle"
       : spec.stat === "speed" ? "+" + displayNumber(next - current) + "× speed"
       : "+" + (next - current) + " " + spec.stat;
+    const items = id === "facility" && cost !== null ? speedSpecialCost(state, facilityId, level) : null;
     return {
       id,
       facilityId,
+      items,
+      requirement: null,
       label: id === "facility" && FACILITIES[facilityId] ? FACILITIES[facilityId].name + " speed" : spec.label,
       role: spec.role ?? null,
       category: spec.category,
@@ -492,7 +579,7 @@
       cost,
       unlocked,
       available: unlocked && cost !== null,
-      affordable: unlocked && cost !== null && state.wallet >= cost,
+      affordable: unlocked && cost !== null && state.wallet >= cost && (!items || items.met),
       current, next, currentLabel, nextLabel, gain,
       maxed: cost === null,
     };
@@ -502,7 +589,9 @@
     const upgrade = getUpgrade(state, id, facilityId);
     if (!upgrade?.affordable) return false;
     state.wallet -= upgrade.cost;
-    if (id === "facility") state.facilities[facilityId].speed++;
+    if (upgrade.items) spendSpecials(state, upgrade.items.item, upgrade.items.count);
+    if (id === "quality") state.facilities[facilityId].quality++;
+    else if (id === "facility") state.facilities[facilityId].speed++;
     else state.upgrades[id]++;
     if (id === "runner") state.facilities.cargo.unlocked = true;
     return true;
@@ -580,7 +669,7 @@
     const cycle = getProductionCycle(state, id);
     const capacity = getFacilityOutputCapacity(state, id);
     let cycles = dt / cycle;
-    while (cycles > 0 && (facility.stock ?? facility.output) < capacity) {
+    while (cycles > 0 && (facility.stock ?? facility.output + (facility.special ?? 0)) < capacity) {
       if (!facility.active) {
         if (facility.input < batch) break;
         facility.input -= batch;
@@ -592,7 +681,10 @@
       cycles -= progress;
       if (facility.progress < 1 - 1e-9) break;
       if (id === "grant") fillGrantOrder(state);
-      else facility.output++;
+      else if (SPECIALS[id] && nextQualityRoll(state) < getSpecialChance(state, id)) {
+        facility.special = (facility.special ?? 0) + 1;
+        facility.specialMade = (facility.specialMade ?? 0) + 1;
+      } else facility.output++;
       facility.active = false;
       facility.progress = 0;
     }
@@ -818,9 +910,32 @@
     if (clerkTime) tickClerk(state, clerkTime);
   }
 
-  function pickUp(state, id, quantity) {
+  function batchOf(id, ...events) {
+    const list = events.flatMap((event) => !event ? [] : event.type === "batch" ? event.events : [event]);
+    if (list.length < 2) return list[0] ?? null;
+    return { type: "batch", facility: id, events: list };
+  }
+
+  function takeSpecial(state, id, quantity) {
     const facility = state.facilities[id];
+    const item = SPECIALS[id];
+    if (!item || !facility?.unlocked || !(facility.special > 0)) return null;
+    const max = Math.min(facility.special, carryRoom(state));
+    const count = quantity ?? max;
+    if (!validQuantity(count, max)) return null;
+    facility.special -= count;
+    state.inventory[item] += count;
+    return { type: "pickup", facility: id, item, count, special: true };
+  }
+
+  function pickUp(state, id, quantity) {
     if (id === "cargo") return collectCargo(state);
+    const special = quantity === undefined ? takeSpecial(state, id) : null;
+    return batchOf(id, special, pickUpOutput(state, id, quantity));
+  }
+
+  function pickUpOutput(state, id, quantity) {
+    const facility = state.facilities[id];
     const item = FACILITIES[id].item;
     if (!item || facility.output <= 0 || (!facility.unlocked && id !== "engineering")) return null;
     if (item === "cash") {
@@ -845,16 +960,16 @@
 
   function stageLaunch(state, ingredient, quantity) {
     if (!MISSIONS[state.missionIndex]) return null;
-    if (ingredient !== undefined && (!INGREDIENTS.includes(ingredient) || !validQuantity(quantity, state.inventory[ingredient]))) return null;
+    if (ingredient !== undefined && (!LOADABLE.includes(ingredient) || !validQuantity(quantity, state.inventory[ingredient]))) return null;
     let count = 0;
     let item = null;
     let tip = null;
-    for (const id of ingredient === undefined ? INGREDIENTS : [ingredient]) {
+    for (const id of ingredient === undefined ? LOADABLE : [ingredient]) {
       const amount = quantity ?? state.inventory[id];
       if (amount <= 0) continue;
       count += amount;
       item = id;
-      state.loadout[id] += amount;
+      loadoutFor(state, id)[id] += amount;
       state.inventory[id] -= amount;
       const lesson = firstTip(state, id);
       tip ||= lesson;
@@ -865,10 +980,14 @@
     return { type: "deposit", facility: "launch", item, count, tip };
   }
 
+  function loadoutFor(state, id) {
+    return SPECIAL_ITEMS.includes(id) ? state.specialLoadout : state.loadout;
+  }
+
   function removeItem(state, id, discard = false, count = 1) {
-    if (!INGREDIENTS.includes(id) || !validQuantity(count, state.loadout[id])) return null;
+    if (!LOADABLE.includes(id) || !validQuantity(count, loadoutFor(state, id)[id])) return null;
     if (!discard && count > carryRoom(state)) return null;
-    state.loadout[id] -= count;
+    loadoutFor(state, id)[id] -= count;
     if (!discard) state.inventory[id] += count;
     if (id === "part") restockTutorialPart(state);
     return { type: discard ? "scrap" : "unload", facility: discard && state.facilities.scrap.unlocked ? "scrap" : "launch", item: id, count };
@@ -945,6 +1064,7 @@
     if (FACTORIES.includes(id)) {
       return [
         take(spec.item, facility.output),
+        ...(SPECIALS[id] ? [take(SPECIALS[id], facility.special ?? 0)] : []),
         stationAction("make", "Order", spec.item, orderCapacity(state, id), { unitPrice: spec.cash, unitCubes: spec.cubes }),
         store("store", "Store", spec.item, getFacilityOutputCapacity(state, id) - facility.output),
       ];
@@ -959,10 +1079,10 @@
       ]);
     }
     if (id === "launch" && MISSIONS[state.missionIndex]) {
-      return INGREDIENTS.flatMap((item) => [
+      return LOADABLE.flatMap((item) => [
         stationAction("load", "Load", item, held[item]),
-        stationAction("unload", "Unload", item, Math.min(state.loadout[item], room)),
-        stationAction("scrap", "Scrap", item, state.loadout[item]),
+        stationAction("unload", "Unload", item, Math.min(loadoutFor(state, item)[item], room)),
+        stationAction("scrap", "Scrap", item, loadoutFor(state, item)[item]),
       ]);
     }
     if (id === "scrap") return Object.keys(held).map((item) => stationAction("discard", "Discard", item, held[item]));
@@ -983,7 +1103,8 @@
     if (!action || !validQuantity(count, action.max)) return null;
     const { item, kind } = action;
     switch (kind) {
-      case "take": return id === "cargo" ? collectCargo(state, item, count) : pickUp(state, id, count);
+      case "take": return id === "cargo" ? collectCargo(state, item, count)
+        : SPECIAL_ITEMS.includes(item) ? takeSpecial(state, id, count) : pickUp(state, id, count);
       case "deposit":
       case "make": return orderFromProducer(state, id, count);
       case "collect": return pickUp(state, id);
@@ -1046,8 +1167,7 @@
     // Factories make room by taking cubes first. Grants pay out directly to the wallet.
     const first = id === "grant" ? pickUp(state, id) : orderFromProducer(state, id);
     const second = id === "grant" ? orderFromProducer(state, id) : pickUp(state, id);
-    if (!first || !second) return first || second;
-    return { type: "batch", facility: id, events: [first, second] };
+    return batchOf(id, first, second);
   }
 
   function interact(state, id, zone = "both") {
@@ -1067,7 +1187,23 @@
     return null;
   }
 
-  function inspectLoadout(loadout, mission) {
+  function launchLoadout(state) {
+    const loadout = { ...state.loadout };
+    for (const item of SPECIAL_ITEMS) loadout[ITEMS[item].base] += state.specialLoadout?.[item] ?? 0;
+    return loadout;
+  }
+
+  function specialBonus(specials = {}) {
+    const count = (item) => Math.max(0, specials[item] ?? 0);
+    return {
+      primePart: count("primePart"), prizePaper: count("prizePaper"), eliteCrew: count("eliteCrew"),
+      odds: Math.round(count("primePart") * SPECIAL_REWARDS.primePart * 100) / 100,
+      downlink: Math.round(count("prizePaper") * SPECIAL_REWARDS.prizePaper * 100) / 100,
+      cash: Math.round(count("eliteCrew") * SPECIAL_REWARDS.eliteCrew * 100) / 100,
+    };
+  }
+
+  function inspectLoadout(loadout, mission, specials = {}) {
     const { fuel = 0, part = 0, paper = 0, crew = 0 } = loadout;
     const dryMass = part * ITEMS.part.mass + paper * ITEMS.paper.mass + crew * ITEMS.crew.mass;
     const mass = fuel * ITEMS.fuel.mass + dryMass;
@@ -1084,10 +1220,12 @@
     const recipe = RECIPES[mission.id];
     const penalty = INGREDIENTS.reduce((sum, id) => sum + Math.abs((loadout[id] ?? 0) - recipe.ingredients[id]) * ODDS_PENALTY[id], 0);
     const exact = penalty === 0;
-    const odds = mass > mission.massLimit || fuel < fuelNeeded
+    const bonus = specialBonus(specials);
+    const baseOdds = mass > mission.massLimit || fuel < fuelNeeded
       ? 0 : Math.max(0.05, Math.round((recipe.peakOdds - penalty - (thinMargin ? THIN_MARGIN_PENALTY : 0)) * 100) / 100);
+    const odds = baseOdds > 0 && bonus.odds > 0 ? Math.min(MAX_ODDS, Math.round((baseOdds + bonus.odds) * 100) / 100) : baseOdds;
     return {
-      empty: mass === 0,
+      empty: mass === 0, specialBonus: bonus,
       dryMass, mass, fuelNeeded, powerDemand, powerRatio, effectiveScience, effectiveCrew, bonusScience, thinMargin,
       odds, exact, peakOdds: recipe.peakOdds, qualifyingIssue,
       gauges: {
@@ -1134,7 +1272,7 @@
       gauges: {}, odds: 0, exact: false, peakOdds: null, recipe: null,
       blockedReason: "Select a mission to launch again.",
     };
-    const values = inspectLoadout(state.loadout, mission);
+    const values = inspectLoadout(launchLoadout(state), mission, state.specialLoadout);
     let blockedReason = "";
     if (values.empty) blockedReason = "Deliver hardware to the Launch Pad.";
     else if (values.mass > mission.massLimit) blockedReason = "Unload hardware to get below the mass limit.";
@@ -1147,8 +1285,8 @@
     return { ...values, mission, recipe, discovered: Boolean(state.discovered[mission.id]), ready: !blockedReason && !state.report, blockedReason };
   }
 
-  function evaluateLaunch(loadout, mission, rng = () => 0.5) {
-    const values = inspectLoadout(loadout, mission);
+  function evaluateLaunch(loadout, mission, rng = () => 0.5, specials = {}) {
+    const values = inspectLoadout(loadout, mission, specials);
     const { gauges, mass, fuelNeeded, powerRatio, effectiveScience, effectiveCrew, bonusScience, thinMargin, odds, exact, qualifyingIssue } = values;
     let status = "success";
     let stars = 3;
@@ -1195,9 +1333,23 @@
     return {
       ...values, mission, status, stars, cause, tip, roll,
       grant: Math.round(mission.reward * stars / 3),
-      output: scienceOutput * (1 + crewBonus) * (mission.dataMultiplier ?? 1),
+      output: scienceOutput * (1 + crewBonus) * (mission.dataMultiplier ?? 1) * (stars ? 1 + values.specialBonus.downlink : 1),
       loadout: { ...emptyLoadout(), ...loadout },
     };
+  }
+
+  function nextQualityRoll(state) {
+    let seed = state.qualitySeed || 7;
+    seed ^= seed << 13;
+    seed ^= seed >>> 17;
+    seed ^= seed << 5;
+    state.qualitySeed = seed >>> 0;
+    return state.qualitySeed / 2 ** 32;
+  }
+
+  function getSpecialChance(state, id) {
+    if (!SPECIALS[id]) return 0;
+    return SPECIAL_CHANCE[state.facilities[id]?.quality ?? 0] ?? SPECIAL_CHANCE[0];
   }
 
   function nextRandom(state) {
@@ -1232,7 +1384,8 @@
     const inspection = inspectLaunch(state);
     if (!inspection.ready) return null;
     const { mission } = inspection;
-    const report = evaluateLaunch(state.loadout, mission, () => nextRandom(state));
+    const report = evaluateLaunch(launchLoadout(state), mission, () => nextRandom(state), state.specialLoadout);
+    const specialCash = report.stars > 0 ? Math.round(mission.reward * report.specialBonus.cash) : 0;
     const { earned } = getMissionGrant(state, mission.id);
     const firstClear = report.stars === 3 && (state.bestStars[mission.id] ?? 0) < 3;
     const grant = Math.max(0, report.grant - earned);
@@ -1243,11 +1396,12 @@
       report.gauges.fuel.status = "good";
       report.gauges.fuel.message = `The calibrated fuel reserve improves the odds of reaching ${mission.arrival}.`;
     }
-    state.wallet += grant + feeRefund - mission.fee;
+    state.wallet += grant + feeRefund + specialCash - mission.fee;
     state.discovered[mission.id] = true;
     state.bestStars[mission.id] = Math.max(state.bestStars[mission.id] ?? 0, report.stars);
     if (firstClear && mission.id === "m5") state.facilities.cargo.unlocked = true;
     state.loadout = emptyLoadout();
+    state.specialLoadout = emptySpecials();
     state.stats.attempts++;
     const signalOutput = report.output;
     const output = report.stars > 0 ? updateDownlink(state.satellites, {
@@ -1258,7 +1412,7 @@
     if (mission.id === "m1" && firstClear && firstTip(state, "free")) report.tip = TIPS.free;
     restockTutorialPart(state);
     state.report = {
-      ...report, grant, output, signalOutput, firstClear, recipeDiscovered, feeRefund,
+      ...report, grant, output, signalOutput, firstClear, recipeDiscovered, feeRefund, specialCash,
       ...(firstClear ? { unlockedReward: { ...mission.perk } } : {}),
       ...(recipeDiscovered ? { discoveredPlan: { ...RECIPES[mission.id].ingredients } } : {}),
       campaignCompleted, completed: state.completed,
@@ -1276,6 +1430,7 @@
 
   globalThis.SpaceportRules = {
     SAVE_KEY, ITEMS, INGREDIENTS, FACILITIES, MISSIONS, STAGES, UPGRADES, WORKERS, TIPS,
+    SPECIALS, SPECIAL_ITEMS, SPECIAL_CHANCE, SPECIAL_QUALITY, SPEED_SPECIALS, SPECIAL_REWARDS, getSpecialChance,
     INPUT_CAPACITY, OUTPUT_CAPACITY, CARGO_CAPACITY, GRANT_BONUS,
     createState, loadState, saveState, getInventoryCount, getRates, tick, getUnlock,
     getStage, getExpansion, buyExpansion, isMissionAvailable, getRecipe, buyRecipe, getMissionReward,

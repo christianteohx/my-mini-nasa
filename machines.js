@@ -699,11 +699,40 @@
     lab: 'research', researchLab: 'research', crew: 'academy', scrapBin: 'scrap', pad: 'launch', launchPad: 'launch',
   };
 
+  // A gold star floats over a factory holding a special product; a burst plays when one is made.
+  const SPECIAL_TOP = { engineering: -78, research: -78, academy: -58 };
+  const SPECIAL_FLASH = 1.4;
+
+  function specialBadge(ctx, top, time, holding, flash) {
+    const opacity = ctx.globalAlpha;
+    if (flash < SPECIAL_FLASH) {
+      const t = flash / SPECIAL_FLASH;
+      ctx.globalAlpha = opacity * (1 - t);
+      shape(ctx, null, p => p.arc(0, top, 10 + t * 34, 0, Math.PI * 2), '#ffd23f', 3.5 * (1 - t) + 0.5);
+      for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4 + t;
+        const inner = 14 + t * 20, outer = 20 + t * 30;
+        line(ctx, [[Math.cos(a) * inner, top + Math.sin(a) * inner], [Math.cos(a) * outer, top + Math.sin(a) * outer]], '#fff4a8', 2.2);
+      }
+      ctx.globalAlpha = opacity;
+    }
+    const pop = flash < 0.35 ? 1 + 0.6 * Math.sin(flash / 0.35 * Math.PI) : 1;
+    const bob = Math.sin(time * 3.2) * 2.5;
+    if (!holding && flash >= 0.6) return;
+    ctx.save();
+    ctx.translate(0, top + bob);
+    ctx.scale(pop, pop);
+    shape(ctx, '#ffd23f40', p => p.arc(0, 0, 13 + Math.sin(time * 5) * 1.5, 0, Math.PI * 2));
+    star(ctx, 0, 0, 9.5, '#ffd23f', 1.6);
+    oval(ctx, -2.5, -3, 2.4, 1.4, '#fffbe0');
+    ctx.restore();
+  }
+
   function draw(ctx, id, x, y, scale = 1, options = {}) {
     const machineId = aliases[id] || id;
     const machine = machines[machineId];
     if (!machine) return;
-    const { active = false, locked = false, ready = false, time = 0, liftoff = 0 } = options;
+    const { active = false, locked = false, ready = false, special = false, flash = Infinity, time = 0, liftoff = 0 } = options;
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(scale, scale);
@@ -715,6 +744,8 @@
     if (locked) {
       ctx.globalAlpha = opacity;
       gate(ctx, machineId === 'scrap' ? 58 : 76);
+    } else if (special || flash < SPECIAL_FLASH) {
+      specialBadge(ctx, SPECIAL_TOP[machineId] ?? -76, time, special, flash);
     }
     ctx.restore();
   }

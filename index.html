@@ -13,15 +13,16 @@
   <link rel="stylesheet" href="stations.css?v=8">
   <link rel="stylesheet" href="upgrades.css?v=10">
   <link rel="stylesheet" href="challenges.css?v=11">
-  <link rel="stylesheet" href="cartoon.css?v=14">
+  <link rel="stylesheet" href="cartoon.css?v=18">
   <link rel="stylesheet" href="splash.css?v=1">
   <script defer src="splash.js?v=1"></script>
-  <script defer src="rules.js?v=11"></script>
+  <script defer src="celebrate.js?v=1"></script>
+  <script defer src="rules.js?v=19"></script>
   <script defer src="challenges.js?v=11"></script>
-  <script defer src="machines.js?v=13"></script>
-  <script defer src="yard.js?v=12"></script>
-  <script defer src="stations.js?v=14"></script>
-  <script defer src="app.js?v=15"></script>
+  <script defer src="machines.js?v=17"></script>
+  <script defer src="yard.js?v=17"></script>
+  <script defer src="stations.js?v=17"></script>
+  <script defer src="app.js?v=18"></script>
 </head>
 <body>
   <div class="splash" id="splash" role="dialog" aria-modal="true" aria-labelledby="splash-title">
@@ -116,6 +117,7 @@
             <div class="odds-summary"><span>Success chance</span><strong id="launch-odds">—</strong></div>
             <div class="odds-meter" aria-hidden="true"><span id="odds-fill"></span></div>
             <p class="status-line" id="status-line"></p>
+            <p class="special-bonus" id="special-bonus" hidden></p>
           </div>
           <div class="gauge-top"><span class="eyebrow">Payload</span><span id="manifest-note">PLAN LOCKED</span><button type="button" id="manifest-button" class="manifest-button" data-open="manifest" hidden>Manage ↗</button></div>
           <div class="gauges" id="gauges"></div>

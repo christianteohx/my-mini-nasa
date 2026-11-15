@@ -14,8 +14,10 @@
   const gaugeKeys = ['fuel', 'power', 'science', 'crew', 'mass'];
   const inventoryKeys = ['data', 'fuel', 'part', 'paper', 'crew'];
   const gaugeItems = {fuel:'fuel', power:'part', science:'paper', crew:'crew', mass:'mass'};
-  const labels = {data:'Data Cube', fuel:'Fuel', part:'Part', paper:'Research Paper', crew:'Astronaut', mass:'Mass'};
-  const symbols = {data:'◆', fuel:'◒', part:'✚', paper:'▤', crew:'♟', mass:'◈'};
+  const specialKeys = R.SPECIAL_ITEMS;
+  const labels = {data:'Data Cube', fuel:'Fuel', part:'Part', paper:'Research Paper', crew:'Astronaut', mass:'Mass',
+    primePart:'Prime Part', prizePaper:'Prize Paper', eliteCrew:'Elite Astronaut'};
+  const symbols = {data:'◆', fuel:'◒', part:'✚', paper:'▤', crew:'♟', mass:'◈', primePart:'✦', prizePaper:'✪', eliteCrew:'★'};
   const production = {fuel:'fuel', part:'engineering', paper:'research', crew:'academy'};
   const nasaMissionDesign = 'https://www.nasa.gov/wp-content/uploads/2025/04/250323-design-and-develop-science-mission.pdf';
   const resultLabels = {failed:'Launch failed', partial:'Partial success', success:'Mission success'};
@@ -73,6 +75,58 @@
     oscillator.stop(now + duration + .01);
   }
 
+  // A short brass "ta-da" for successful flights. Three stars get the full fanfare.
+  function fanfare(stars) {
+    if (!sound || !stars || !window.AudioContext) return;
+    if (!audioContext) audioContext = new AudioContext();
+    if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
+    const start = audioContext.currentTime + 0.05;
+    const filter = audioContext.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 2600;
+    const master = audioContext.createGain();
+    master.gain.value = 0.9;
+    filter.connect(master).connect(audioContext.destination);
+    const brass = (frequency, at, length, level = 0.035) => {
+      for (const [type, ratio, mix] of [['sawtooth', 1, 1], ['square', 0.5, 0.45]]) {
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency * ratio, start + at);
+        gain.gain.setValueAtTime(0.0001, start + at);
+        gain.gain.exponentialRampToValueAtTime(level * mix, start + at + 0.02);
+        gain.gain.setValueAtTime(level * mix * 0.8, start + at + length * 0.7);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + at + length);
+        oscillator.connect(gain).connect(filter);
+        oscillator.start(start + at);
+        oscillator.stop(start + at + length + 0.02);
+      }
+    };
+    const chime = (frequency, at) => {
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(frequency, start + at);
+      gain.gain.setValueAtTime(0.03, start + at);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + at + 0.35);
+      oscillator.connect(gain).connect(audioContext.destination);
+      oscillator.start(start + at);
+      oscillator.stop(start + at + 0.4);
+    };
+    if (stars === 3) {
+      // G4 G4 G4 | C5 (held, as a C major chord) with sparkles on top.
+      brass(392, 0, 0.1);
+      brass(392, 0.12, 0.1);
+      brass(392, 0.24, 0.1);
+      for (const note of [523.25, 659.25, 783.99]) brass(note, 0.38, 0.9, 0.028);
+      brass(1046.5, 0.38, 0.9, 0.02);
+      [1567.98, 2093, 2637, 3135.96].forEach((note, i) => chime(note, 0.5 + i * 0.09));
+    } else {
+      brass(523.25, 0, 0.12);
+      for (const note of [659.25, 783.99]) brass(note, 0.15, 0.5, 0.03);
+    }
+  }
+
   function notify(text, seconds = 4.2) {
     if (!text) return;
     byId('notice-text').textContent = text;
@@ -88,6 +142,12 @@
   const yard = new window.SpaceportYard(canvas, {
     onInteract: usePad,
     onFacilityInspect: id => openFacility(id, canvas),
+    onSpecial(id) {
+      const item = R.SPECIALS[id];
+      if (!item) return;
+      notify(`★ ${labels[item]} made at ${R.FACILITIES[id].name}!`, 3);
+      chirp('unlock');
+    },
     onUpgrade(id) {
       const upgrade = R.getUpgrade(state, id);
       if (!upgrade?.available) return false;
@@ -140,7 +200,9 @@
         store();
       }
     }
-    if (id === 'returns') {
+    const special = events.find(event => event.special);
+    if (special) notify(`★ Picked up ${special.count} ${special.count === 1 ? labels[special.item] : R.ITEMS[special.item].plural}.`, 2.5);
+    else if (id === 'returns') {
       const count = events.reduce((total, event) => total + event.count, 0);
       notify(`${count} ${count === 1 ? 'item' : 'items'} returned to stock.`, 2.5);
     } else if (cash) notify('Collected ' + money(cash.count), 1.5);
@@ -264,8 +326,8 @@
     if (node.textContent !== String(text)) node.textContent = text;
   }
 
-  const inventoryNames = {data:'Data Cubes', fuel:'Fuel', part:'Parts', paper:'Research', crew:'Astronauts'};
-  byId('inventory').innerHTML = inventoryKeys.map(item => `<span class="inventory-item zero" data-item="${item}" title="${labels[item]}">${icon(item)}<span class="inventory-name">${inventoryNames[item]}</span><b id="item-${item}">0</b></span>`).join('');
+  const inventoryNames = {data:'Data Cubes', fuel:'Fuel', part:'Parts', paper:'Research', crew:'Astronauts', primePart:'Prime', prizePaper:'Prize', eliteCrew:'Elite'};
+  byId('inventory').innerHTML = [...inventoryKeys, ...specialKeys].map(item => `<span class="inventory-item zero" data-item="${item}"${specialKeys.includes(item) ? ' data-special' : ''} title="${labels[item]}">${icon(item)}<span class="inventory-name">${inventoryNames[item]}</span><b id="item-${item}">0</b></span>`).join('');
   byId('gauges').innerHTML = gaugeKeys.map(key => `<div class="gauge" data-item="${gaugeItems[key]}" id="gauge-${key}">${icon(gaugeItems[key])}<div><div class="gauge-head"><span>${key[0].toUpperCase() + key.slice(1)}</span><span class="gauge-value"><b>0</b> <span></span></span></div><div class="gauge-track"><div class="gauge-fill"></div><div class="gauge-mark" hidden></div></div></div></div>`).join('');
 
   function updateHUD() {
@@ -295,8 +357,8 @@
     setText('order-bonus', '+' + money(state.customers.bonus));
     const challenge = C.getChallenge(state.challenge);
     setText('challenge-summary', challenge ? `${challenge.label} · ${challenge.complete ? 'Goal complete' : `${challenge.progress}/${challenge.target}`}` : 'Pick a focus');
-    for (const item of inventoryKeys) {
-      const count = state.inventory[item];
+    for (const item of [...inventoryKeys, ...specialKeys]) {
+      const count = state.inventory[item] || 0;
       const node = byId('item-' + item);
       node.parentElement.classList.toggle('zero', count === 0);
       if (node.textContent !== String(count)) node.textContent = count;
@@ -357,6 +419,13 @@
     else if (info.ready) statusText = recipe?.known && info.exact ? 'Payload plan matched. Launch risk remains.' : 'Extra or missing supplies lower the odds.';
     status.dataset.tone = overloaded || info.thinMargin || (!info.empty && info.qualifyingIssue) ? 'warn' : info.ready ? 'ready' : '';
     setText('status-line', statusText);
+    const bonus = info.specialBonus;
+    const perks = [];
+    if (bonus?.odds) perks.push(`+${percent(bonus.odds)} odds`);
+    if (bonus?.downlink) perks.push(`+${percent(bonus.downlink)} data`);
+    if (bonus?.cash && mission) perks.push(`+${money(Math.round(mission.reward * bonus.cash))} on success`);
+    byId('special-bonus').hidden = !perks.length;
+    setText('special-bonus', perks.length ? `★ Specials ${perks.join(' · ')}` : '');
     byId('launch').disabled = !info.ready || Boolean(flightTimer);
     byId('yard-launch').hidden = yard.nearby !== 'launch' || !info.ready || Boolean(flightTimer);
     setText('launch-label', flightTimer ? 'Launching…' : 'Launch mission');
@@ -412,14 +481,24 @@
     const maxLevel = item.maxLevel + 1;
     const current = item.id === 'runnerCarry' && item.current === 1 ? '1 supply' : item.currentLabel;
     let purchase = '<span class="upgrade-unavailable">Build first</span>';
+    const extra = item.items ? ` + ${item.items.count} ${symbols[item.items.item]}` : '';
     if (item.maxed) purchase = '<span class="upgrade-unavailable">Max level</span>';
-    else if (item.unlocked) purchase = action(`Upgrade · ${money(item.cost)}`, 'upgrade', value, !item.affordable, true);
+    else if (item.unlocked) purchase = action(`Upgrade · ${money(item.cost)}${extra}`, 'upgrade', value, !item.affordable, true);
+    const needs = [];
+    if (!item.maxed && item.items) {
+      const {item: special, count, have, met} = item.items;
+      needs.push(`<span class="upgrade-need" data-met="${met}">${icon(special)} ${count} ${escapeHTML(count === 1 ? labels[special] : R.ITEMS[special].plural)} <small>(have ${have})</small></span>`);
+    }
+    if (!item.maxed && item.requirement) {
+      needs.push(`<span class="upgrade-need" data-met="${item.requirement.met}"><span aria-hidden="true">${item.requirement.met ? '✓' : '✕'}</span> 3★ ${escapeHTML(item.requirement.mission)}</span>`);
+    }
     return `<div class="upgrade-stat">
       <div class="upgrade-stat-copy">
         <div class="upgrade-stat-heading"><span class="upgrade-stat-name">${name}</span><span class="upgrade-level">Lv. ${level}/${maxLevel}</span>
           <progress value="${level}" max="${maxLevel}" aria-label="${name} level"></progress></div>
         <p class="upgrade-values"><strong>${escapeHTML(current)}</strong>${item.unlocked && item.nextLabel ? `
           <span class="upgrade-next"><span aria-hidden="true">→</span> <b>${escapeHTML(item.nextLabel)}</b></span>` : ''}</p>
+        ${needs.length && item.unlocked ? `<p class="upgrade-needs"><span>Needs</span>${needs.join('')}</p>` : ''}
       </div>${purchase}
     </div>`;
   }
@@ -446,7 +525,10 @@
       upgradeCard('◆', 'Ground Station', '', upgradeLine(R.getUpgrade(state, 'ground'), 'Cube storage')),
       ...['grant','fuel','engineering','research','academy'].map(id => {
         const spec = R.FACILITIES[id];
-        return upgradeCard(id === 'grant' ? '$' : symbols[spec.item], spec.name, '', upgradeLine(R.getUpgrade(state, 'facility', id), 'Cycle time'));
+        const special = R.SPECIALS[id];
+        const lines = upgradeLine(R.getUpgrade(state, 'facility', id), 'Cycle time')
+          + (special ? upgradeLine(R.getUpgrade(state, 'quality', id), `${labels[special]} chance`) : '');
+        return upgradeCard(id === 'grant' ? '$' : symbols[spec.item], spec.name, special ? `Sometimes makes ★ ${R.ITEMS[special].plural}` : '', lines);
       })
     ].join('') : [
       upgradeCard('▦', 'Backpack', '', upgradeLine(R.getUpgrade(state, 'carry'), 'Carry capacity')),
@@ -567,13 +649,15 @@
     const title = report.mission?.name || 'Mission';
     byId('panel-kicker').textContent = title.toUpperCase() + ' / FLIGHT REPORT';
     byId('panel-title').textContent = resultLabels[report.status] || 'Flight report';
-    return `<div class="report-stars" aria-label="${report.stars} out of 3 stars">${'★'.repeat(report.stars)}${'☆'.repeat(3 - report.stars)}</div>
+    dialog.dataset.result = report.stars === 3 ? 'success' : report.stars ? 'partial' : 'failed';
+    const starMarks = [0, 1, 2].map(i => `<span${i < report.stars ? ' data-earned' : ''}>${i < report.stars ? '★' : '☆'}</span>`).join('');
+    return `<div class="report-stars" aria-label="${report.stars} out of 3 stars">${starMarks}</div>
       <p class="dialog-lead">${escapeHTML(report.cause)}</p>
       ${typeof report.odds === 'number' ? `<div class="report-chance"><strong>${percent(report.odds)}</strong> chance to reach the destination</div>` : ''}
       ${report.campaignCompleted ? '<div class="report-discovery"><strong>Campaign complete</strong> Solar Probe completed its flyby.</div>' : ''}
       ${report.unlockedReward ? `<div class="mission-perk report-perk" data-earned="true"><span aria-hidden="true">✦</span><div><strong>${escapeHTML(report.unlockedReward.name)} unlocked</strong><small>${escapeHTML(report.unlockedReward.detail)}</small></div></div>` : ''}
       ${report.recipeDiscovered ? `<div class="report-discovery"><strong>Payload plan unlocked for free</strong>${payloadChips(report.discoveredPlan || report.loadout)}</div>` : ''}
-      <div class="report-reward">${report.grant ? `<span>+${money(report.grant)} GRANT</span>` : ''}${report.output ? `<span>+${decimal(report.output)} CUBES/S</span>` : ''}${report.feeRefund ? `<span>+${money(report.feeRefund)} FEE REFUND</span>` : ''}</div>
+      <div class="report-reward">${report.grant ? `<span>+${money(report.grant)} GRANT</span>` : ''}${report.output ? `<span>+${decimal(report.output)} CUBES/S</span>` : ''}${report.feeRefund ? `<span>+${money(report.feeRefund)} FEE REFUND</span>` : ''}${report.specialCash ? `<span class="special-reward">★ +${money(report.specialCash)} ELITE BONUS</span>` : ''}${report.stars && report.specialBonus?.downlink ? `<span class="special-reward">★ +${percent(report.specialBonus.downlink)} PRIZE DATA</span>` : ''}${report.specialBonus?.odds ? `<span class="special-reward">★ +${percent(report.specialBonus.odds)} PRIME ODDS</span>` : ''}</div>
       ${report.stars && !report.grant && typeof report.signalOutput === 'number' ? '<p class="inline-note">Your best grant for this mission has already been paid.</p>' : ''}
       ${report.challengeNote ? `<p class="challenge-report">${escapeHTML(report.challengeNote)}</p>` : ''}
       ${afterSuccessfulFlight(report)}
@@ -677,8 +761,11 @@
     chirp('launch');
     flightTimer = window.setTimeout(() => {
       flightTimer = 0;
-      if (report.stars) chirp('success');
       openDialog('report', byId('launch'));
+      if (report.stars) {
+        fanfare(report.stars);
+        window.SpaceportCelebrate?.burst(report.stars);
+      }
       updateHUD();
     }, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 100 : 1100);
     updateHUD();

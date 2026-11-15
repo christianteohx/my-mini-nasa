@@ -143,6 +143,13 @@ test("the full campaign progresses through the normal economy and unlock actions
     takeData(recipe.cubes);
     assert.ok(transfer(id, "make:" + recipe.item, 1));
     R.tick(state, recipe.cycle);
+    const special = R.SPECIALS[id];
+    if (special && state.facilities[id].special > 0) {
+      // A special product counts as its base item on the launch pad.
+      assert.equal(transfer(id, "take:" + special, 1).item, special);
+      assert.equal(transfer("launch", "load:" + special, 1).count, 1);
+      return;
+    }
     const pickup = transfer(id, "take:" + recipe.item, 1);
     assert.equal(pickup.item, recipe.item);
     assert.equal(transfer("launch", "load:" + recipe.item, 1).count, 1);
@@ -157,10 +164,13 @@ test("the full campaign progresses through the normal economy and unlock actions
     state.report = null;
   };
 
+  const loaded = (id) => {
+    const special = R.SPECIALS[id];
+    return state.loadout[R.FACILITIES[id].item] + (special ? state.specialLoadout[special] : 0);
+  };
   const makeTo = (id, count) => {
-    const item = R.FACILITIES[id].item;
-    while (state.loadout[item] < count) make(id);
-    assert.equal(state.loadout[item], count);
+    while (loaded(id) < count) make(id);
+    assert.equal(loaded(id), count);
   };
 
   transfer("engineering", "take:part", 1);
@@ -240,11 +250,14 @@ test("upgrades, station caps, helper transfers and save restoration work", () =>
   assert.equal(R.buyUpgrade(state, "intern"), true);
   assert.equal(R.buyUpgrade(state, "facility", "research"), false);
   assert.ok(R.unlockFacility(state, "fuel"));
+  assert.equal(R.buyUpgrade(state, "facility", "fuel"), false);
+  state.inventory.primePart = 1;
   assert.equal(R.buyUpgrade(state, "facility", "fuel"), true);
+  assert.equal(state.inventory.primePart, 0);
   assert.deepEqual(R.getRates(state), { carry: 6, speed: 1.15, data: 0.5, cap: 40, intern: true });
 
   R.interact(state, "fuel", "input");
-  R.tick(state, 2.4);
+  R.tick(state, R.getProductionCycle(state, "fuel"));
   assert.equal(state.facilities.fuel.output, 1);
   R.tick(state, 2.6);
   R.tick(state, 2.6);
@@ -311,7 +324,7 @@ test("Cargo Runner moves manufactured hardware to a recipe-aware shelf", () => {
 
   R.interact(state, "fuel", "input");
   R.interact(state, "fuel", "input");
-  R.tick(state, 6);
+  R.tick(state, 2 * R.getProductionCycle(state, "fuel"));
   assert.equal(state.runner.phase, "deliver");
   assert.equal(state.runner.cargo, "fuel");
   assert.equal(state.facilities.fuel.output, 1);
@@ -527,7 +540,7 @@ test("a shared factory pad deposits cubes before collecting hardware from a full
   assert.equal(state.wallet, before - 40);
   assert.equal(state.inventory.part, 1);
 
-  R.tick(state, 8);
+  R.tick(state, 2 * R.getProductionCycle(state, "engineering"));
   const waiting = R.interact(state, "engineering", "output");
   assert.deepEqual(waiting, { type: "pickup", facility: "engineering", item: "part", count: 2 });
   assert.equal(state.wallet, before - 40);
@@ -546,7 +559,7 @@ test("Fuel Plant visits and waiting avoid an extra order when fuel is queued, pr
   assert.equal(R.interact(state, "fuel", "both"), null);
   assert.equal(state.wallet, 45);
 
-  R.tick(state, 2);
+  R.tick(state, R.getProductionCycle(state, "fuel") - 1);
   R.interact(state, "ground", "output");
   assert.equal(R.interact(state, "fuel", "both"), null);
   assert.equal(state.wallet, 45);
@@ -601,7 +614,7 @@ test("selectable factory batches charge the exact recipe and support storing exc
   assert.deepEqual(state, before);
   assert.equal(transfer("engineering", "make:part", 1).count, 2);
   assert.deepEqual([state.wallet, state.facilities.engineering.input, state.inventory.data], [90, 2, 2]);
-  R.tick(state, 4);
+  R.tick(state, R.getProductionCycle(state, "engineering"));
   assert.equal(transfer("engineering", "take:part", 1).count, 1);
   assert.equal(transfer("engineering", "store:part", 1).count, 1);
   assert.equal(state.facilities.engineering.output, 2);
@@ -609,7 +622,7 @@ test("selectable factory batches charge the exact recipe and support storing exc
   assert.equal(transfer("fuel", "make:fuel", 3).count, 3);
   assert.equal(state.facilities.fuel.input, 3);
   assert.equal(state.wallet, 45);
-  R.tick(state, 9);
+  R.tick(state, 3 * R.getProductionCycle(state, "fuel"));
   assert.equal(transfer("fuel", "take:fuel", 2).count, 2);
   assert.equal(state.facilities.fuel.output, 1);
 });
@@ -645,7 +658,7 @@ test("manual Cargo Shelf storage leaves room for cargo already in transit", () =
   const transfer = (station, action, n) => R.transferAtStation(state, station, action, n);
 
   transfer("fuel", "make:fuel", 5);
-  R.tick(state, 15);
+  R.tick(state, 5 * R.getProductionCycle(state, "fuel"));
   assert.equal(state.runner.cargo, "fuel");
   transfer("fuel", "take:fuel", 4);
   assert.equal(transfer("cargo", "store:fuel", 4), null);

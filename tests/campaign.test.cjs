@@ -64,13 +64,13 @@ test("v7 flight records restore earned rewards without any extra payouts", () =>
   assert.equal(R.getCargoCapacity(restored), 12);
   assert.equal(R.getCargoItemCapacity(restored), 6);
   assert.equal(restored.upgrades.runner, 0);
-  assert.equal(R.getProductionCycle(restored, "fuel"), 2.4);
+  assert.equal(R.getProductionCycle(restored, "fuel"), 3.6);
   assert.equal(R.getFacilityOutputCapacity(restored, "fuel"), 8);
 
   restored.wallet = 200;
   assert.ok(R.unlockFacility(restored, "fuel"));
   assert.ok(R.transferAtStation(restored, "fuel", "make:fuel", 8));
-  R.tick(restored, 19.2);
+  R.tick(restored, 8 * R.getProductionCycle(restored, "fuel"));
   assert.equal(restored.facilities.fuel.output, 8);
   assert.ok(R.transferAtStation(restored, "ground", "take:data", 4));
   assert.ok(R.transferAtStation(restored, "grant", "deposit:data", 4));

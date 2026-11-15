@@ -95,6 +95,22 @@
       </figure>`;
   }
 
+  const specialPerks = {
+    primePart: 'Counts as a Part. Each one loaded adds +5% launch odds.',
+    prizePaper: 'Counts as a Research Paper. Each one loaded adds +30% satellite data.',
+    eliteCrew: 'Counts as an Astronaut. Each one loaded pays a 50% mission bonus on success.',
+  };
+  const loaded = (state, item) => (rules.SPECIAL_ITEMS.includes(item) ? state.specialLoadout : state.loadout)[item] || 0;
+
+  function specialCard(id) {
+    const item = rules.SPECIALS[id];
+    if (!item) return '';
+    return `<div class="special-info" data-item="${item}">
+        <span class="special-star" aria-hidden="true">★</span>
+        <div><strong>${escapeHTML(rules.ITEMS[item].name)}</strong><p>${specialPerks[item]}</p><p class="special-odds" data-special-text></p></div>
+      </div>`;
+  }
+
   const money = amount => '$' + Number(amount).toLocaleString('en-US');
   const name = item => rules.ITEMS[item]?.name || 'Cash';
   const plural = item => rules.ITEMS[item]?.plural || name(item);
@@ -127,7 +143,8 @@
     if (id === 'ground') return `${facility.output} / ${rules.getRates(state).cap} Data Cubes ready · ${rules.getRates(state).data.toFixed(2)}/s`;
 
     const capacity = rules.getFacilityOutputCapacity(state, id);
-    const ready = id === 'grant' ? `${money(facility.output)} ready · ${facility.stock} / ${capacity} payouts` : `${facility.output} / ${capacity} ${plural(spec.item)} ready`;
+    const special = rules.SPECIALS[id] && facility.special ? ` + ${facility.special} ★` : '';
+    const ready = id === 'grant' ? `${money(facility.output)} ready · ${facility.stock} / ${capacity} payouts` : `${facility.output} / ${capacity} ${plural(spec.item)}${special} ready`;
     const batches = Math.floor(facility.input / Math.max(1, spec.cubes)) + Number(facility.active);
     return batches ? `${ready} · ${batches} processing or queued` : ready;
   }
@@ -150,6 +167,7 @@
     container.innerHTML = `<p class="dialog-lead station-purpose">${purpose}</p>
       <dl class="station-flow"><div><dt>INPUT</dt><dd>${input}</dd></div><div><dt>OUTPUT</dt><dd>${effectiveOutput}</dd></div></dl>
       ${id === 'grant' ? `<div class="grant-bonus"><div class="grant-bonus-head"><h3>Grant Bonus</h3><span class="grant-bonus-chip">+${money(rules.GRANT_BONUS)} every ${state.customers.order} cubes</span></div><div class="grant-bonus-meter" data-grant-meter aria-hidden="true"></div><p data-grant-bonus-text></p></div>` : ''}
+      ${specialCard(id)}
       <div class="station-status"><strong data-station-stock></strong><span data-station-bag></span></div>
       ${canUse && id === 'launch' ? '<div class="dialog-list" data-station-list></div><p data-station-empty class="inline-note" hidden>No items to transfer here.</p>' : ''}
       <div class="dialog-bottom station-footer">
@@ -167,6 +185,12 @@
     updateText(stock, stationStatus(state, station));
     const carry = rules.getRates(state).carry;
     updateText(container.querySelector('[data-station-bag]'), `Bag ${rules.getInventoryCount(state)} / ${carry} · ${money(state.wallet)}`);
+    const specialText = container.querySelector('[data-special-text]');
+    if (specialText) {
+      const chance = Math.round(rules.getSpecialChance(state, station) * 100);
+      const ready = state.facilities[station].special || 0;
+      updateText(specialText, `${chance}% chance per batch · ${ready} ready here`);
+    }
     const meter = container.querySelector('[data-grant-meter]');
     if (meter) {
       const { order, filled } = state.customers;
@@ -182,7 +206,7 @@
     const list = container.querySelector('[data-station-list]');
     if (!list) return;
     const limits = Object.fromEntries(rules.getStationActions(state, 'launch').map(operation => [operation.id, operation.max]));
-    const items = ['fuel', 'part', 'paper', 'crew'].filter(item => state.inventory[item] || state.loadout[item]);
+    const items = ['fuel', 'part', 'paper', 'crew', ...rules.SPECIAL_ITEMS].filter(item => state.inventory[item] || loaded(state, item));
     const signature = items.join(',');
     if (signature !== list.dataset.signature) {
       const focused = document.activeElement?.closest('[data-operation]')?.dataset.operation;
@@ -206,7 +230,7 @@
       const unload = limits[`unload:${item}`] || 0;
       const max = Math.max(load, unload);
       const suggested = plan && item in plan ? plan[item] - state.loadout[item] : null;
-      updateText(detail, `${state.inventory[item]} in bag · ${state.loadout[item]} loaded`);
+      updateText(detail, `${state.inventory[item]} in bag · ${loaded(state, item)} loaded`);
       match.hidden = suggested === null;
       if (!match.hidden) updateText(match, suggested ? `Plan calls for ${Math.abs(suggested)} ${suggested < 0 ? 'fewer' : 'more'}` : 'Plan quantity met');
       const untouched = input.dataset.edited !== 'true';
