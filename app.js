@@ -85,6 +85,47 @@
     oscillator.stop(now + duration + .01);
   }
 
+  // Engine rumble and a rising roar for the launch show.
+  function launchRumble() {
+    if (!sound || !window.AudioContext) return;
+    if (!audioContext) audioContext = new AudioContext();
+    if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
+    const now = audioContext.currentTime;
+    const length = 3;
+    const buffer = audioContext.createBuffer(1, Math.floor(audioContext.sampleRate * length), audioContext.sampleRate);
+    const data = buffer.getChannelData(0);
+    let brown = 0;
+    for (let i = 0; i < data.length; i++) {
+      brown = (brown + 0.02 * (Math.random() * 2 - 1)) / 1.02;
+      data[i] = brown * 3.5;
+    }
+    const noise = audioContext.createBufferSource();
+    noise.buffer = buffer;
+    const filter = audioContext.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(180, now);
+    filter.frequency.exponentialRampToValueAtTime(900, now + 0.7);
+    filter.frequency.exponentialRampToValueAtTime(260, now + length);
+    const gain = audioContext.createGain();
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.5, now + 0.6);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + length);
+    noise.connect(filter).connect(gain).connect(audioContext.destination);
+    noise.start(now);
+    noise.stop(now + length);
+    const tone = audioContext.createOscillator();
+    const toneGain = audioContext.createGain();
+    tone.type = 'triangle';
+    tone.frequency.setValueAtTime(70, now);
+    tone.frequency.exponentialRampToValueAtTime(240, now + 2.4);
+    toneGain.gain.setValueAtTime(0.0001, now);
+    toneGain.gain.exponentialRampToValueAtTime(0.05, now + 0.6);
+    toneGain.gain.exponentialRampToValueAtTime(0.0001, now + 2.6);
+    tone.connect(toneGain).connect(audioContext.destination);
+    tone.start(now);
+    tone.stop(now + 2.7);
+  }
+
   // A short brass "ta-da" for successful flights. Three stars get the full fanfare.
   function fanfare(stars) {
     if (!sound || !stars || !window.AudioContext) return;
@@ -770,7 +811,8 @@
     preparingReplay = false;
     loadedReport = report;
     yard.burstLaunch();
-    chirp('launch');
+    Music?.duck(3.2);
+    launchRumble();
     flightTimer = window.setTimeout(() => {
       flightTimer = 0;
       openDialog('report', byId('launch'));
@@ -780,7 +822,7 @@
         window.SpaceportCelebrate?.burst(report.stars);
       }
       updateHUD();
-    }, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 100 : 1100);
+    }, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 100 : 2700);
     updateHUD();
     store();
   }

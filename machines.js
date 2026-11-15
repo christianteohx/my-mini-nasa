@@ -557,7 +557,8 @@
   }
 
   function launch(ctx, state) {
-    const { time, liftoff } = state;
+    const { time, liftoff, ignition = 0 } = state;
+    const firing = ignition > 0 || liftoff > 0;
     stage(ctx);
     oval(ctx, 222, 352, 214, 66, '#2b235029');
     isoCylinder(ctx, 200, 344, 192, 30, ['#c6d8ff', '#8a9bd2', '#e6eeff'], 62);
@@ -570,7 +571,7 @@
     line(ctx, [[200, top - 24], [200, top + 24]], '#6f7aa8', 3);
     for (const dx of [-150, -90, 0, 90, 150]) {
       const y = 344 + 62 * Math.sqrt(1 - (dx / 192) ** 2) - 14;
-      const on = liftoff > 0 && Math.sin(time * 14 + dx) > 0;
+      const on = firing && Math.sin(time * 14 + dx) > 0;
       inkCircle(ctx, 200 + dx, y, 6, on ? '#fff083' : '#ffd23f', 2.5);
     }
 
@@ -582,28 +583,41 @@
     for (let y = 272; y > 90; y -= 38) line(ctx, [[300, y], [334, y - 19], [300, y - 38]], INK, 5);
     inkRect(ctx, 290, 46, 54, 16, 6, '#ffd23f');
     line(ctx, [[317, 46], [317, 16]], INK, 5);
-    const beacon = liftoff > 0 && Math.sin(time * 14) > 0;
+    const beacon = firing && Math.sin(time * 14) > 0;
     inkCircle(ctx, 317, 12, 8, beacon ? '#fff083' : '#ff6b5a', 3);
-    if (liftoff === 0) inkRect(ctx, 250, 150, 52, 12, 4, '#ffd23f', 3);
+    // The service arm swings clear as the engines light.
+    if (ignition < 1) {
+      ctx.save();
+      ctx.translate(302, 156);
+      ctx.rotate(-ignition * 1.2);
+      inkRect(ctx, -52, -6, 52, 12, 4, '#ffd23f', 3);
+      ctx.restore();
+    }
     ctx.restore();
 
-    if (liftoff > 0) {
-      for (let i = 0; i < 6; i++) {
-        const spread = (i - 2.5) * 15;
-        puff(ctx, spread, 4 + Math.abs(spread) * 0.08, 7 + 3 * Math.sin(time * 9 + i), 1);
-      }
+    if (firing && liftoff < 80) {
+      const glow = Math.min(1, ignition + liftoff / 40) * (1 - liftoff / 80);
+      oval(ctx, 0, 2, 22 + 22 * glow, 7 + 6 * glow, `rgba(255, 196, 92, ${0.55 * glow})`);
     }
     ctx.save();
     ctx.translate(0, -liftoff);
-    rocket(ctx, state);
+    rocket(ctx, { ...state, thrust: liftoff > 0 ? 1 : ignition });
     ctx.restore();
   }
 
   // The rocket is drawn in yard units so lift-off keeps its existing distance scale.
   function rocket(ctx, state) {
     const w = 1.5;
-    if (state.liftoff > 0) {
-      const length = 22 + 6 * Math.sin(state.time * 27);
+    const thrust = state.thrust ?? (state.liftoff > 0 ? 1 : 0);
+    if (thrust > 0) {
+      const length = 12 + 34 * thrust + 7 * Math.sin(state.time * 27);
+      const spread = 9 + 6 * thrust;
+      shape(ctx, 'rgba(255, 138, 76, 0.45)', p => {
+        p.moveTo(-spread - 4, -4);
+        p.quadraticCurveTo(-spread, length * 0.8, 0, length * 1.25);
+        p.quadraticCurveTo(spread, length * 0.8, spread + 4, -4);
+        p.closePath();
+      });
       shape(ctx, '#ffd23f', p => {
         p.moveTo(-11, -4);
         p.quadraticCurveTo(-9, length * 0.7, 0, length);
@@ -732,7 +746,7 @@
     const machineId = aliases[id] || id;
     const machine = machines[machineId];
     if (!machine) return;
-    const { active = false, locked = false, ready = false, special = false, flash = Infinity, time = 0, liftoff = 0 } = options;
+    const { active = false, locked = false, ready = false, special = false, flash = Infinity, time = 0, liftoff = 0, ignition = 0 } = options;
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(scale, scale);
@@ -740,7 +754,7 @@
     ctx.lineCap = 'round';
     const opacity = ctx.globalAlpha;
     if (locked) ctx.globalAlpha = opacity * 0.39;
-    machine(ctx, { active: active && !locked, ready: ready && !locked, time, liftoff });
+    machine(ctx, { active: active && !locked, ready: ready && !locked, time, liftoff, ignition });
     if (locked) {
       ctx.globalAlpha = opacity;
       gate(ctx, machineId === 'scrap' ? 58 : 76);

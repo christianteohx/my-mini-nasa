@@ -11,6 +11,15 @@
   const PIXEL_RATIO_LIMIT = 1.5;
   const PICKUP_INTERVAL = 0.45;
   const SCRAP_HOLD = 0.85;
+  // Launch show: ignition, then liftoff at LIFTOFF_AT seconds, then the climb.
+  const LIFTOFF_AT = 0.6;
+  const LAUNCH_SHOW = 3.2;
+  const SMOKE = ['#ffffff', '#f4efe6', '#e6e1dc', '#fde7c8', '#f6d9b8'];
+  const SPARKS = ['#ffd23f', '#ff8a4c', '#fff4a8', '#ff6b5a'];
+  const pick = list => list[Math.floor(Math.random() * list.length)];
+  const between = (min, max) => min + Math.random() * (max - min);
+  const launchLift = elapsed => elapsed < LIFTOFF_AT ? 0 : (elapsed - LIFTOFF_AT) ** 2 * 250 + (elapsed - LIFTOFF_AT) * 30;
+  const launchShake = elapsed => elapsed < LIFTOFF_AT ? 1 + 3 * elapsed / LIFTOFF_AT : Math.max(0, 4.5 - (elapsed - LIFTOFF_AT) * 3);
   const PAD_SETTLE = 0.35;
   const TRANSFER_TIME = 0.45;
   const TRANSFER_STAGGER = 0.07;
@@ -985,6 +994,10 @@
       this.puff = [];
       this.transfers = [];
       this.time = 0;
+      this.launchElapsed = -1;
+      this.launchAnchor = null;
+      this.sparks = [];
+      this.rings = [];
       this.specialSeen = {};
       this.specialFlash = {};
       this.player = { ...START, facing: 1 };
@@ -1146,6 +1159,9 @@
       this.padHoldTotal = 0;
       this.padAction = undefined;
       this.pickupDelay = 0;
+      this.launchElapsed = -1;
+      this.sparks = [];
+      this.rings = [];
       this.puff = [];
       this.transfers = [];
       this.launchTime = 0;
@@ -1207,6 +1223,11 @@
 
     burstLaunch() {
       this.launchTime = 1.75;
+      this.launchElapsed = 0;
+      this.launchRing = false;
+      this.smokeClock = 0;
+      this.trailClock = 0;
+      this.launchCalm = Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
       const p = point(STATIONS.launch.u, STATIONS.launch.v);
       for (let i = 0; i < 32; i += 1) {
         const angle = i * 2.35;
@@ -1358,10 +1379,12 @@
       ctx.restore();
       ctx.setTransform(view.scale * widthScale, 0, 0, view.scale * heightScale, view.x * widthScale, view.y * heightScale);
       ctx.drawImage(this.scene.yard, 0, 0, WIDTH, HEIGHT);
-      const launch = this.launchTime;
-      const lift = launch > 0 ? Math.max(0, 1.56 - launch) ** 2 * 230 : 0;
+      const launch = this.launchElapsed ?? -1;
+      const lift = launch >= 0 ? launchLift(launch) : 0;
+      const ignition = launch >= 0 ? Math.min(1, launch / LIFTOFF_AT) : 0;
       ctx.save();
-      if (launch > 1.24) ctx.translate(Math.sin(launch * 105) * 3.1, Math.sin(launch * 83) * 2.15);
+      const shake = launch >= 0 && !this.launchCalm ? launchShake(launch) : 0;
+      if (shake) ctx.translate(Math.sin(this.time * 105) * shake, Math.sin(this.time * 83) * shake * 0.7);
       const next = window.SpaceportRules.getUnlock(state);
       const guide = this.guide;
       const drawables = [];
@@ -1382,6 +1405,7 @@
           this.callbacks.onSpecial?.(id);
         }
         const flash = this.specialFlash[id] === undefined ? Infinity : this.time - this.specialFlash[id];
+        if (id === 'launch') this.launchAnchor = { x, y };
         drawables.push({ y, draw: () => {
           if (id === 'cargo') drawCargoShelf(ctx, x, y, state.runner.shelf);
           else if (id === 'returns') drawReturnsCrate(ctx, x, y);
@@ -1393,6 +1417,7 @@
             flash,
             time: this.time,
             liftoff: id === 'launch' ? lift : 0,
+            ignition: id === 'launch' ? ignition : 0,
           });
         } });
         const focused = id === this.nearby && pad.zone === this.nearZone;
@@ -1496,8 +1521,85 @@
       }
     }
 
+    updateLaunch(dt) {
+      const elapsed = this.launchElapsed ?? -1;
+      const anchor = this.launchAnchor;
+      if (elapsed < 0 || !anchor) return;
+      const scale = 1.03;
+      const lift = launchLift(elapsed) * scale;
+      // Smoke rolls out sideways from the pad, strongest right at liftoff.
+      if (elapsed < 1.9) {
+        const rate = elapsed < LIFTOFF_AT ? 45 : 90 * Math.max(0.15, 1 - (elapsed - LIFTOFF_AT) / 1.3);
+        this.smokeClock += dt * rate;
+        while (this.smokeClock >= 1) {
+          this.smokeClock -= 1;
+          const side = Math.random() < 0.5 ? -1 : 1;
+          this.puff.push({ x: anchor.x + side * between(4, 22), y: anchor.y + between(-6, 8), vx: side * between(55, 170), vy: between(-30, 2),
+            age: 0, life: between(1.1, 2), size: between(6, 12), color: pick(SMOKE) });
+        }
+      }
+      // Exhaust trail and sparks follow the rocket up.
+      if (elapsed >= LIFTOFF_AT && lift < 1500) {
+        const tail = anchor.y - lift + 8;
+        this.trailClock += dt * 60;
+        while (this.trailClock >= 1) {
+          this.trailClock -= 1;
+          this.puff.push({ x: anchor.x + between(-5, 5), y: tail + between(4, 16), vx: between(-16, 16), vy: between(8, 36),
+            age: 0, life: between(0.9, 1.5), size: between(4, 7.5), color: pick(SMOKE) });
+          for (let i = 0; i < 2; i++) {
+            this.sparks.push({ x: anchor.x + between(-6, 6), y: tail + 20, vx: between(-110, 110), vy: between(30, 170),
+              age: 0, life: between(0.35, 0.75), color: pick(SPARKS) });
+          }
+        }
+      }
+      if (!this.launchRing && elapsed >= LIFTOFF_AT) {
+        this.launchRing = true;
+        this.rings.push({ x: anchor.x, y: anchor.y + 4, age: 0, life: 0.9 }, { x: anchor.x, y: anchor.y + 4, age: -0.16, life: 1.05 });
+      }
+    }
+
+    drawLaunchFlourish() {
+      const ctx = this.ctx;
+      const elapsed = this.launchElapsed ?? -1;
+      const anchor = this.launchAnchor;
+      if (elapsed < LIFTOFF_AT || !anchor) return;
+      const since = elapsed - LIFTOFF_AT;
+      if (since < 0.35 && !this.launchCalm) {
+        ctx.globalAlpha = 0.32 * (1 - since / 0.35);
+        ctx.fillStyle = '#fff4d6';
+        ctx.fillRect(-2000, -2000, WIDTH + 4000, HEIGHT + 4000);
+        ctx.globalAlpha = 1;
+      }
+      if (since < 1.3) {
+        const pop = since < 0.25 ? 0.4 + 0.9 * Math.sin(since / 0.25 * Math.PI / 2) : 1.3 - Math.min(0.3, (since - 0.25) * 1.2);
+        ctx.save();
+        ctx.globalAlpha = since > 1 ? 1 - (since - 1) / 0.3 : 1;
+        ctx.translate(anchor.x - 104, anchor.y - 118);
+        ctx.rotate(-0.1);
+        ctx.scale(pop, pop);
+        ctx.font = '700 30px Fredoka, Barlow, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = 7;
+        ctx.strokeStyle = '#2b2350';
+        ctx.strokeText('LIFTOFF!', 0, 0);
+        ctx.fillStyle = '#ffd23f';
+        ctx.fillText('LIFTOFF!', 0, 0);
+        ctx.restore();
+      }
+    }
+
     drawEffects(dt) {
       const ctx = this.ctx;
+      this.updateLaunch(dt);
+      for (const ring of this.rings) {
+        if (ring.age < 0) continue;
+        const progress = ring.age / ring.life;
+        ctx.globalAlpha = Math.max(0, 1 - progress);
+        oval(ctx, ring.x, ring.y, 18 + progress * 130, 6 + progress * 44, null, '#fff8e0', 6 * (1 - progress) + 1);
+      }
+      ctx.globalAlpha = 1;
       for (const particle of this.puff) {
         const progress = particle.age / particle.life;
         ctx.globalAlpha = Math.max(0, Math.min(0.9, (1 - progress) * 1.15));
@@ -1513,6 +1615,21 @@
         drawItem(ctx, x, y, transfer.item, 0.88);
       }
       ctx.globalAlpha = 1;
+      for (const spark of this.sparks) {
+        const progress = spark.age / spark.life;
+        ctx.globalAlpha = Math.max(0, 1 - progress);
+        oval(ctx, spark.x + spark.vx * spark.age, spark.y + spark.vy * spark.age + 160 * spark.age ** 2, 2.6 * (1 - progress) + 0.6, 2.6 * (1 - progress) + 0.6, spark.color);
+      }
+      ctx.globalAlpha = 1;
+      this.drawLaunchFlourish();
+      for (const spark of this.sparks) spark.age += dt;
+      for (const ring of this.rings) ring.age += dt;
+      this.sparks = this.sparks.filter(spark => spark.age < spark.life);
+      this.rings = this.rings.filter(ring => ring.age < ring.life);
+      if (this.launchElapsed >= 0) {
+        this.launchElapsed += dt;
+        if (this.launchElapsed > LAUNCH_SHOW) this.launchElapsed = -1;
+      }
       for (const particle of this.puff) particle.age += dt;
       for (const transfer of this.transfers) transfer.age += dt;
       this.puff = this.puff.filter(particle => particle.age < particle.life);
