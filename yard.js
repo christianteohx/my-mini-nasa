@@ -941,11 +941,16 @@
     round(ctx, x - 32, y - 52, 64, 52, 6, '#a86f46', '#674551', 2);
     polygon(ctx, [[x + 32, y - 50], [x + 42, y - 59], [x + 42, y - 10], [x + 32, y]], '#bf8353', '#674551', 1.7);
     polygon(ctx, [[x - 34, y - 51], [x + 33, y - 50], [x + 43, y - 59], [x - 24, y - 61]], '#ffcf8b', '#a77853', 1.7);
-    for (const [i, [item, count]] of Object.entries(shelf).entries()) {
+    // Four base-resource compartments; specials share their matching compartment.
+    for (const [i, item] of ['fuel', 'part', 'paper', 'crew'].entries()) {
+      const special = Object.keys(SPECIAL_SHAPE).find(key => SPECIAL_SHAPE[key] === item);
+      const normalCount = shelf[item] || 0;
+      const specialCount = Math.min(shelf[special] || 0, normalCount ? 2 : 3);
+      const displayed = [...Array(specialCount).fill(special), ...Array(Math.min(normalCount, 3 - specialCount)).fill(item)];
       const left = x - 26 + (i % 2) * 28;
       const top = y - 46 + Math.floor(i / 2) * 20;
       round(ctx, left, top, 24, 17, 3, '#694d5b', '#eac68b');
-      for (let j = 0; j < Math.min(count, 3); j += 1) drawItem(ctx, left + 6 + j * 6, top + 14, item, 0.76);
+      for (const [j, product] of displayed.entries()) drawItem(ctx, left + 6 + j * 6, top + 14, product, 0.76);
     }
     round(ctx, x - 32, y - 5, 65, 7, 2, '#efb47c', '#9a674b');
   }
