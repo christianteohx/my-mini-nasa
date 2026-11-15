@@ -857,6 +857,7 @@
   });
   panel.addEventListener('keydown', event => {
     if (event.key === 'Escape' && skinInfo) {
+      panel.querySelector(`.skin-info-toggle[data-value="${skinInfo}"]`)?.focus({preventScroll:true});
       showSkinInfo(null); event.preventDefault(); event.stopPropagation();
     }
   });
