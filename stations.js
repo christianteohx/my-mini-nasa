@@ -166,11 +166,23 @@
     </div>`;
   }
 
+  function cargoHeader(guidance) {
+    if (!guidance.mission) return '<p class="cargo-mission">Choose a mission</p>';
+    const labels = {fuel:'Fuel', part:'Parts', paper:'Research', crew:'Crew'};
+    return `<div class="cargo-mission"><strong>${escapeHTML(guidance.mission.name)}</strong><span>${guidance.ready ? 'Supplies ready' : guidance.known ? 'Payload plan' : 'Mission minimum'}</span></div>
+      <div class="cargo-needs">${Object.entries(labels).map(([item, label]) => {
+        const needed = guidance.needs[item];
+        if (needed === null) return `<span class="cargo-need" data-state="locked">${label} · plan locked</span>`;
+        const have = Math.max(0, needed - guidance.remaining[item]);
+        return `<span class="cargo-need" data-state="${guidance.remaining[item] > 0 ? 'needed' : 'ready'}"><span>${label}</span><b>${have}/${needed}</b></span>`;
+      }).join('')}</div>`;
+  }
+
   function render(container, state, id, canUse, showWalk) {
     const [purpose, input, output] = descriptions[id];
     const effectiveOutput = id === 'grant' ? `${money(rules.getGrantPayout(state))} cash` : output;
-    container.innerHTML = `<p class="dialog-lead station-purpose">${purpose}</p>
-      <dl class="station-flow"><div><dt>INPUT</dt><dd>${input}</dd></div><div><dt>OUTPUT</dt><dd>${effectiveOutput}</dd></div></dl>
+    container.innerHTML = `${id === 'cargo' ? '<div data-cargo-guidance></div>' : `<p class="dialog-lead station-purpose">${purpose}</p>
+      <dl class="station-flow"><div><dt>INPUT</dt><dd>${input}</dd></div><div><dt>OUTPUT</dt><dd>${effectiveOutput}</dd></div></dl>`}
       ${id === 'grant' ? `<div class="grant-bonus"><div class="grant-bonus-head"><h3>Grant Bonus</h3><span class="grant-bonus-chip">+${money(rules.GRANT_BONUS)} every ${state.customers.order} cubes</span></div><div class="grant-bonus-meter" data-grant-meter aria-hidden="true"></div><p data-grant-bonus-text></p></div>` : ''}
       ${specialCard(id)}
       <div class="station-status"><strong data-station-stock></strong><span data-station-bag></span></div>
@@ -180,11 +192,17 @@
         ${id === 'launch' ? '<button type="button" class="quiet button" data-action="station-recipe">View payload plan</button><button type="button" class="primary button" data-action="station-launch">Launch mission</button>' : ''}
         <button type="button" class="quiet button" data-action="close">Back to yard</button>
       </div><p class="station-feedback" role="status" data-station-feedback></p>
-      ${nasaFact(id)}`;
+      ${id === 'cargo' ? '' : nasaFact(id)}`;
     refresh(container, state, id);
   }
 
   function refresh(container, state, station) {
+    const guidance = station === 'cargo' ? rules.getCargoGuidance(state) : null;
+    const guidanceNode = container.querySelector('[data-cargo-guidance]');
+    if (guidanceNode) {
+      const markup = cargoHeader(guidance);
+      if (guidanceNode.innerHTML !== markup) guidanceNode.innerHTML = markup;
+    }
     const stock = container.querySelector('[data-station-stock]');
     if (!stock) return;
     updateText(stock, stationStatus(state, station));
@@ -216,11 +234,24 @@
     const take = cargo ? 'take' : 'unload';
     const store = cargo ? 'store' : 'load';
     const items = ['fuel', 'part', 'paper', 'crew', ...rules.SPECIAL_ITEMS].filter(item => state.inventory[item] || stored(item));
+    if (cargo) items.sort((a, b) => Number((guidance.remaining[rules.ITEMS[b].base ?? b] ?? 0) > 0) - Number((guidance.remaining[rules.ITEMS[a].base ?? a] ?? 0) > 0));
     const signature = items.join(',');
     if (signature !== list.dataset.signature) {
       const focused = document.activeElement?.closest('[data-operation]')?.dataset.operation;
       const previouslyRendered = list.hasAttribute('data-signature');
+      const quantities = new Map([...list.querySelectorAll('[data-operation]')].map(row => {
+        const input = row.querySelector('input');
+        return [row.dataset.operation, {value: input.value, edited: input.dataset.edited}];
+      }));
       list.innerHTML = items.map(item => actionRow(item, station)).join('');
+      for (const row of list.querySelectorAll('[data-operation]')) {
+        const previous = quantities.get(row.dataset.operation);
+        if (previous?.edited === 'true') {
+          const input = row.querySelector('input');
+          input.value = previous.value;
+          input.dataset.edited = previous.edited;
+        }
+      }
       list.dataset.signature = signature;
       if (previouslyRendered && focused) {
         const next = list.querySelector(`[data-operation="${focused}"] input`);
@@ -240,12 +271,26 @@
       const max = Math.max(load, unload);
       const suggested = plan && item in plan ? plan[item] - state.loadout[item] : null;
       updateText(detail, `${state.inventory[item]} in bag · ${stored(item)} ${cargo ? 'on shelf' : 'loaded'}`);
-      match.hidden = suggested === null;
-      if (!match.hidden) updateText(match, suggested ? `Plan calls for ${Math.abs(suggested)} ${suggested < 0 ? 'fewer' : 'more'}` : 'Plan quantity met');
+      let usefulTake = 0;
+      if (cargo) {
+        const base = rules.ITEMS[item].base ?? item;
+        const remaining = guidance.remaining[base];
+        const needed = guidance.needs[base];
+        usefulTake = Math.min(remaining || 0, unload);
+        row.dataset.needed = String(remaining > 0);
+        match.hidden = false;
+        const recommendation = needed === null ? 'Fuel · plan locked'
+          : remaining > 0 ? (usefulTake ? `Take ${usefulTake}` : stored(item) ? 'Bag full' : `Need ${remaining}`)
+          : needed > 0 ? 'Ready' : 'Optional';
+        updateText(match, recommendation);
+      } else {
+        match.hidden = suggested === null;
+        if (!match.hidden) updateText(match, suggested ? `Plan calls for ${Math.abs(suggested)} ${suggested < 0 ? 'fewer' : 'more'}` : 'Plan quantity met');
+      }
       const untouched = input.dataset.edited !== 'true';
       input.max = Math.max(1, max);
       input.disabled = max === 0;
-      if (untouched && document.activeElement !== input) input.value = Math.max(1, Math.min(suggested < 0 ? unload : load, Math.abs(suggested) || 1));
+      if (untouched && document.activeElement !== input) input.value = cargo ? Math.max(1, usefulTake) : Math.max(1, Math.min(suggested < 0 ? unload : load, Math.abs(suggested) || 1));
       const quantity = input.valueAsNumber;
       const valid = Number.isInteger(quantity) && quantity >= 1;
       const unloadButton = row.querySelector(`[data-value="${take}:${item}"]`);

@@ -1265,6 +1265,24 @@
     return loadout;
   }
 
+  // Cargo guidance uses revealed plans or public mission minima, never hidden recipes.
+  function getCargoGuidance(state) {
+    const mission = inspectLaunch(state).mission;
+    if (!mission) return { mission: null, known: false, needs: {}, remaining: {}, ready: false };
+    const recipe = getRecipe(state);
+    const needs = recipe.known ? { ...recipe.ingredients } : {
+      fuel: null, part: 1 + mission.scienceMin + mission.crewMin,
+      paper: mission.scienceMin, crew: mission.crewMin,
+    };
+    const available = launchLoadout(state);
+    for (const item of INGREDIENTS) available[item] += state.inventory[item] || 0;
+    for (const item of SPECIAL_ITEMS) available[ITEMS[item].base] += state.inventory[item] || 0;
+    const remaining = Object.fromEntries(INGREDIENTS.map(item => [item,
+      needs[item] === null ? null : Math.max(0, needs[item] - available[item])]));
+    return { mission, known: recipe.known, needs, remaining,
+      ready: recipe.known && INGREDIENTS.every(item => remaining[item] === 0) };
+  }
+
   function specialBonus(specials = {}) {
     const count = (item) => Math.max(0, specials[item] ?? 0);
     return {
@@ -1505,7 +1523,7 @@
     SPECIALS, SPECIAL_ITEMS, SPECIAL_CHANCE, SPECIAL_QUALITY, SPEED_SPECIALS, SPECIAL_REWARDS, getSpecialChance,
     INPUT_CAPACITY, OUTPUT_CAPACITY, CARGO_CAPACITY, GRANT_BONUS,
     scrapAll, createState, loadState, saveState, getInventoryCount, getRates, tick, getUnlock,
-    getStage, getExpansion, buyExpansion, isMissionAvailable, getRecipe, buyRecipe, getMissionReward,
+    getCargoGuidance, getStage, getExpansion, buyExpansion, isMissionAvailable, getRecipe, buyRecipe, getMissionReward,
     getMissionGrant,
     getGrantPayout, getProductionCycle, getFacilityOutputCapacity, getCargoCapacity, getCargoItemCapacity,
     getStationActions, transferAtStation, getReturnsCount, returnSupplies,
