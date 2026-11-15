@@ -641,17 +641,18 @@
       return `<section class="board-stage"><div class="board-heading"><h3>${escapeHTML(stage.name)}</h3><span>${escapeHTML(stage.destination || 'Earth').toUpperCase()} · ${locked ? 'LOCKED' : 'OPEN'}</span></div>${unlock}<div class="mission-offers">${offers}</div></section>`;
     }).join('');
     const loaded = Object.values(state.loadout).some(Boolean);
-    return `<p class="dialog-lead">${loaded ? 'Supplies already on the launch pad stay loaded when you change missions.' : 'Improve your best result to earn the remaining grant. Three stars earn a lasting spaceport upgrade.'}</p><div class="challenge-board-link">${action('Challenges', 'open-challenges')}${action('Space quiz · $10', 'open-trivia')}</div>${stages}`;
+    return `<p class="dialog-lead">${loaded ? 'Supplies already on the launch pad stay loaded when you change missions.' : 'Improve your best result to earn the remaining grant. Three stars earn a lasting spaceport upgrade.'}</p><div class="challenge-board-link">${action('Challenges', 'open-challenges')}${action('Space quiz', 'open-trivia')}</div>${stages}`;
   }
 
   function triviaPanel() {
     const {data,question:q,complete}=T.current(state);
     const last=data.last;
+    const reward=last?last.reward:T.rewardForState(state);
     if(complete && !last) return `<div class="trivia"><p class="eyebrow">6 / 6 COMPLETE</p><h3>Nice exploring!</h3><p>You earned ${money(T.QUESTIONS.length*T.REWARD)}. Each question pays once.</p>${action('Back to missions','back-to-board')}</div>`;
-    return `<div class="trivia"><div class="trivia-meta"><span>${data.claimed.length} / ${T.QUESTIONS.length} rewards earned</span><strong>+${money(T.REWARD)}</strong></div>
+    return `<div class="trivia"><div class="trivia-meta"><span>${data.claimed.length} / ${T.QUESTIONS.length} rewards earned</span><strong>+${money(reward)}</strong></div>
       <h3>${escapeHTML(q.prompt)}</h3>
       <div class="trivia-options">${q.options.map((option,i)=>`<button class="quiet button${last ? (i === q.answer ? ' trivia-correct' : i === last.choice ? ' trivia-wrong' : '') : ''}" data-action="trivia-answer" data-value="${q.id}:${i}" ${last?'disabled':''}>${escapeHTML(option)}${last&&i===q.answer?' · Correct':''}${last&&i===last.choice&&i!==q.answer?' · Your answer (incorrect)':''}</button>`).join('')}</div>
-      ${last?`<div class="trivia-result" role="status" tabindex="-1"><strong>${last.choice===q.answer?'Correct · +'+money(T.REWARD):'Not quite. No penalty.'}</strong><p>${escapeHTML(q.fact)}</p><a href="${q.source}" target="_blank" rel="noopener">NASA source</a></div><div class="dialog-bottom">${complete?action('Back to missions','back-to-board','',false,true):action('Next question','trivia-next','',false,true)}</div>`:'<p class="challenge-note">Optional · $10 per question, once. No timer.</p>'}</div>`;
+      ${last?`<div class="trivia-result" role="status" tabindex="-1"><strong>${last.choice===q.answer?'Correct · +'+money(last.reward):'Not quite. No penalty.'}</strong><p>${escapeHTML(q.fact)}</p><a href="${q.source}" target="_blank" rel="noopener">NASA source</a></div><div class="dialog-bottom">${complete?action('Back to missions','back-to-board','',false,true):action('Next question','trivia-next','',false,true)}</div>`:'<p class="challenge-note">Optional · One reward per question. Scales with your spaceport.</p>'}</div>`;
   }
 
   function challengesPanel() {
@@ -675,7 +676,7 @@
       ${goal.rank && !goal.complete ? `<p class="challenge-note">Personal best level ${goal.rank}</p>` : ''}
       </section>` : '<p class="dialog-lead">Choose a focus above to start a personal goal.</p>';
     return `<p class="dialog-lead">Pick what you enjoy. Complete goals to unlock tougher ones.</p>
-      ${row("Space quiz", "Answer a space question for $10.", action("Play", "open-trivia"))}${recommended}<div class="challenge-picker" role="group" aria-label="Challenge focus">${picks}</div>${active}
+      ${row("Space quiz", "Earn a bonus for a correct answer.", action("Play", "open-trivia"))}${recommended}<div class="challenge-picker" role="group" aria-label="Challenge focus">${picks}</div>${active}
       <p class="challenge-note">Flight and Research goals can ease after two flights that miss the goal’s star or science requirement. Your recent play stays on this device. Switch or pause anytime.</p>`;
   }
 
