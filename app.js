@@ -23,7 +23,28 @@
   const production = {fuel:'fuel', part:'engineering', paper:'research', crew:'academy'};
   const nasaMissionDesign = 'https://www.nasa.gov/wp-content/uploads/2025/04/250323-design-and-develop-science-mission.pdf';
   const resultLabels = {failed:'Launch failed', partial:'Partial success', success:'Mission success'};
-  let state = R.loadState() || R.createState();
+  // Isolated branch-preview scenarios: refresh resets them, no game save reads/writes.
+  const previewScenario = location.hostname.endsWith('.my-mini-nasa.pages.dev')
+    ? new URLSearchParams(location.search).get('preview') : null;
+  const cargoPreview = ['special-cargo', 'special-guidance'].includes(previewScenario);
+  function createCargoPreview() {
+    const fixture = R.createState(151126);
+    Object.values(fixture.facilities).forEach(f => { f.unlocked = true; f.output = 0; });
+    fixture.wallet = 500;
+    fixture.recipes.m1 = 'flight';
+    fixture.loadout.fuel = 1;
+    if (previewScenario === 'special-guidance') {
+      fixture.specialLoadout.primePart = 1;
+      fixture.runner.shelf.part = 1;
+      fixture.facilities.cargo.output = 1;
+    } else {
+      fixture.facilities.engineering.special = 6;
+      fixture.facilities.engineering.input = 4;
+      fixture.upgrades.runner = 1;
+    }
+    return fixture;
+  }
+  let state = cargoPreview ? createCargoPreview() : R.loadState() || R.createState();
   state.challenge = C.normalize(state.challenge);
   state.cosmetics = S.normalize(state.cosmetics, state);
   let objective;
@@ -191,6 +212,7 @@
   }
 
   function store() {
+    if (cargoPreview) return;
     const saved = R.saveState(state);
     if (saved === false) byId('save-status').textContent = 'SAVE UNAVAILABLE IN THIS BROWSER';
   }
@@ -236,6 +258,13 @@
       }
     }
   });
+
+  if (cargoPreview) {
+    document.title = 'Special cargo preview · My Mini NASA';
+    byId('splash-title').textContent = previewScenario === 'special-guidance' ? 'Special payload guidance' : 'Special cargo runner';
+    byId('splash-start').textContent = 'Test preview';
+    byId('save-status').textContent = 'PREVIEW · REFRESH TO RESET';
+  }
 
   function usePad(id, action) {
     if (flightTimer || state.report) return null;
@@ -316,6 +345,7 @@
   function currentObjective(info) {
     const facilities = state.facilities;
     const inv = state.inventory;
+    const loaded = { ...state.loadout, ...state.specialLoadout };
     const tally = Object.values(inv).reduce((sum, count) => sum + count, 0);
     const full = tally >= R.getRates(state).carry;
     if (!info.mission) return route('Choose your next mission', 'Pick an available flight from the mission board.', null, 'input', 'missions');
@@ -340,13 +370,13 @@
       const facility = facilities[id];
       const label = labels[item];
 
-      if (inv[item]) return route(`Load ${item === 'part' ? 'Power' : label}`, `Walk onto the Launch Pad with your ${label}.`, 'launch');
-      if (state.runner.shelf[item] > 0) return full ? unloadCargo() :
+      if (R.getSupplyCount(inv, item)) return route(`Load ${item === 'part' ? 'Power' : label}`, `Walk onto the Launch Pad with your ${label}.`, 'launch');
+      if (R.getSupplyCount(state.runner.shelf, item) > 0) return full ? unloadCargo() :
         route(`Pick up ${label}`, 'Your Cargo Runner stocked the Cargo Shelf.', 'cargo', 'output');
       const canTradeData = id !== 'fuel' && R.getStationActions(state, id)
         .some(operation => operation.id === `make:${item}` && operation.max);
-      if (facility.output > 0) return full && !canTradeData ? unloadCargo() : route(`Pick up ${label}`, `Collect it at the ${spec.name} pad.`, id, 'output');
-      if (state.runner.cargo === item || (state.runner.from === id && state.runner.phase === 'pickup')) {
+      if (facility.output + (facility.special ?? 0) > 0) return full && !canTradeData ? unloadCargo() : route(`Pick up ${label}`, `Collect it at the ${spec.name} pad.`, id, 'output');
+      if ((state.runner.cargo && (R.ITEMS[state.runner.cargo].base ?? state.runner.cargo) === item) || (state.runner.from === id && state.runner.phase === 'pickup')) {
         return full ? unloadCargo() : route(`Meet the Cargo Runner`, `Pick up ${label} when it reaches the Cargo Shelf.`, 'cargo', 'output');
       }
       if (!facility.unlocked) {
@@ -377,15 +407,15 @@
       return route('Choose your next mission', 'Choose a new flight or revisit a familiar mission.', null, 'input', 'missions');
     }
     const recipe = info.recipe?.ingredients;
-    if (recipe && inventoryKeys.slice(1).some(item => state.loadout[item] > recipe[item])) {
+    if (recipe && inventoryKeys.slice(1).some(item => R.getSupplyCount(loaded, item) > recipe[item])) {
       return route('Trim the payload', 'Unload extras to match the payload plan.', null, 'input', 'manifest');
     }
     const fuelTarget = recipe?.fuel ?? info.fuelNeeded;
-    if (mission.id === R.MISSIONS[0].id && state.loadout.fuel < fuelTarget) return supply('fuel');
-    if (state.loadout.paper < (recipe?.paper ?? mission.scienceMin)) return supply('paper');
-    if (state.loadout.crew < (recipe?.crew ?? mission.crewMin)) return supply('crew');
-    if (state.loadout.part < (recipe?.part ?? info.powerDemand)) return supply('part');
-    if (state.loadout.fuel < fuelTarget) return supply('fuel');
+    if (mission.id === R.MISSIONS[0].id && R.getSupplyCount(loaded, 'fuel') < fuelTarget) return supply('fuel');
+    if (R.getSupplyCount(loaded, 'paper') < (recipe?.paper ?? mission.scienceMin)) return supply('paper');
+    if (R.getSupplyCount(loaded, 'crew') < (recipe?.crew ?? mission.crewMin)) return supply('crew');
+    if (R.getSupplyCount(loaded, 'part') < (recipe?.part ?? info.powerDemand)) return supply('part');
+    if (R.getSupplyCount(loaded, 'fuel') < fuelTarget) return supply('fuel');
     if (state.wallet < mission.fee) return fund(mission.fee, 'for the launch fee');
     return route('Launch when ready', recipe ? 'The load matches the payload plan. Check your odds before liftoff.' : 'Check your odds, then fly this load or try another combination.');
   }
