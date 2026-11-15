@@ -14,14 +14,46 @@
   <link rel="stylesheet" href="upgrades.css?v=10">
   <link rel="stylesheet" href="challenges.css?v=11">
   <link rel="stylesheet" href="cartoon.css?v=14">
+  <link rel="stylesheet" href="splash.css?v=1">
+  <script defer src="splash.js?v=1"></script>
   <script defer src="rules.js?v=11"></script>
   <script defer src="challenges.js?v=11"></script>
   <script defer src="machines.js?v=13"></script>
   <script defer src="yard.js?v=12"></script>
   <script defer src="stations.js?v=14"></script>
-  <script defer src="app.js?v=13"></script>
+  <script defer src="app.js?v=15"></script>
 </head>
 <body>
+  <div class="splash" id="splash" role="dialog" aria-modal="true" aria-labelledby="splash-title">
+    <div class="splash-stars" aria-hidden="true"></div>
+    <div class="splash-stars splash-stars-far" aria-hidden="true"></div>
+    <div class="splash-planet" aria-hidden="true"><i></i><i></i><i></i><b class="splash-satellite"><span></span></b></div>
+    <svg class="splash-rocket" viewBox="0 0 120 220" aria-hidden="true">
+      <path class="splash-flame" d="M44 168 Q48 204 60 214 Q72 204 76 168 Z"></path>
+      <path class="splash-flame-core" d="M52 168 Q54 190 60 198 Q66 190 68 168 Z"></path>
+      <path d="M38 118 Q14 138 12 172 L34 166 L42 146 Z" fill="#ff6b5a"></path>
+      <path d="M82 118 Q106 138 108 172 L86 166 L78 146 Z" fill="#e0503f"></path>
+      <rect x="46" y="156" width="28" height="16" rx="5" fill="#6f7aa8"></rect>
+      <path d="M60 8 C44 10 32 54 32 96 C32 128 38 148 46 162 L74 162 C82 148 88 128 88 96 C88 54 76 10 60 8 Z" fill="#fff8e8"></path>
+      <path d="M60 8 C51 9 43 26 38 46 Q60 40 82 46 C77 26 69 9 60 8 Z" fill="#ff6b5a"></path>
+      <circle cx="60" cy="86" r="16" fill="#c6f4ff"></circle>
+      <circle cx="60" cy="86" r="10" fill="#4b45d9" stroke-width="3"></circle>
+      <path d="M50 132 L60 112 L70 132 Z" fill="#ffd23f" stroke-width="3"></path>
+    </svg>
+
+    <div class="splash-content">
+      <p class="splash-event" aria-label="NASA Space Apps Challenge 2026">
+        <span class="splash-nasa" aria-hidden="true">NASA</span>
+        <span class="splash-apps" aria-hidden="true">SPACE APPS</span>
+        <span class="splash-challenge" aria-hidden="true">CHALLENGE <b>2026</b></span>
+      </p>
+      <h2 class="splash-title" id="splash-title"><span>My</span> <span>Mini</span> <span class="splash-title-nasa">NASA</span></h2>
+      <button type="button" class="splash-start" id="splash-start"><span aria-hidden="true">▶</span> Start mission</button>
+      <p class="splash-hint">Press Enter or tap to start</p>
+    </div>
+    <p class="splash-credit">by team Willis Not Sears</p>
+  </div>
+
   <header class="masthead">
     <div class="wrap masthead-inner">
       <a class="brand" href="./" aria-label="My Mini NASA home">

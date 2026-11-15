@@ -890,8 +890,12 @@
   });
   updateHUD();
   if (state.report) {
-    loadedReport = state.report;
-    openDialog('report', byId('launch'));
+    const showReport = () => {
+      loadedReport = state.report;
+      openDialog('report', byId('launch'));
+    };
+    if (window.SpaceportSplash?.open) window.addEventListener('splash:closed', showReport, {once: true});
+    else showReport();
   }
   if (!document.hidden) animationFrame = requestAnimationFrame(frame);
 })();
