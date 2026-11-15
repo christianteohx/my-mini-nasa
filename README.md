@@ -1,46 +1,266 @@
 # My Mini NASA
 
-A single-player browser game for the 2026 NASA Space Apps **Space Mission Design Game** challenge. Collect satellite data, trade it for grants, make spacecraft supplies, and carry them to the launch pad. Successful satellites send back more data.
+**Run a pocket-sized spaceport, build spacecraft one crate at a time, and launch missions from Earth orbit to the Sun.**
 
-Check out the link: https://mymininasa.wiki/
+### [▶ Play here: mymininasa.wiki](https://mymininasa.wiki)
 
-## Play
+<p align="center">
+  <a href="https://mymininasa.wiki"><img src="assets/hero.jpg" alt="My Mini NASA start screen with the NASA Space Apps Challenge 2026 title and a Start mission button" width="100%"></a>
+</p>
 
-Open `index.html` in a browser, or serve this directory with any static web server. There are no runtime packages to install. The game saves your progress in the current browser. Background music is an original theme synthesized in the browser with the Web Audio API; it starts with the **Start mission** button, changes arrangement for Earth, the Moon, Mars, and the Sun, and can be turned off in Settings. An HTTP server gives the game a stable browser origin for saving.
+My Mini NASA is a free browser game built by **team Willis Not Sears** for the [2026 NASA Space Apps Challenge](https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/), **Space Mission Design Game**. It runs on desktop and mobile with nothing to install.
 
-Use **WASD** or the **arrow keys** to move. On a touchscreen, drag to steer. The camera follows your astronaut. Pad signs show what a facility accepts, the cost per batch, and its ready stock out of capacity. Walk onto a pad to pick up or deliver supplies automatically. At the Launch Pad, set a quantity between **Unload** and **Load** for each item. Walk onto the Return Supplies pad to put extras back into stock.
+---
 
-The Grant Office pays $8 per Data Cube and an extra $3 every four cubes. In **Upgrades**, the Grant Intern delivers cubes, the Cargo Runner stocks the Cargo Shelf, the Materials Intern supplies factories for your selected mission, and the Credit Clerk banks grant payouts. Workers can be paused separately and take a short break between trips. The Crew, Machines, and Player cards show the current level, current stat, and next gain.
+## 1. About the game
 
-Every finished batch at Engineering, the Research Lab, and the Academy has a 10% chance to come out as a special product: a **Prime Part**, a **Prize Paper**, or an **Elite Astronaut**. A gold star floats over the factory while one waits on its pad. Specials count as their base item on the Launch Pad and add a reward: each Prime Part adds 5% launch odds, each Prize Paper adds 30% satellite data, and each Elite Astronaut pays a bonus of half the mission grant on a successful flight. Machine speed upgrades cost cash plus specials from the next factory in the chain: Fuel Plant and Academy need Prime Parts, Engineering needs Prize Papers, and the Research Lab needs Elite Astronauts (one for level 2, two for level 3). Specials in your bag or waiting at their factory both count. Each special factory also has a chance upgrade from 10% to 20%, which needs cash and a three-star clear: Earth Watch for Engineering, Station Science for the Research Lab, and Lunar Relay for the Academy.
+### A hypercasual spaceport
 
-**Choose mission** opens the mission board. First Light and Earth Watch are available from the start. Each mission's first three-star clear earns a permanent perk. For example, Earth Watch pays $2 more per Data Cube, Lunar Relay opens and expands the Cargo Shelf, and Mars Surveyor refunds half the launch fee on failed flights. After a three-star flight, the report lets you replay, select the next mission, or open the next section when it is within budget. The route goes from Earth orbit through the Moon and Mars to Solar Probe, the final mission. The Launch Pad keeps its loaded supplies when you choose another mission.
+My Mini NASA is a hypercasual "walk-and-carry" management game inspired by [My Mini Mart](https://apps.apple.com/us/app/my-mini-mart/id1592004814). In My Mini Mart you run a small shop by carrying goods between stations, hiring helpers, and upgrading. We kept that easy loop and swapped the shop for a spaceport:
 
-Improving your best result earns the remaining portion of that mission's grant. The Ground Station receives only the strongest downlink from each mission. The mission board shows how much grant money is still available.
+- your astronaut walks the yard and carries supplies between facilities,
+- satellites send down **Data Cubes**, which the Grant Office turns into funding,
+- factories turn data and cash into **Fuel**, **Parts**, **Research Papers**, and **Astronauts**,
+- and everything you build ends up on the **Launch Pad**, where you decide what flies.
 
-Open **Challenges** in Mission Control or the mission board and pick Flight, Operations, or Research. Recent launches and manual factory orders can suggest a focus using only the game save on your device. Completing a goal earns a personal best level and opens a harder goal. Flight and Research goals can ease after two flights that miss the goal's star or science requirement. Each focus saves its own progress, and you can switch or pause it at any time. Challenges use the same prices and launch odds as the main game.
+Anyone can start playing in seconds. The mission design depth shows up gradually, one launch at a time.
 
-Each mission has an optimal payload plan. Extra and missing supplies both reduce the odds. A three-star success unlocks the plan for free, as does flying the exact payload on a failed attempt. You can also buy a plan before flying. Use the Mission Control toggle to free up more of the yard.
+### Why a mission design game looks like this
 
-## Development
+The challenge asks for a game in which players design, manage, and simulate a complete space mission while trading off **mass, power, budget, data, communications, and time**. Mission design is usually taught as theory because students rarely get to run a whole mission from start to finish.
 
-`rules.js` owns the economy, station timers, seeded launch evaluation and saves. `challenges.js` sets personal goals and tracks progress. `yard.js` handles movement and rendering, `machines.js` draws the facilities, `stations.js` renders the station controls, and `app.js` connects the yard to the control panels.
+In My Mini NASA, each of those trade-offs is a physical object you have to carry:
 
-Run the rules tests with:
+- Every Research Paper (instrument) you add raises the science return. It also adds mass and needs another Part (power).
+- More mass needs more Fuel, which is the heaviest item of all.
+- Loading close to the rocket's limit leaves a thin margin and lowers the odds of success.
+- Each launch costs a fee, and the grant for a mission depends on how well it performs.
 
-```sh
-node --test tests/*.test.cjs
+Players learn the trade-offs by making them, flying the result, and reading a flight report that explains what happened and why.
+
+### How the game maps to the challenge
+
+| Challenge theme | In My Mini NASA |
+| --- | --- |
+| Define a mission objective | Each of the 8 missions has a stated objective, a destination, and science and crew requirements. |
+| Spacecraft design | Parts power the spacecraft, every instrument, and every crew member. Too few Parts means a partial mission. |
+| Scientific instruments | Research Papers are instruments. Each mission sets a minimum and a useful maximum. |
+| Launch vehicle and orbit | Each mission flies a specific rocket (from Rideshare to Solar heavy launcher) with its own mass limit. Farther destinations need more fuel. |
+| **Mass** | Every item has a mass. Going over the limit blocks the launch, and using over 90% of it lowers the odds. |
+| **Power** | Parts needed = 1 (spacecraft) + instruments + crew. |
+| **Budget** | Cash from grants pays for factories, launch fees, upgrades, and crew. |
+| **Data** | Successful satellites keep sending Data Cubes. Better missions downlink more. |
+| **Communications** | The Ground Station (modeled on NASA's Deep Space Network) receives every downlink. |
+| **Time** | Each factory needs time to produce, so planning the production line matters. |
+| Mission simulation and evaluation | Seeded launch evaluation with success odds, a 0 to 3 star rating, and a detailed flight report. |
+| Post-mission analysis | The report rates fuel, power, science, crew, and mass, explains the cause of the result, and links a NASA source. |
+| Multiple scenarios and difficulty | 8 missions across Earth, Moon, Mars, and Sun stages, plus adaptive Flight, Operations, and Research challenges. |
+| No single perfect solution | Different payload mixes can fly the same mission. A hidden optimal plan rewards experimentation. |
+| Save and compare | Progress saves in the browser, and the Flight Log keeps past reports for comparison. |
+| Educational value | NASA tips in flight reports, and a "Real NASA" photo card in every facility. |
+
+> **Scope note:** My Mini NASA is single-player. Team play for up to four people, which the challenge suggests as an option, is on our list of future ideas below.
+
+---
+
+## 2. How to play
+
+<p align="center">
+  <img src="assets/yard.jpg" alt="The spaceport yard: the astronaut carries a stack of supplies between the Fuel Plant, Engineering, Research Lab, Academy, Grant Office, and Launch Pad, with Mission Control on the right" width="100%">
+</p>
+
+### Controls
+
+| Action | Desktop | Mobile |
+| --- | --- | --- |
+| Move | **WASD** or **arrow keys** | Drag to steer |
+| Pick up or deliver | Walk onto a facility pad and wait a moment | Same |
+| Open a facility | Click the building | Tap the building |
+
+### The core loop
+
+1. **Collect data.** Pick up Data Cubes at the **Ground Station**.
+2. **Get funded.** Drop cubes at the **Grant Office** for $8 each, with a $3 bonus every four cubes.
+3. **Build hardware.** Bring cubes and cash to the factories:
+
+   | Facility | Takes | Makes | Real NASA counterpart |
+   | --- | --- | --- | --- |
+   | Fuel Plant | $15 | 1 Fuel | Liquid hydrogen storage at Launch Pad 39B |
+   | Engineering | 2 Data Cubes + $20 | 1 Part | Building the Webb telescope in a clean room |
+   | Research Lab | 3 Data Cubes + $25 | 1 Research Paper | Science on the International Space Station |
+   | Academy | 4 Data Cubes + $40 | 1 Astronaut | Spacewalk training in the Neutral Buoyancy Laboratory |
+
+4. **Load the rocket.** Carry supplies to the **Launch Pad** and choose exactly how many of each to load.
+5. **Launch.** Check the odds in **Mission Control**, then launch. Successful missions add a satellite that keeps sending data, so the loop speeds up.
+
+<p align="center">
+  <img src="assets/facility.jpg" alt="The Engineering facility panel with the Prime Part card and a Real NASA card about building the James Webb Space Telescope" width="80%">
+  <br><sub>Every facility panel ends with a <b>Real NASA</b> card about the place or program it stands for.</sub>
+</p>
+
+### Designing a launch
+
+<img src="assets/mission_control.jpg" alt="Mission Control for First Light: a 75% success chance and payload gauges for fuel, power, science, crew, and mass" width="270" align="right">
+
+Mission Control shows the payload as gauges for **Fuel, Power, Science, Crew, and Mass**, plus the chance of reaching the destination.
+
+| Item | Mass | Role |
+| --- | --- | --- |
+| Fuel | 2 | Needed fuel = mission base + 1 per 5 dry mass |
+| Part | 1 | Powers the spacecraft, each instrument, and each astronaut |
+| Research Paper | 1 | One science instrument |
+| Astronaut | 3 | Crew for crewed missions |
+
+- **Over the mass limit:** the launch is blocked.
+- **Too little fuel:** the rocket never arrives.
+- **Too little power:** the spacecraft arrives but with systems off, which costs stars.
+- **Thin margin (90% or more of the limit):** odds drop.
+- **Payload plan:** every mission has an optimal mix. Extra and missing supplies both lower the odds. A three-star flight, or flying the exact mix, unlocks the plan for free. You can also buy it.
+
+<br clear="right">
+
+### Missions
+
+| # | Mission | Destination | Rocket | Mass limit | Needs | First 3-star perk |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | First Light | Earth orbit | Rideshare | 6 | A powered CubeSat | Ground Station holds 8 more cubes |
+| 2 | Earth Watch | Earth orbit | Small | 10 | 1 to 2 instruments | +$2 per Data Cube |
+| 3 | Storm Tracker | Earth orbit | Medium | 14 (12 for 3★) | 2 to 3 instruments | Fuel Plant 25% faster |
+| 4 | Station Science | Earth orbit | Heavy | 20 | 1 astronaut, 1 to 2 instruments | Bag holds 2 more items |
+| 5 | Lunar Relay | Lunar orbit | Lunar launcher | 16 | 1 to 2 instruments, uncrewed | Opens the Cargo Shelf |
+| 6 | Mars Surveyor | Mars orbit | Mars launcher | 18 | 2 instruments | Failed launches refund half the fee |
+| 7 | Mars Lander | Mars surface | Mars heavy launcher | 22 (18 for 3★) | 3 to 4 instruments | Factories store 2 more items |
+| 8 | Solar Probe | Solar corona | Solar heavy launcher | 25 | 4 to 5 instruments | +1 Data Cube per second |
+
+A three-star result in a stage lets you buy the next one: **Orbital Yard → Flight Annex → Lunar Program → Mars Program → Solar Program**.
+
+<p align="center">
+  <img src="assets/success.jpg" alt="A three-star Mission success flight report for First Light, with confetti, the unlocked payload plan, and the grant reward" width="90%">
+  <br><sub>A successful launch ends with confetti, a fanfare, and a flight report that explains the result.</sub>
+</p>
+
+### Growing the spaceport
+
+<img src="assets/upgrades.jpg" alt="The Upgrades panel, Machines tab: speed upgrades that need special products and chance upgrades that need a three-star mission clear" width="420" align="right">
+
+- **Crew:** hire a Grant Intern, a Cargo Runner, a Materials Intern, and a Credit Clerk to automate parts of the loop.
+- **Machines:** speed up each factory. Speed upgrades cost cash plus a **special product** from the next factory in the chain.
+- **Special products:** each batch at Engineering, the Research Lab, or the Academy has a 10% chance to become a **Prime Part** (+5% launch odds), a **Prize Paper** (+30% satellite data), or an **Elite Astronaut** (a bonus of half the mission grant on success). A chance upgrade raises this to 20% after a specific mission is cleared.
+- **Player:** a bigger backpack and faster boots.
+- **Challenges:** optional Flight, Operations, and Research goals that get harder as you succeed and ease off if you struggle.
+
+<br clear="right">
+
+### The goal
+
+Earn three stars on **Solar Probe**, the final mission, flying a heat-shielded probe through the Sun's outer atmosphere. Along the way, collect every mission perk and build a fleet of satellites.
+
+### What players learn
+
+- **Everything is connected.** One more instrument means more power, more mass, and more fuel.
+- **Margins matter.** A rocket packed to its limit is a riskier rocket.
+- **Requirements drive design.** Each mission's objective decides what the payload must include.
+- **Destinations cost energy.** Farther targets need more propellant (the rocket equation, simplified).
+- **Data is the product.** Missions exist to return science, and better design returns more.
+- **Iteration works.** Failed flights explain what went wrong, and real mission teams also compare and refine designs.
+- **Real NASA context.** Flight reports cite NASA sources (the rocket equation, CubeSat 101, the Mars Relay Network, Parker Solar Probe, and more), and each facility shows the real NASA place or program behind it.
+
+---
+
+## 3. Technical overview
+
+### Tech stack
+
+| Area | Choice |
+| --- | --- |
+| Language | Plain JavaScript (ES2020+), HTML, and CSS. No framework and no runtime dependencies. |
+| Rendering | HTML Canvas 2D. Every building, character, and rocket is drawn in code as cartoon vector art. There are no sprite sheets. |
+| UI | Semantic HTML panels (`<dialog>`, buttons, live regions) layered over the canvas, styled with CSS. |
+| Audio | Web Audio API. Background music, the launch rumble, and the fanfare are synthesized live. There are no audio files. |
+| Effects | Canvas particles for smoke, sparks, and shockwaves, and a confetti layer drawn in the browser's top layer. |
+| Saving | `localStorage`, with migrations for older saves. |
+| Randomness | Seeded xorshift generators, so launches and special products are reproducible in tests. |
+| Testing | Node's built-in test runner (`node --test`), with no test libraries. |
+| Hosting | Cloudflare Pages at mymininasa.wiki. Vercel is configured as a fallback. |
+| CI | GitHub Actions runs the tests and the static build on every push and pull request. |
+
+### Architecture
+
+The game separates **rules** from **presentation**:
+
+- `rules.js` is a self-contained simulation: the economy, production timers, workers, upgrades, special products, launch evaluation, and saves. It never touches the DOM, so the tests run it directly in Node.
+- The other scripts render that state (the canvas yard and HTML panels) and turn player input into rule calls.
+
+```text
+input (keys, touch, clicks) ──► app.js ──► rules.js (state + simulation)
+                                   │              │
+                                   ▼              ▼
+                     panels (stations.js, HTML)   yard.js + machines.js (canvas)
 ```
 
-The missions use simplified game units. Flight reports link to the NASA material behind the design choices. The campaign starts with one spare Part at Engineering so First Light can fly before the fabrication line is unlocked. Extra powered science within the mission limit earns a small downlink bonus, which makes the additional mass and launch risk a player choice.
+### Repository structure
 
-- [NASA Space Apps challenge brief](https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/)
-- [NASA Design and Develop Science Missions](https://www.nasa.gov/wp-content/uploads/2025/04/250323-design-and-develop-science-mission.pdf)
-- [My Mini Mart by Supersonic Studios](https://apps.apple.com/us/app/my-mini-mart/id1592004814)
+```text
+my-mini-nasa/
+├── index.html          Page shell: HUD, Mission Control, dialogs, splash screen
+├── rules.js            Game rules and simulation: economy, missions, launches, upgrades, saves
+├── challenges.js       Adaptive Flight, Operations, and Research challenges
+├── app.js              Glue: game loop, HUD, panels, launch flow, sound effects
+├── yard.js             Canvas yard: movement, camera, pads, workers, particles, launch show
+├── machines.js         Cartoon vector drawings of every facility and the rocket
+├── stations.js         Facility panels, launch loading, and "Real NASA" cards
+├── splash.js           Start screen
+├── celebrate.js        Confetti for successful launches
+├── music.js            Synthesized background music, one arrangement per destination
+├── style.css           Base layout and HUD
+├── campaign.css        Mission board and Mission Control layout
+├── stations.css        Facility panel layout
+├── upgrades.css        Upgrades panel
+├── challenges.css      Challenges panel
+├── cartoon.css         Cartoon theme for the HUD, panels, and effects
+├── splash.css          Start screen styles and animation
+├── assets/             README screenshots and facility photos
+│   └── nasa/           In-game facility photos from the NASA Image and Video Library
+├── tests/              Node tests for rules, economy, crew, campaign, challenges, and specials
+├── scripts/build.mjs   Copies the static game into dist/ for deployment
+├── .github/workflows/  CI: tests and build on every push and pull request
+├── vercel.json         Fallback hosting configuration
+└── DEPLOYMENT.md       Hosting and deployment notes
+```
+
+### Run it locally
+
+The game is static. Any web server works:
+
+```sh
+git clone https://github.com/christianteohx/my-mini-nasa.git
+cd my-mini-nasa
+python -m http.server 8000      # or: npx serve .
+```
+
+Then open http://localhost:8000. Opening `index.html` directly also works, but a server gives the browser a stable origin for saving.
+
+### Test and build
+
+```sh
+node --test tests/*.test.cjs    # run the rules tests
+node scripts/build.mjs          # package the game into dist/
+```
+
+Pushes to `main` deploy automatically after the tests pass. See [DEPLOYMENT.md](DEPLOYMENT.md).
+
+---
+
+## Credits
+
+- **Team:** Willis Not Sears
+- **Challenge:** [2026 NASA Space Apps Challenge: Space Mission Design Game](https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/)
+- **Inspiration:** [My Mini Mart](https://apps.apple.com/us/app/my-mini-mart/id1592004814) by Supersonic Studios, for the walk-and-carry gameplay loop. All art, music, and code in My Mini NASA are original.
+- **Mission design reference:** [NASA, Design and Develop Science Missions](https://www.nasa.gov/wp-content/uploads/2025/04/250323-design-and-develop-science-mission.pdf)
 
 ### NASA photos
 
-Each facility panel ends with a "Real NASA" card: a photo and a short note on the NASA work the facility stands for. The photos in `assets/nasa/` are the small renditions from the [NASA Image and Video Library](https://images.nasa.gov/) and follow the [NASA Images and Media Usage Guidelines](https://www.nasa.gov/nasa-brand-center/images-and-media/). Credits and library IDs live with the captions in `stations.js`.
+Each facility panel ends with a "Real NASA" card. The photos in `assets/nasa/` are small renditions from the [NASA Image and Video Library](https://images.nasa.gov/), used under the [NASA Images and Media Usage Guidelines](https://www.nasa.gov/nasa-brand-center/images-and-media/). Credits and library IDs also appear with the captions in `stations.js`.
 
 | Facility | NASA counterpart | Library ID |
 | --- | --- | --- |
@@ -55,20 +275,28 @@ Each facility panel ends with a "Real NASA" card: a photo and a short note on th
 | Cargo Shelf | Cygnus cargo craft arriving at the station | iss071e416851 |
 | Returns | CRS-21 science unpacked after splashdown | KSC-20210114-ILW02_0044 |
 
-## Releases
+My Mini NASA is a fan-made educational project. It is not affiliated with or endorsed by NASA or Supersonic Studios. The missions use simplified game units.
 
-| Release | Sites version | Changes |
-| --- | --- | --- |
-| v11 | 11 | Rebalanced income and added adaptive challenges for Flight, Operations, and Research. |
-| v10 | 10 | Spaced out the yard and station labels, removed the Grant Officer tag, and simplified the Upgrades menu. |
-| v9 | 9 | Renamed the game to My Mini NASA. |
-| v8 | 8 | Centered follow camera, station signs, staffed Grant Office, four upgradeable crew roles, mission perks, and one-row payload transfers. |
-| v7 | 7 | Walk-up yard actions, Return Supplies pad, and idle Intern animation at a full Grant Office. |
-| v6 | 6 | Exact quantities at the Launch Pad, one-click actions elsewhere, and a clearer Grant Bonus counter. |
-| v5 | 5 | Exact item quantities, facility input and output panels, free payload plans after success, and missions to the Moon, Mars, and the Sun. |
-| v4 | 4 | One pad per station for drop-off and pickup. |
-| v3 | 3 | Full-window yard, collapsible Mission Control, mission choice, Flight Annex, and hidden recipes. |
-| v2 | 2 | Brighter yard, scientist orders, walk-up upgrades, and Cargo Runner. First public release. |
-| v1 | 1 | First playable release, with four Earth-orbit missions. |
+## Future ideas
 
-To roll back the public game, redeploy the corresponding saved version in Sites. The source checkout also has a Git tag for each release.
+- Team mode for up to four players with roles (mission planning, spacecraft, science, communications)
+- Random in-flight events and unexpected constraints
+- Leaderboards and shareable mission designs
+- A sandbox mode with no budget limits
+
+## Release history
+
+| Release | Changes |
+| --- | --- |
+| Current (`main`) | Cartoon art and UI, Real NASA facility cards, start screen, special products and chained upgrades, slower production for more challenge, launch show with confetti and fanfare, and synthesized background music. |
+| v11 | Rebalanced income and added adaptive challenges for Flight, Operations, and Research. |
+| v10 | Spaced out the yard and station labels, removed the Grant Officer tag, and simplified the Upgrades menu. |
+| v9 | Renamed the game to My Mini NASA. |
+| v8 | Centered follow camera, station signs, staffed Grant Office, four upgradeable crew roles, mission perks, and one-row payload transfers. |
+| v7 | Walk-up yard actions, Return Supplies pad, and idle Intern animation at a full Grant Office. |
+| v6 | Exact quantities at the Launch Pad, one-click actions elsewhere, and a clearer Grant Bonus counter. |
+| v5 | Exact item quantities, facility panels, free payload plans after success, and missions to the Moon, Mars, and the Sun. |
+| v4 | One pad per station for drop-off and pickup. |
+| v3 | Full-window yard, collapsible Mission Control, mission choice, Flight Annex, and hidden recipes. |
+| v2 | Brighter yard, scientist orders, walk-up upgrades, and Cargo Runner. First public release. |
+| v1 | First playable release, with four Earth-orbit missions. |
