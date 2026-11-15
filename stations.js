@@ -171,7 +171,7 @@
       <div class="station-status"><strong data-station-stock></strong><span data-station-bag></span></div>
       ${canUse && id === 'launch' ? '<div class="dialog-list" data-station-list></div><p data-station-empty class="inline-note" hidden>No items to transfer here.</p>' : ''}
       <div class="dialog-bottom station-footer">
-        ${!canUse && showWalk ? `<button type="button" class="primary button" data-action="goto" data-value="${id}:both">Walk to pad →</button>` : ''}
+        ${!canUse && showWalk ? `<button type="button" class="primary button" data-action="goto" data-value="${id}:both">Walk to pad ${window.NasaIcons.svg('right')}</button>` : ''}
         ${id === 'launch' ? '<button type="button" class="quiet button" data-action="station-recipe">View payload plan</button><button type="button" class="primary button" data-action="station-launch">Launch mission</button>' : ''}
         <button type="button" class="quiet button" data-action="close">Back to yard</button>
       </div><p class="station-feedback" role="status" data-station-feedback></p>

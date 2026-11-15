@@ -7,7 +7,7 @@ const root = path.join(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 test('UI and canvas use vector icons, not font-dependent emoji glyphs', () => {
   for (const file of ['index.html','app.js','stations.js','yard.js']) {
-    assert.doesNotMatch(read(file), /[\u{1F000}-\u{1FAFF}\uFE0F↗↩↑↓↟▲▶◆◉⌘⚙✦★☆♟✚✪▤▦◈◒✓✕]/u, file);
+    assert.doesNotMatch(read(file), /[\u{1F000}-\u{1FAFF}\uFE0F→↗↩↑↓↟▲▶◆◉⌘⚙✦★☆♟✚✪▤▦◈◒✓✕]/u, file);
   }
 });
 test('icon module loads before every consumer and is included in static build', () => {
