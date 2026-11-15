@@ -69,6 +69,7 @@
     const effectiveOutput = id === 'grant' ? `${money(rules.getGrantPayout(state))} cash` : output;
     container.innerHTML = `<p class="dialog-lead station-purpose">${purpose}</p>
       <dl class="station-flow"><div><dt>INPUT</dt><dd>${input}</dd></div><div><dt>OUTPUT</dt><dd>${effectiveOutput}</dd></div></dl>
+      ${id === 'grant' ? `<div class="grant-bonus"><div class="grant-bonus-head"><h3>Grant Bonus</h3><span class="grant-bonus-chip">+${money(rules.GRANT_BONUS)} every ${state.customers.order} cubes</span></div><div class="grant-bonus-meter" data-grant-meter aria-hidden="true"></div><p data-grant-bonus-text></p></div>` : ''}
       <div class="station-status"><strong data-station-stock></strong><span data-station-bag></span></div>
       ${canUse && id === 'launch' ? '<div class="dialog-list" data-station-list></div><p data-station-empty class="inline-note" hidden>No items to transfer here.</p>' : ''}
       <div class="dialog-bottom station-footer">
@@ -85,6 +86,16 @@
     updateText(stock, stationStatus(state, station));
     const carry = rules.getRates(state).carry;
     updateText(container.querySelector('[data-station-bag]'), `Bag ${rules.getInventoryCount(state)} / ${carry} · ${money(state.wallet)}`);
+    const meter = container.querySelector('[data-grant-meter]');
+    if (meter) {
+      const { order, filled } = state.customers;
+      const signature = `${filled}/${order}`;
+      if (meter.dataset.signature !== signature) {
+        meter.innerHTML = Array.from({ length: order }, (_, i) => `<span${i < filled ? ' data-filled' : ''}></span>`).join('');
+        meter.dataset.signature = signature;
+      }
+      updateText(container.querySelector('[data-grant-bonus-text]'), `${filled} / ${order} cubes toward the next bonus`);
+    }
     const launch = container.querySelector('[data-action="station-launch"]');
     if (launch) launch.disabled = !rules.inspectLaunch(state).ready;
     const list = container.querySelector('[data-station-list]');

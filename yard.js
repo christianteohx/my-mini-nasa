@@ -1349,6 +1349,7 @@
           else window.SpaceportMachines?.draw(ctx, id, x, y, id === 'launch' ? 1.03 : 0.96, {
             active: facility.active || id === 'ground',
             locked: !facility.unlocked,
+            ready: id === 'grant' && facility.output > 0,
             time: this.time,
             liftoff: id === 'launch' ? lift : 0,
           });

@@ -310,11 +310,12 @@
     byId('mission-perk').hidden = !perk;
     if (perk) {
       byId('mission-perk').dataset.earned = perk.earned;
-      setText('mission-perk-title', `${perk.earned ? 'Earned' : '3-star reward'} · ${perk.name}`);
+      setText('mission-perk-title', `${perk.earned ? 'Earned' : '★★★'} · ${perk.name}`);
+      byId('mission-perk').title = perk.detail;
       setText('mission-perk-detail', perk.detail);
     }
     setText('rocket', mission?.rocket || 'Mission complete');
-    setText('rocket-limit', mission ? `${mission.massLimit} mass limit` : '');
+    setText('rocket-limit', mission ? `max ${mission.massLimit} mass` : '');
     const hasPayload = Boolean(mission && !info.empty);
     byId('manifest-note').hidden = hasPayload;
     byId('manifest-button').hidden = !hasPayload;

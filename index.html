@@ -13,12 +13,13 @@
   <link rel="stylesheet" href="stations.css?v=8">
   <link rel="stylesheet" href="upgrades.css?v=10">
   <link rel="stylesheet" href="challenges.css?v=11">
+  <link rel="stylesheet" href="cartoon.css?v=13">
   <script defer src="rules.js?v=11"></script>
   <script defer src="challenges.js?v=11"></script>
-  <script defer src="machines.js?v=5"></script>
-  <script defer src="yard.js?v=10"></script>
-  <script defer src="stations.js?v=11"></script>
-  <script defer src="app.js?v=11"></script>
+  <script defer src="machines.js?v=13"></script>
+  <script defer src="yard.js?v=12"></script>
+  <script defer src="stations.js?v=12"></script>
+  <script defer src="app.js?v=13"></script>
 </head>
 <body>
   <header class="masthead">
@@ -72,24 +73,22 @@
 
       <aside class="mission" id="mission-control" aria-label="Mission Control">
         <div class="mission-strip">
-          <span class="eyebrow"><i></i> MISSION CONTROL</span>
+          <span class="eyebrow"><i></i> Mission Control</span>
           <button type="button" class="quiet board-button" id="mission-board" data-open="missions">Choose mission <span aria-hidden="true">↗</span></button>
           <button type="button" class="quiet mission-toggle" id="mission-toggle" aria-expanded="true" aria-controls="mission-content mission-primary" aria-label="Collapse Mission Control"><span aria-hidden="true">−</span></button>
         </div>
         <div class="mission-content" id="mission-content">
-          <div class="mission-heading"><span class="mission-tag" id="mission-tag">EARTH ORBIT</span><h2 id="mission-title">First Light</h2><p id="mission-description">Put your first CubeSat in orbit.</p></div>
+          <div class="mission-heading"><h2 id="mission-title">First Light</h2><p id="mission-description" hidden>Put your first CubeSat in orbit.</p><div class="mission-chips"><span class="mission-tag" id="mission-tag">EARTH ORBIT</span><span class="vehicle-chip"><span class="vehicle-icon" aria-hidden="true">↟</span><strong id="rocket">Rideshare</strong><span id="rocket-limit">max 6 mass</span></span></div></div>
           <div class="mission-perk" id="mission-perk" hidden><span aria-hidden="true">✦</span><div><strong id="mission-perk-title"></strong><small id="mission-perk-detail"></small></div></div>
-          <button type="button" class="quiet challenge-entry" data-open="challenges"><span><strong>Challenges</strong><small id="challenge-summary">Pick a focus</small></span><span aria-hidden="true">↗</span></button>
           <div class="odds-panel">
-            <div class="odds-summary"><span>CHANCE TO REACH DESTINATION</span><strong id="launch-odds">—</strong></div>
+            <div class="odds-summary"><span>Success chance</span><strong id="launch-odds">—</strong></div>
             <div class="odds-meter" aria-hidden="true"><span id="odds-fill"></span></div>
             <p class="status-line" id="status-line"></p>
           </div>
-          <div class="vehicle"><span class="vehicle-icon" aria-hidden="true">↟</span><div><span>LAUNCH VEHICLE</span><strong id="rocket">Rideshare</strong></div><span id="rocket-limit">6 mass limit</span></div>
-          <div class="gauge-top"><span class="eyebrow">PAYLOAD MANIFEST</span><span id="manifest-note">PLAN LOCKED</span><button type="button" id="manifest-button" class="manifest-button" data-open="manifest" hidden>MANAGE LOADOUT ↗</button></div>
+          <div class="gauge-top"><span class="eyebrow">Payload</span><span id="manifest-note">PLAN LOCKED</span><button type="button" id="manifest-button" class="manifest-button" data-open="manifest" hidden>Manage ↗</button></div>
           <div class="gauges" id="gauges"></div>
           <button type="button" class="quiet expansion-button" id="expansion-button" data-open="missions" hidden><span>Next destination</span><strong id="expansion-label"></strong><span aria-hidden="true">↗</span></button>
-          <div class="mission-actions"><button class="quiet button" type="button" data-open="log"><span aria-hidden="true">≡</span> Flight log</button></div>
+          <div class="mission-actions"><button type="button" class="quiet button challenge-entry" data-open="challenges" aria-describedby="challenge-summary"><span aria-hidden="true">★</span> Challenges<small id="challenge-summary" hidden>Pick a focus</small></button><button class="quiet button" type="button" data-open="log"><span aria-hidden="true">≡</span> Flight log</button></div>
         </div>
         <div class="mission-primary" id="mission-primary">
           <button class="launch button" type="button" id="launch" disabled><span class="launch-icon" aria-hidden="true">▲</span><strong id="launch-label">Launch mission</strong><small id="launch-fee">FREE</small></button>
