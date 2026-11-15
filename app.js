@@ -48,6 +48,16 @@
   const smallScreen = window.matchMedia('(max-width: 760px)');
 
   try { sound = localStorage.getItem('pocket-spaceport-sound') === 'on'; } catch {}
+  let music = true;
+  try { music = localStorage.getItem('pocket-spaceport-music') !== 'off'; } catch {}
+  const Music = window.SpaceportMusic;
+
+  function setMusic(on) {
+    music = on;
+    try { localStorage.setItem('pocket-spaceport-music', on ? 'on' : 'off'); } catch {}
+    if (on) Music?.start();
+    else Music?.stop();
+  }
   const money = value => '$' + Number(value || 0).toLocaleString('en-US');
   const decimal = value => Number(value || 0).toFixed(2);
   const percent = value => `${Math.round((value || 0) * 100)}%`;
@@ -365,6 +375,7 @@
     }
 
     setText('yard-tier', stage.name.toUpperCase());
+    Music?.setTheme(stage.destination);
     setText('mission-tag', mission ? `${mission.destination || 'Earth'} · ${mission.crewMin ? 'Crewed' : 'Uncrewed'}`.toUpperCase() : 'MISSION CONTROL');
     setText('mission-title', mission?.name || 'Choose a mission');
     setText('mission-description', mission?.objective || mission?.description || 'Visit the mission board to plan another flight.');
@@ -715,6 +726,7 @@
     } else if (activePanel === 'settings') {
       byId('panel-kicker').textContent = `${document.title.toUpperCase()} ${version}`;
       panel.innerHTML = `<div class="dialog-list">
+        ${row('Music', 'Play the background theme. It changes for each destination.', action(music ? 'On' : 'Off', 'music'))}
         ${row('Sound effects', 'Play short sounds for collecting, building and launching.', action(sound ? 'On' : 'Off', 'sound'))}
         ${row('Start a new spaceport', confirmReset ? 'This will erase the flight history and upgrades on this device.' : 'Erase the local save and begin with First Light.', action(confirmReset ? 'Erase and restart' : 'New game', 'reset', '', false, confirmReset))}
         </div>${confirmReset ? '<p class="inline-note danger">The previous save will be removed.</p>' : ''}`;
@@ -763,6 +775,7 @@
       flightTimer = 0;
       openDialog('report', byId('launch'));
       if (report.stars) {
+        if (sound) Music?.duck(report.stars === 3 ? 2.4 : 1.4);
         fanfare(report.stars);
         window.SpaceportCelebrate?.burst(report.stars);
       }
@@ -917,6 +930,9 @@
     } else if (command === 'past-report') {
       loadedReport = (state.history || state.log || [])[Number(id)];
       if (loadedReport) openDialog('report');
+    } else if (command === 'music') {
+      setMusic(!music);
+      drawPanel();
     } else if (command === 'sound') {
       sound = !sound;
       try { localStorage.setItem('pocket-spaceport-sound', sound ? 'on' : 'off'); } catch {}
@@ -976,6 +992,18 @@
     }
   });
   updateHUD();
+  // Browsers only allow audio after a click or key press, so music starts with the splash button.
+  const startMusic = () => { if (music) Music?.start(); };
+  if (window.SpaceportSplash?.open) window.addEventListener('splash:closed', startMusic, {once: true});
+  else {
+    const firstInput = () => {
+      startMusic();
+      window.removeEventListener('pointerdown', firstInput);
+      window.removeEventListener('keydown', firstInput);
+    };
+    window.addEventListener('pointerdown', firstInput);
+    window.addEventListener('keydown', firstInput);
+  }
   if (state.report) {
     const showReport = () => {
       loadedReport = state.report;

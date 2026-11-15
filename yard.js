@@ -724,9 +724,9 @@
       ctx.stroke();
     }
     if (!hasOutput || facility.output <= 0) {
-      const arrows = shared ? '↕' : hasOutput ? '↑' : pad.id === 'scrap' ? '×' : pad.id === 'returns' ? '↩' : '↓';
-      const glyph = isLocked ? (canGuide ? '+' : '·') : arrows;
-      type(ctx, glyph, x, y + 0.3, 17, '#365470', 900, 'center', true);
+      const mark = pad.id === 'scrap' ? '×' : pad.id === 'returns' ? '↩' : '';
+      const glyph = isLocked ? (canGuide ? '+' : '·') : mark;
+      if (glyph) type(ctx, glyph, x, y + 0.3, 17, '#365470', 900, 'center', true);
     }
     if (build) {
       const colors = state.wallet >= next.unlock ? ['#fff2a0', '#e6a443', '#6e4424'] : ['#fbf7da', '#b5a982', '#766443'];
