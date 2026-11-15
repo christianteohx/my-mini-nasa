@@ -1158,8 +1158,7 @@
         this.target = null;
         if (id === 'scrap' || id === 'returns') return;
         this.padHold = 0;
-        const pickupOnly = id === 'fuel' && action === 'both' && this.state.facilities.fuel.unlocked;
-        this.doInteract(pad, pickupOnly ? 'output' : action);
+        this.doInteract(pad, action);
       } else {
         this.target = { ...pad, action };
       }
@@ -1212,11 +1211,6 @@
       if (pad.zone === 'upgrade') {
         if (this.callbacks.onUpgrade?.(pad.id)) this.sparkle(pad, pad.tint);
         return;
-      }
-      if (pad.id === 'fuel' && action === 'input') {
-        const { input, active, output } = this.state.facilities.fuel;
-        if (output > 0) action = 'output';
-        else if (input > 0 || active) return;
       }
       const event = this.callbacks.onInteract?.(pad.id, action);
       if (event) this.noteEvent(event);
@@ -1325,7 +1319,7 @@
           const settle = pad.id !== 'scrap' && !HOLD_ZONES.includes(pad.zone);
           this.doInteract(pad, settle ? this.padAction : undefined);
         }
-      } else if (pad && (pad.zone === 'both' || pad.zone === 'output')) {
+      } else if (pad && pad.id !== 'cargo' && (pad.zone === 'both' || pad.zone === 'output')) {
         this.pickupDelay -= dt;
         if (this.pickupDelay <= 0 && (this.state.facilities[pad.id].output > 0 || this.state.facilities[pad.id].special > 0)) {
           this.pickupDelay = PICKUP_INTERVAL;

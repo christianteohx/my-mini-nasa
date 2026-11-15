@@ -6,13 +6,13 @@
   const descriptions = {
     ground: ['Walk onto the pad to pick up Data Cubes.', 'Satellite signals', 'Data Cubes'],
     grant: [`Walk onto the pad to sell Data Cubes. Wait there to collect cash and the $${rules.GRANT_BONUS} bonus for every four cubes sold.`, '1 Data Cube', 'Cash'],
-    fuel: ['Step onto the pad to order one Fuel unit when idle. Wait on the pad to pick it up.', '$15', '1 Fuel'],
+    fuel: ['Step onto the pad to order as much Fuel as you can afford. Wait to collect it.', '$15', '1 Fuel'],
     engineering: ['Walk onto the pad to deliver Data Cubes and collect parts that power onboard systems.', '2 Data Cubes + $20', '1 Part'],
     research: ['Walk onto the pad to deliver Data Cubes and collect Research Papers.', '3 Data Cubes + $25', '1 Research Paper'],
     academy: ['Walk onto the pad to deliver Data Cubes and collect astronauts.', '4 Data Cubes + $40', '1 Astronaut'],
-    cargo: ['Walk onto the pad to pick up finished supplies.', 'Cargo Runner deliveries and surplus from Returns', payload],
+    cargo: ['Choose supplies to take or store.', 'Cargo Runner deliveries and surplus from Returns', payload],
     launch: ['Load the rocket. Unload any extras back into your bag.', payload, 'Mission payload'],
-    scrap: ['Stand on the pad briefly to discard one item from your bag.', 'Items in your bag', 'Free bag space'],
+    scrap: ['Stand on the pad briefly to scrap everything in your bag.', 'Items in your bag', 'Free bag space'],
     returns: ['Walk onto the pad to send carried hardware back to stock.', payload, 'Restocked supplies']
   };
   // Real NASA counterparts shown at the bottom of each facility panel.
@@ -149,14 +149,19 @@
     return batches ? `${ready} · ${batches} processing or queued` : ready;
   }
 
-  function actionRow(item) {
+  function actionRow(item, station) {
+    const cargo = station === 'cargo';
+    const take = cargo ? 'take' : 'unload';
+    const store = cargo ? 'store' : 'load';
+    const takeLabel = cargo ? 'Take' : 'Unload';
+    const storeLabel = cargo ? 'Store' : 'Load';
     const label = escapeHTML(name(item));
     return `<div class="station-action dialog-row" data-operation="${item}">
       <div class="row-copy"><h3>${label}</h3><p data-action-detail></p><p class="station-match" data-recommendation hidden></p></div>
       <div class="station-controls">
-        <button type="button" class="button quiet" data-action="station-transfer" data-value="unload:${item}" aria-label="Unload ${label}">Unload</button>
+        <button type="button" class="button quiet" data-action="station-transfer" data-value="${take}:${item}" aria-label="${takeLabel} ${label}">${takeLabel}</button>
         <input class="transfer-quantity" type="number" inputmode="numeric" min="1" step="1" aria-label="${label} quantity">
-        <button type="button" class="button primary" data-action="station-transfer" data-value="load:${item}" aria-label="Load ${label}">Load</button>
+        <button type="button" class="button primary" data-action="station-transfer" data-value="${store}:${item}" aria-label="${storeLabel} ${label}">${storeLabel}</button>
       </div>
     </div>`;
   }
@@ -169,7 +174,7 @@
       ${id === 'grant' ? `<div class="grant-bonus"><div class="grant-bonus-head"><h3>Grant Bonus</h3><span class="grant-bonus-chip">+${money(rules.GRANT_BONUS)} every ${state.customers.order} cubes</span></div><div class="grant-bonus-meter" data-grant-meter aria-hidden="true"></div><p data-grant-bonus-text></p></div>` : ''}
       ${specialCard(id)}
       <div class="station-status"><strong data-station-stock></strong><span data-station-bag></span></div>
-      ${canUse && id === 'launch' ? '<div class="dialog-list" data-station-list></div><p data-station-empty class="inline-note" hidden>No items to transfer here.</p>' : ''}
+      ${canUse && ['launch', 'cargo'].includes(id) ? '<div class="dialog-list" data-station-list></div><p data-station-empty class="inline-note" hidden>No items to transfer here.</p>' : ''}
       <div class="dialog-bottom station-footer">
         ${!canUse && showWalk ? `<button type="button" class="primary button" data-action="goto" data-value="${id}:both">Walk to pad ${window.NasaIcons.svg('right')}</button>` : ''}
         ${id === 'launch' ? '<button type="button" class="quiet button" data-action="station-recipe">View payload plan</button><button type="button" class="primary button" data-action="station-launch">Launch mission</button>' : ''}
@@ -205,13 +210,17 @@
     if (launch) launch.disabled = !rules.inspectLaunch(state).ready;
     const list = container.querySelector('[data-station-list]');
     if (!list) return;
-    const limits = Object.fromEntries(rules.getStationActions(state, 'launch').map(operation => [operation.id, operation.max]));
-    const items = ['fuel', 'part', 'paper', 'crew', ...rules.SPECIAL_ITEMS].filter(item => state.inventory[item] || loaded(state, item));
+    const limits = Object.fromEntries(rules.getStationActions(state, station).map(operation => [operation.id, operation.max]));
+    const cargo = station === 'cargo';
+    const stored = item => cargo ? state.runner.shelf[item] || 0 : loaded(state, item);
+    const take = cargo ? 'take' : 'unload';
+    const store = cargo ? 'store' : 'load';
+    const items = ['fuel', 'part', 'paper', 'crew', ...rules.SPECIAL_ITEMS].filter(item => state.inventory[item] || stored(item));
     const signature = items.join(',');
     if (signature !== list.dataset.signature) {
       const focused = document.activeElement?.closest('[data-operation]')?.dataset.operation;
       const previouslyRendered = list.hasAttribute('data-signature');
-      list.innerHTML = items.map(actionRow).join('');
+      list.innerHTML = items.map(item => actionRow(item, station)).join('');
       list.dataset.signature = signature;
       if (previouslyRendered && focused) {
         const next = list.querySelector(`[data-operation="${focused}"] input`);
@@ -219,18 +228,18 @@
       }
     }
     container.querySelector('[data-station-empty]').hidden = items.length > 0;
-    const plan = rules.getRecipe(state)?.ingredients;
+    const plan = cargo ? null : rules.getRecipe(state)?.ingredients;
 
     for (const item of items) {
       const row = list.querySelector(`[data-operation="${item}"]`);
       const detail = row.querySelector('[data-action-detail]');
       const match = row.querySelector('[data-recommendation]');
       const input = row.querySelector('input');
-      const load = limits[`load:${item}`] || 0;
-      const unload = limits[`unload:${item}`] || 0;
+      const load = limits[`${store}:${item}`] || 0;
+      const unload = limits[`${take}:${item}`] || 0;
       const max = Math.max(load, unload);
       const suggested = plan && item in plan ? plan[item] - state.loadout[item] : null;
-      updateText(detail, `${state.inventory[item]} in bag · ${loaded(state, item)} loaded`);
+      updateText(detail, `${state.inventory[item]} in bag · ${stored(item)} ${cargo ? 'on shelf' : 'loaded'}`);
       match.hidden = suggested === null;
       if (!match.hidden) updateText(match, suggested ? `Plan calls for ${Math.abs(suggested)} ${suggested < 0 ? 'fewer' : 'more'}` : 'Plan quantity met');
       const untouched = input.dataset.edited !== 'true';
@@ -239,18 +248,18 @@
       if (untouched && document.activeElement !== input) input.value = Math.max(1, Math.min(suggested < 0 ? unload : load, Math.abs(suggested) || 1));
       const quantity = input.valueAsNumber;
       const valid = Number.isInteger(quantity) && quantity >= 1;
-      const unloadButton = row.querySelector(`[data-value="unload:${item}"]`);
-      const loadButton = row.querySelector(`[data-value="load:${item}"]`);
+      const unloadButton = row.querySelector(`[data-value="${take}:${item}"]`);
+      const loadButton = row.querySelector(`[data-value="${store}:${item}"]`);
       unloadButton.disabled = !valid || quantity > unload;
       loadButton.disabled = !valid || quantity > load;
-      unloadButton.title = unload ? `Unload up to ${unload}` : state.loadout[item] ? 'Your bag is full' : 'None loaded';
-      loadButton.title = load ? `Load up to ${load}` : 'None in your bag';
+      unloadButton.title = unload ? `${cargo ? 'Take' : 'Unload'} up to ${unload}` : stored(item) ? 'Your bag is full' : cargo ? 'None on shelf' : 'None loaded';
+      loadButton.title = load ? `${cargo ? 'Store' : 'Load'} up to ${load}` : cargo && state.inventory[item] ? 'Shelf is full' : 'None in your bag';
     }
   }
 
   function confirmation(operationId, count) {
     const [verb, item] = operationId.split(':');
-    return `${verb === 'load' ? 'Loaded' : 'Unloaded'} ${count} ${count === 1 ? name(item) : plural(item)}.`;
+    return `${({load:'Loaded', unload:'Unloaded', take:'Took', store:'Stored'})[verb] || 'Transferred'} ${count} ${count === 1 ? name(item) : plural(item)}.`;
   }
 
   window.SpaceportStations = { render, refresh, confirmation, summary: id => descriptions[id][0] };
