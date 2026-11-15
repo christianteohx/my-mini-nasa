@@ -799,6 +799,7 @@
   }
 
   function skinsPanel() {
+    state.cosmetics = S.normalize(state.cosmetics);
     const ship = skinCategory === 'ship';
     const selected = ship ? state.cosmetics.ship : state.cosmetics.crew[skinRole];
     return `<div class="skin-tabs" role="group" aria-label="Appearance category">${['ship','crew'].map(id => `<button class="quiet button" data-action="skin-category" data-value="${id}" aria-pressed="${skinCategory === id}">${id === 'ship' ? 'Spaceship' : 'Crew'}</button>`).join('')}</div>
@@ -925,7 +926,7 @@
     const {action: command, value = ''} = button.dataset;
     const [id, qualifier] = value.split(':');
     if (command === 'close') dialog.close();
-    else if (command === 'open-skins') openDialog('skins');
+    else if (command === 'open-skins') {openDialog('skins');byId('close-panel').focus();}
     else if (command === 'skin-category') {
       if (!['ship','crew'].includes(value)) return;
       skinCategory = value; drawPanel();

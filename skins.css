@@ -1,6 +1,6 @@
 .skin-tabs {display:flex;gap:8px;margin-bottom:18px;}
 .skin-tabs button {flex:1;min-height:44px;}
-.skin-tabs [aria-pressed="true"] {background:#334b80;color:white;}
+#panel .skin-tabs [aria-pressed="true"] {background:#334b80;color:white;}
 .skin-role {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;font-weight:700;}
 .skin-role select {max-width:70%;min-height:44px;border:1px solid #a3b1c9;border-radius:10px;background:#fff;color:#263957;padding:8px;font:inherit;}
 .skin-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
