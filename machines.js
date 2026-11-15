@@ -1,15 +1,6 @@
 (() => {
   'use strict';
 
-  const palette = { cyan: '#7efaff', lime: '#c8ff59', apricot: '#ffe15a', violet: '#e596ff' };
-  const edge = '#17276c52';
-
-  function gradient(ctx, x0, y0, x1, y1, stops) {
-    const value = ctx.createLinearGradient(x0, y0, x1, y1);
-    stops.forEach(([stop, color]) => value.addColorStop(stop, color));
-    return value;
-  }
-
   function shape(ctx, fill, path, stroke, width = 1) {
     ctx.beginPath();
     path(ctx);
@@ -47,397 +38,601 @@
     }, color, width);
   }
 
-  function light(ctx, x, y, color, size = 2.4) {
-    oval(ctx, x, y, size + 1.8, size, '#0b1f2f9a');
-    oval(ctx, x, y, size, size - 0.3, color);
-    oval(ctx, x - 0.5, y - 0.6, size / 2, size / 3, '#fff8df');
+  // Cartoon-vector Grant Office. Drawn in a 400-unit design space (see the
+  // Grant Office concept canvas) and scaled down to the yard's machine size.
+  const INK = '#2b2350';
+  const CARTOON_FONT = 'Fredoka, Barlow, "Trebuchet MS", sans-serif';
+
+  function inked(ctx, fill, path, width = 4) {
+    shape(ctx, fill, path, width ? INK : null, width);
   }
 
-  function led(ctx, x, y, state) {
-    const bright = state.active && Math.sin(state.time * 5.5) > -0.2;
-    const color = state.active ? (bright ? palette.lime : '#49b936') : '#8ad95c';
-    if (bright) oval(ctx, x, y, 6.7, 5.5, '#d0ff6380');
-    light(ctx, x, y, color, state.active ? 2.6 : 1.9);
+  function inkPolygon(ctx, points, fill, width = 4) {
+    polygon(ctx, points, fill, width ? INK : null, width);
   }
 
-  function block(ctx, x, y, width, height, depth, colors) {
-    const dx = depth * 0.64;
-    const front = gradient(ctx, x, y, x + width, y + height, [[0, colors[1]], [1, colors[2]]]);
-    polygon(ctx, [[x, y], [x + width, y], [x + width, y + height], [x, y + height]], front, edge);
-    polygon(ctx, [[x + width, y], [x + width + dx, y - depth], [x + width + dx, y + height - depth],
-      [x + width, y + height]], colors[2], edge);
-    polygon(ctx, [[x, y], [x + dx, y - depth], [x + width + dx, y - depth], [x + width, y]], colors[0], edge);
-    line(ctx, [[x + 1, y + 1], [x + width - 0.5, y + 1]], '#fffff19b', 1.25);
+  function inkRect(ctx, x, y, w, h, r, fill, width = 4) {
+    inked(ctx, fill, p => p.roundRect(x, y, w, h, r), width);
   }
 
-  function foundation(ctx, w, colors) {
-    oval(ctx, 5, 10, w * 0.59, 19, '#54303935');
-    oval(ctx, 1, 7, w * 0.53, 15, '#49345331');
-    block(ctx, -w / 2 - 5, 10, w, 7, 17, colors);
-    line(ctx, [[-w / 2 + 2, 15], [-w / 2 + 13, 15]], '#f4dbad77', 1.2);
-    line(ctx, [[w / 2 - 18, 15], [w / 2 - 7, 15]], '#0b273d60', 1.2);
+  function inkCircle(ctx, x, y, r, fill, width = 4) {
+    inked(ctx, fill, p => p.arc(x, y, r, 0, Math.PI * 2), width);
   }
 
-  function cylinder(ctx, x, y, radius, top, height, colors, ry = radius * 0.32) {
-    const [shine, center, shade, cap] = colors;
-    const hull = gradient(ctx, x - radius, top, x + radius, top, [
-      [0, shade], [0.19, shine], [0.42, center], [0.83, shade], [1, shade],
-    ]);
-    shape(ctx, hull, p => {
-      p.moveTo(x - radius, top);
-      p.lineTo(x - radius, y);
-      p.ellipse(x, y, radius, ry, 0, Math.PI, 0, true);
-      p.lineTo(x + radius, top);
-      p.closePath();
-    }, edge);
-    oval(ctx, x, top, radius, ry, cap, edge);
-    if (height > 9) {
-      line(ctx, [[x - radius * 0.54, top + ry], [x - radius * 0.54, y + 1]], '#fff9df33', 1);
-    }
-  }
-
-  function bolts(ctx, left, right, y, fill = '#435c68') {
-    oval(ctx, left, y, 1.5, 1.1, fill);
-    oval(ctx, right, y, 1.5, 1.1, fill);
-  }
-
-  function vents(ctx, x, y, n, width = 4) {
-    for (let i = 0; i < n; i++) {
-      round(ctx, x + i * (width + 2), y, width, 2.2, 1, '#142c4195');
-    }
-  }
-
-  function panel(ctx, x, y, width, height, accent = palette.cyan) {
-    round(ctx, x, y, width, height, 3, '#173245', '#ecf7ef8c');
-    const waveform = [[0.12, 0.67], [0.26, 0.67], [0.36, 0.3], [0.48, 0.72], [0.59, 0.54], [0.86, 0.54]];
-    line(ctx, waveform.map(([px, py]) => [x + width * px, y + height * py]), accent, 1.2);
-    line(ctx, [[x + 2, y + height - 3], [x + width - 2, y + height - 3]], '#c3f4f038', 0.8);
-  }
-
-  function marking(ctx, x, y, label, color, size = 7) {
-    ctx.font = `800 ${size}px ui-monospace, monospace`;
-    ctx.fillStyle = color;
+  function cartoonText(ctx, text, x, y, size, fill, outline = 0) {
+    ctx.font = `700 ${size}px ${CARTOON_FONT}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
-    ctx.fillText(label, x, y);
-  }
-
-  function badge(ctx, x, y, label, color, width = 19) {
-    round(ctx, x - width / 2, y - 8, width, 11, 4.5, '#fff7d9', '#353b7f68');
-    marking(ctx, x, y, label, color, 7.4);
-  }
-
-  function antenna(ctx, x, y, height, state, color = palette.cyan) {
-    round(ctx, x - 5, y - 2, 10, 7, 1.5, '#496779', edge);
-    line(ctx, [[x, y], [x, y - height]], '#36556b', 2.5);
-    line(ctx, [[x - 0.7, y], [x - 0.7, y - height]], '#c4e6e4', 0.9);
-    light(ctx, x, y - height, state.active ? palette.lime : color, 2.4);
-  }
-
-  function stripes(ctx, x, y, w, h, color = '#ffd07a') {
-    round(ctx, x, y, w, h, 1.4, '#263948');
-    ctx.save();
-    ctx.beginPath();
-    ctx.roundRect(x, y, w, h, 1.4);
-    ctx.clip();
-    for (let i = x - h; i < x + w; i += 8) {
-      polygon(ctx, [[i, y + h], [i + 4, y + h], [i + 4 + h, y], [i + h, y]], color);
+    if (outline) {
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = outline;
+      ctx.strokeText(text, x, y);
     }
-    ctx.restore();
+    ctx.fillStyle = fill;
+    ctx.fillText(text, x, y);
   }
 
-  function photovoltaic(ctx, x, y, width, tilt) {
-    const front = [[x, y], [x + width, y + tilt], [x + width + 7, y + tilt - 21], [x + 7, y - 21]];
-    const face = gradient(ctx, x, y, x + width, y - 21, [[0, '#2467d3'], [0.55, '#598eff'], [1, '#4932a7']]);
-    polygon(ctx, front.map(([px, py]) => [px + 1, py + 3]), '#214e9d', '#304087');
-    polygon(ctx, front, face, '#b3eeff', 1.6);
-    for (let i = 1; i < 5; i++) {
-      const step = i / 5;
-      line(ctx, [[x + width * step, y + tilt * step], [x + width * step + 7, y + tilt * step - 21]], '#a7c5e27a', 0.8);
-    }
-    line(ctx, [[x + 3, y - 10], [x + width + 3, y + tilt - 10]], '#a7c5e28a', 0.8);
+  function grantCoin(ctx, x, y) {
+    inkCircle(ctx, x, y, 22, '#ffcc33');
+    shape(ctx, null, p => p.arc(x, y, 14.5, 0, Math.PI * 2), '#e79a1c', 3);
+    cartoonText(ctx, '$', x, y + 9, 24, '#b05f0c');
+    oval(ctx, x - 9, y - 9, 5, 3, '#ffffffbf');
   }
 
-  function ground(ctx, state) {
-    foundation(ctx, 91, ['#b0fff4', '#54dce0', '#2995c5']);
-    photovoltaic(ctx, -47, 1, 32, -5);
-    photovoltaic(ctx, 15, -3, 40, 4);
-    block(ctx, -26, -9, 51, 22, 11, ['#d5fff6', '#50eada', '#298bbf']);
-    round(ctx, -21, -6, 25, 16, 3, '#2c6895', '#d1fff2');
-    panel(ctx, -18, -4, 19, 12);
-    vents(ctx, 10, 3, 2);
-    led(ctx, 14, -3, state);
-    cylinder(ctx, 0, -18, 13, -28, 10, ['#a2fffc', '#4ac6e7', '#3281b7', '#cefaff']);
-    line(ctx, [[0, -25], [0, -57]], '#3b85bd', 8);
-    line(ctx, [[-1.8, -25], [-1.8, -57]], '#c7ffef', 2.6);
-    ctx.save();
-    ctx.translate(-3, -61);
-    ctx.rotate(0.38 + 0.06 * Math.sin(2.5 * state.time));
-    shape(ctx, '#56c6e7', p => {
-      p.moveTo(-32, -7);
-      p.bezierCurveTo(-27, 30, 27, 31, 32, -7);
-      p.closePath();
-    }, '#257caf', 1.7);
-    shape(ctx, gradient(ctx, -32, -9, 18, 15, [[0, '#ffffe9'], [0.48, '#efffff'], [1, '#84d9eb']]), p => {
-      p.moveTo(-34, -8);
-      p.bezierCurveTo(-27, -32, 26, -32, 34, -8);
-      p.bezierCurveTo(30, 17, -28, 17, -34, -8);
-      p.closePath();
-    }, '#f8f9ef', 1.5);
-    line(ctx, [[-24, -13], [-6, 2], [19, -11]], '#6dbbdc', 1.1);
-    line(ctx, [[-21, 1], [4, -26], [28, -7]], '#448bc7', 1.6);
-    line(ctx, [[-21, 0], [4, -28], [28, -8]], '#efffff', 1.4);
-    light(ctx, 4, -27, palette.cyan, 3.3);
-    const signal = (state.time * 1.4) % 1;
-    ctx.globalAlpha *= 1 - signal;
-    shape(ctx, null, p => {
-      p.moveTo(0 - 5 * signal, -32 - 5 * signal);
-      p.quadraticCurveTo(4, -38 - 12 * signal, 9 + 5 * signal, -33 - 5 * signal);
-    }, '#32c4ff', 2.1);
-    ctx.restore();
+  function sparkle(ctx, x, y, size, alpha) {
+    if (alpha <= 0) return;
+    const opacity = ctx.globalAlpha;
+    ctx.globalAlpha = opacity * alpha;
+    const s = size, k = size * 0.3;
+    inkPolygon(ctx, [[x, y - s], [x + k, y - k], [x + s, y], [x + k, y + k], [x, y + s], [x - k, y + k], [x - s, y], [x - k, y - k]], '#fff4a8', 2.5);
+    ctx.globalAlpha = opacity;
   }
 
   function grant(ctx, state) {
-    foundation(ctx, 81, ['#eaffb1', '#bde85e', '#71a341']);
-    block(ctx, -34, -40, 63, 49, 16, ['#dfff9b', '#9de245', '#4bac58']);
-    block(ctx, -36, -49, 68, 12, 16, ['#fff598', '#ffcf3b', '#e38c28']);
-    block(ctx, -34, 3, 64, 7, 14, ['#b8ed83', '#8cda55', '#488c49']);
-    round(ctx, -28, -34, 48, 32, 4, '#49934c', '#e8ffb3');
-    round(ctx, -25, -31, 42, 20, 3, '#245c5e', '#60be66');
-    marking(ctx, -7, -17, '$', state.active ? '#ebff6d' : '#acf783', 15);
-    for (let i = 0; i < 4; i++) {
-      const bar = 4 + i * 2 + (state.active ? Math.sin(state.time * 10 + i) * 1.5 : 0);
-      round(ctx, 2 + i * 3, -14 - bar, 1.7, bar, 0.5, '#affff3');
+    const { active, ready, time } = state;
+    const idle = !active && !ready;
+    ctx.save();
+    ctx.scale(0.36, 0.36);
+    ctx.translate(-202, -300);
+
+    oval(ctx, 222, 300, 112, 34, '#2b235029');
+    inkPolygon(ctx, [[92, 282], [200, 336], [200, 346], [92, 292]], '#e3c98f');
+    inkPolygon(ctx, [[200, 336], [308, 282], [308, 292], [200, 346]], '#c9a86a');
+    inkPolygon(ctx, [[92, 282], [200, 228], [308, 282], [200, 336]], '#fff0c8');
+
+    // Left face: door, window and striped awning.
+    ctx.save();
+    ctx.transform(1, 0.5, 0, 1, 0, -55);
+    inkRect(ctx, 110, 170, 90, 110, 0, '#ffe3a3');
+    inkRect(ctx, 110, 266, 90, 14, 0, '#e8b86a');
+    inkRect(ctx, 115, 176, 7, 86, 3.5, '#fff4cf', 0);
+    inkRect(ctx, 116, 222, 18, 26, 4, '#9fe8ff');
+    line(ctx, [[120, 228], [120, 236]], '#ffffff', 3);
+    inkRect(ctx, 142, 222, 32, 58, 5, '#4b45d9');
+    inkRect(ctx, 149, 230, 18, 14, 3, '#9fe8ff', 3);
+    inkCircle(ctx, 167, 256, 2.5, '#ffcc33', 2);
+    for (let i = 0; i < 6; i++) inkCircle(ctx, 107.7 + i * 15.32, 213, 7.6, i % 2 ? '#fff4e0' : '#ff6b5a', 3.5);
+    for (let i = 0; i < 6; i++) {
+      const top = 112 + i * 14.33, bottom = 100 + i * 15.33;
+      polygon(ctx, [[top, 185], [top + 14.33, 185], [bottom + 15.33, 213], [bottom, 213]], i % 2 ? '#fff4e0' : '#ff6b5a');
     }
-    round(ctx, -22, -8, 20, 2.5, 1, '#20291f');
-    light(ctx, 9, -6, '#ffb74c', 1.7);
-    led(ctx, 14, -6, state);
-    linesOnCanopy(ctx, -31, -48, 62);
-    antenna(ctx, 25, -56, 15, state, palette.apricot);
-    oval(ctx, -29, -43, 2.4, 1.4, '#fff0c4');
-    oval(ctx, 29, -43, 2.4, 1.4, '#fff0c4');
-    const side = [[26, -33], [36, -39], [36, -26], [26, -20]];
-    polygon(ctx, side, '#3c8355', '#a1e58c');
-    line(ctx, [[29, -28], [34, -31]], '#e4fa6c', 1.5);
-    oval(ctx, -5, -57, 12, 4, '#d39d32');
-    oval(ctx, -5, -59, 12, 4, '#ffe258', '#edaa2c');
-    oval(ctx, -6, -60, 8, 2, '#fff397');
+    line(ctx, [[100, 213], [112, 185], [198, 185], [192, 213]], INK, 4);
+    ctx.restore();
+
+    // Right face: the payout screen.
+    ctx.save();
+    ctx.transform(1, -0.5, 0, 1, 0, 100);
+    inkRect(ctx, 200, 215, 90, 110, 0, '#f2b866');
+    inkRect(ctx, 200, 311, 90, 14, 0, '#d39a4c');
+    inkRect(ctx, 212, 232, 66, 52, 7, idle ? '#3a4170' : '#2d3a7a');
+    cartoonText(ctx, '$', 229, 270, 30, idle ? '#9c9466' : '#ffd23f');
+    const bars = [[15, 7, 7], [20, 6, 5.7], [15, 5, 7.9], [20, 6, 5.2]];
+    bars.forEach(([mid, amp, speed], i) => {
+      const height = active ? mid + amp * Math.sin(time * speed + i * 1.3) : 8 + i * 6;
+      round(ctx, 248 + i * 7, 278 - height, 5, height, 1.5, idle ? '#6f7aa8' : '#7de3ff');
+    });
+    inkRect(ctx, 208, 283, 74, 7, 3.5, '#fff4e0', 3);
+    ctx.restore();
+
+    // Roof, dish and sign.
+    inkPolygon(ctx, [[100, 168], [200, 218], [200, 231], [100, 181]], '#3a9e66');
+    inkPolygon(ctx, [[200, 218], [300, 168], [300, 181], [200, 231]], '#2f8556');
+    inkPolygon(ctx, [[100, 168], [200, 118], [300, 168], [200, 218]], '#5ccf8a');
+    polygon(ctx, [[120, 168], [200, 128], [280, 168], [200, 208]], '#4bb877');
+    line(ctx, [[110, 163], [194, 121]], '#c8f5d8', 3);
+    line(ctx, [[132, 160], [132, 146]], INK, 4);
+    ctx.save();
+    ctx.translate(134, 140);
+    ctx.rotate(-25 * Math.PI / 180);
+    inked(ctx, '#fff4e0', p => p.ellipse(0, 0, 15, 8, 0, 0, Math.PI * 2));
+    ctx.restore();
+    line(ctx, [[134, 140], [145, 129]], INK, 3);
+    const blink = active && Math.sin(time * 6) > 0;
+    inkCircle(ctx, 146, 128, 4, blink ? '#ffe27a' : '#ff6b5a', 2.5);
+    for (const x of [168, 232]) {
+      line(ctx, [[x, 110], [x, 156]], INK, 8);
+      line(ctx, [[x, 110], [x, 156]], '#8a7fb5', 3);
+    }
+    inkRect(ctx, 122, 66, 156, 46, 12, '#ffd23f');
+    round(ctx, 130, 71, 140, 7, 3.5, '#fff1a8');
+    cartoonText(ctx, 'GRANTS', 200, 99, 26, INK);
+
+    const bob = active ? -3 - 3 * Math.sin(time * 4.5) : 0;
+    grantCoin(ctx, 200, 38 + bob);
+
+    if (active) {
+      sparkle(ctx, 240, 22, 10, Math.sin(time * 5.2));
+      sparkle(ctx, 158, 44, 8, Math.sin(time * 5.2 + Math.PI));
+      const lift = -3.5 - 3.5 * Math.sin(time * 6.3);
+      inkPolygon(ctx, [[112, 292 + lift], [124, 286 + lift], [136, 292 + lift], [124, 298 + lift]], '#9fe8ff', 3);
+      inkPolygon(ctx, [[112, 292 + lift], [124, 298 + lift], [124, 312 + lift], [112, 306 + lift]], '#4fb7e8', 3);
+      inkPolygon(ctx, [[124, 298 + lift], [136, 292 + lift], [136, 306 + lift], [124, 312 + lift]], '#2f8fc9', 3);
+      const cycle = (time % 1.8) / 1.8;
+      const opacity = ctx.globalAlpha;
+      ctx.globalAlpha = opacity * (cycle < 0.6 ? 1 : 1 - (cycle - 0.6) / 0.4);
+      cartoonText(ctx, '+$8', 322, 122 - 34 * cycle, 30, '#23854a', 8);
+      ctx.globalAlpha = opacity;
+    }
+
+    if (ready) {
+      const hop = -3.5 - 3.5 * Math.sin(time * 6.3);
+      ctx.save();
+      ctx.translate(0, hop);
+      inkPolygon(ctx, [[116, 270], [132, 270], [124, 286]], '#ffffff');
+      inkRect(ctx, 66, 230, 116, 42, 15, '#ffffff');
+      inkCircle(ctx, 86, 251, 9, '#ffcc33', 3);
+      ctx.textAlign = 'left';
+      ctx.font = `700 17px ${CARTOON_FONT}`;
+      ctx.fillStyle = INK;
+      ctx.fillText('COLLECT', 100, 258);
+      ctx.restore();
+    }
+    ctx.restore();
   }
 
-  function linesOnCanopy(ctx, x, y, w) {
-    for (let i = 4; i < w; i += 9) {
-      line(ctx, [[x + i, y], [x + i, y + 8]], '#f18c35', 1.9);
-      line(ctx, [[x + i + 1.7, y + 1], [x + i + 1.7, y + 6]], '#fff3a4', 0.8);
+  // ---- Cartoon kit shared by every facility ----
+  // Each facility draws in the same 400-unit design space as the Grant Office:
+  // a standard building's front base corner sits at (200, 325).
+  const STAGE = 0.36;
+
+  function stage(ctx) {
+    ctx.save();
+    ctx.scale(STAGE, STAGE);
+    ctx.translate(-202, -300);
+  }
+
+  function cartoonSlab(ctx, [top, left, right], hw = 108, cx = 200, front = 336) {
+    const side = front - hw / 2, back = front - hw;
+    oval(ctx, cx + 22, side + 18, hw + 4, hw * 0.32, '#2b235029');
+    inkPolygon(ctx, [[cx - hw, side], [cx, front], [cx, front + 10], [cx - hw, side + 10]], left);
+    inkPolygon(ctx, [[cx, front], [cx + hw, side], [cx + hw, side + 10], [cx, front + 10]], right);
+    inkPolygon(ctx, [[cx - hw, side], [cx, back], [cx + hw, side], [cx, front]], top);
+  }
+
+  // An isometric box whose front base corner is (cx, base); hw is its half width.
+  function isoBox(ctx, cx, base, hw, h, [top, left, right], width = 4) {
+    const side = base - hw / 2, back = base - hw;
+    inkPolygon(ctx, [[cx - hw, side - h], [cx, base - h], [cx, base], [cx - hw, side]], left, width);
+    inkPolygon(ctx, [[cx, base - h], [cx + hw, side - h], [cx + hw, side], [cx, base]], right, width);
+    inkPolygon(ctx, [[cx - hw, side - h], [cx, back - h], [cx + hw, side - h], [cx, base - h]], top, width);
+  }
+
+  // Draw flat artwork onto a box face. On the left face, local y matches global y at
+  // x = cx - hw; on the right face, local y matches global y at x = cx.
+  function onLeftFace(ctx, cx, hw, draw) {
+    ctx.save();
+    ctx.transform(1, 0.5, 0, 1, 0, -0.5 * (cx - hw));
+    draw();
+    ctx.restore();
+  }
+
+  function onRightFace(ctx, cx, draw) {
+    ctx.save();
+    ctx.transform(1, -0.5, 0, 1, 0, 0.5 * cx);
+    draw();
+    ctx.restore();
+  }
+
+  function isoCylinder(ctx, cx, base, r, h, [body, shade, top], ry = r / 2) {
+    const t = base - h;
+    const hull = p => {
+      p.moveTo(cx - r, t);
+      p.lineTo(cx - r, base);
+      p.ellipse(cx, base, r, ry, 0, Math.PI, 0, true);
+      p.lineTo(cx + r, t);
+      p.closePath();
+    };
+    shape(ctx, body, hull);
+    ctx.save();
+    ctx.beginPath();
+    hull(ctx);
+    ctx.clip();
+    ctx.fillStyle = shade;
+    ctx.fillRect(cx + r * 0.38, t - ry, r, h + ry * 2);
+    ctx.fillStyle = '#ffffff59';
+    ctx.fillRect(cx - r * 0.72, t, r * 0.12, h + ry);
+    ctx.restore();
+    shape(ctx, null, hull, INK, 4);
+    inked(ctx, top, p => p.ellipse(cx, t, r, ry, 0, 0, Math.PI * 2));
+  }
+
+  function blinkLight(ctx, x, y, on, r = 5) {
+    inkCircle(ctx, x, y, r, on ? '#c8ff59' : '#5fd88a', 2.5);
+    oval(ctx, x - r * 0.35, y - r * 0.35, r * 0.35, r * 0.22, '#ffffffcc');
+  }
+
+  function blinking(state, speed = 5.5) {
+    return state.active && Math.sin(state.time * speed) > -0.2;
+  }
+
+  function star(ctx, x, y, r, fill, width = 3) {
+    const points = [];
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 5;
+      const radius = i % 2 ? r * 0.45 : r;
+      points.push([x + Math.cos(a) * radius, y + Math.sin(a) * radius]);
     }
+    inkPolygon(ctx, points, fill, width);
+  }
+
+  function gear(ctx, x, y, r, angle, fill) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    const points = [];
+    for (let i = 0; i < 32; i++) {
+      const a = i * Math.PI / 16;
+      const radius = i % 4 < 2 ? r * 1.3 : r;
+      points.push([Math.cos(a) * radius, Math.sin(a) * radius]);
+    }
+    inkPolygon(ctx, points, fill, 2.5);
+    inkCircle(ctx, 0, 0, r * 0.38, '#2d3a7a', 2.5);
+    ctx.restore();
+  }
+
+  function puff(ctx, x, y, r, alpha) {
+    if (alpha <= 0) return;
+    const opacity = ctx.globalAlpha;
+    ctx.globalAlpha = opacity * alpha;
+    inkCircle(ctx, x, y, r, '#ffffff', 3);
+    ctx.globalAlpha = opacity;
+  }
+
+  function ground(ctx, state) {
+    const { active, time } = state;
+    stage(ctx);
+    cartoonSlab(ctx, ['#e6fbff', '#a9dbe8', '#86bfd2']);
+    isoBox(ctx, 200, 325, 80, 72, ['#c6f4ff', '#7de3ff', '#4fb7e8']);
+    onLeftFace(ctx, 200, 80, () => {
+      inkRect(ctx, 124, 220, 7, 58, 3.5, '#e6fbff', 0);
+      inkRect(ctx, 136, 228, 54, 34, 6, '#2d3a7a');
+      const phase = active ? time * 6 : 0;
+      const wave = [];
+      for (let i = 0; i <= 12; i++) wave.push([140 + i * 3.8, 245 + Math.sin(phase + i * 0.9) * 7]);
+      line(ctx, wave, '#7de3ff', 3);
+      inkRect(ctx, 132, 266, 62, 7, 3.5, '#e6fbff', 3);
+    });
+    onRightFace(ctx, 200, () => {
+      inkRect(ctx, 214, 268, 28, 57, 5, '#4b45d9');
+      inkRect(ctx, 220, 276, 16, 12, 3, '#9fe8ff', 3);
+      for (let i = 0; i < 3; i++) inkRect(ctx, 252, 284 + i * 10, 18, 5, 2.5, '#2f8fc9', 2.5);
+      blinkLight(ctx, 262, 270, blinking(state));
+    });
+
+    // Roof solar panel and dish.
+    const panel = [[136, 214], [180, 192], [180, 172], [136, 194]];
+    line(ctx, [[158, 203], [158, 190]], INK, 5);
+    inkPolygon(ctx, panel, '#4b45d9');
+    for (let k = 1; k < 3; k++) line(ctx, [[136 + 44 * k / 3, 214 - 22 * k / 3], [136 + 44 * k / 3, 194 - 22 * k / 3]], '#9fe8ff', 2);
+    line(ctx, [[136, 204], [180, 182]], '#9fe8ff', 2);
+    inked(ctx, '#e6fbff', p => p.ellipse(222, 214, 14, 7, 0, 0, Math.PI * 2), 3);
+    line(ctx, [[222, 214], [222, 160]], INK, 9);
+    line(ctx, [[222, 214], [222, 160]], '#9fe8ff', 3);
+    const tilt = -0.5 + (active ? 0.08 * Math.sin(time * 2.5) : 0);
+    ctx.save();
+    ctx.translate(222, 150);
+    ctx.rotate(tilt);
+    inked(ctx, '#fff8e8', p => p.ellipse(0, 0, 48, 22, 0, 0, Math.PI * 2));
+    shape(ctx, '#c6f4ff', p => p.ellipse(0, 2, 34, 14, 0, 0, Math.PI * 2));
+    line(ctx, [[0, 0], [0, -34]], INK, 4);
+    inkCircle(ctx, 0, -38, 6, '#ff6b5a', 3);
+    ctx.restore();
+    if (active) {
+      const fx = 222 + 38 * Math.sin(tilt), fy = 150 - 38 * Math.cos(tilt);
+      for (let k = 0; k < 2; k++) {
+        const wave = ((time * 1.2) + k * 0.5) % 1;
+        const opacity = ctx.globalAlpha;
+        ctx.globalAlpha = opacity * (1 - wave);
+        shape(ctx, null, p => p.arc(fx, fy, 14 + wave * 34, -2.5, -0.9), '#4b45d9', 4);
+        ctx.globalAlpha = opacity;
+      }
+    }
+    ctx.restore();
+  }
+
+  function flame(ctx, x, y, s) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    inked(ctx, '#ffd23f', p => {
+      p.moveTo(0, -26);
+      p.bezierCurveTo(14, -10, 16, 4, 0, 12);
+      p.bezierCurveTo(-16, 4, -14, -10, 0, -26);
+      p.closePath();
+    }, 3.5);
+    shape(ctx, '#ff6b5a', p => {
+      p.moveTo(0, -8);
+      p.bezierCurveTo(7, 0, 7, 6, 0, 9);
+      p.bezierCurveTo(-7, 6, -7, 0, 0, -8);
+      p.closePath();
+    });
+    ctx.restore();
   }
 
   function fuel(ctx, state) {
-    foundation(ctx, 76, ['#fff0ad', '#ffb74b', '#cb7648']);
-    cylinder(ctx, -17, 0, 20, -48, 48, ['#ffc453', '#ff834a', '#e04a49', '#ffbe65']);
-    cylinder(ctx, 19, -6, 15, -60, 54, ['#fff8dc', '#fff0ba', '#de945e', '#fff7cf']);
-    cylinder(ctx, -17, -37, 20.5, -45, 8, ['#ffffad', '#ffc854', '#f17f35', '#ffdda0']);
-    cylinder(ctx, 19, -53, 15.4, -60, 7, ['#fffb9e', '#ffd447', '#d78536', '#ffe48e']);
-    cylinder(ctx, -17, -57, 7, -65, 8, ['#ffe37d', '#ff9a46', '#e55044', '#ffc970']);
-    cylinder(ctx, 19, -65, 5, -72, 7, ['#fff2a1', '#ffd768', '#d98742', '#fff2bd']);
-    line(ctx, [[-17, -63], [-17, -76], [4, -76], [4, -19], [29, -19]], '#b34e45', 7.5);
-    line(ctx, [[-17, -64], [-17, -77], [4, -77], [4, -20], [29, -20]], '#ffbd53', 5.2);
-    round(ctx, -35, -23, 27, 18, 5, '#d64945', '#ffcf77');
-    shape(ctx, '#fff2a4', p => {
-      p.moveTo(-22, -21);
-      p.quadraticCurveTo(-15, -12, -22, -8);
-      p.quadraticCurveTo(-28, -11, -22, -21);
-    });
-    round(ctx, 12, -45, 9, 21, 3, '#c27258', '#fff1b8');
-    round(ctx, 13.5, -43.5, 6, 18, 2, '#ffe390');
-    const fill = state.active ? 10 + 5 * Math.sin(state.time * 5) : 8;
-    round(ctx, 14.5, -27 - fill, 4, fill, 1.5, '#fb734a');
-    block(ctx, 7, -8, 23, 16, 6, ['#fff39b', '#f49645', '#c65747']);
-    led(ctx, 20, -2, state);
-    vents(ctx, 12, 3, 2, 3);
-    stripes(ctx, -23, 8, 29, 4);
+    const { active, time } = state;
+    stage(ctx);
+    cartoonSlab(ctx, ['#fff0d6', '#ecc48c', '#d2a364']);
+    isoCylinder(ctx, 252, 292, 32, 140, ['#fff4e0', '#e8cfa8', '#ffffff']);
+    inkRect(ctx, 244, 190, 16, 70, 8, '#2d3a7a', 3);
+    const level = active ? 40 + 14 * Math.sin(time * 5) : 34;
+    round(ctx, 248, 256 - level, 8, level, 4, '#ff8a4c');
+    const pipe = [[160, 200], [160, 136], [252, 136], [252, 152]];
+    line(ctx, pipe, INK, 14);
+    line(ctx, pipe, '#ffd23f', 7);
+    isoCylinder(ctx, 160, 316, 46, 110, ['#ff8a4c', '#e05a3a', '#ffc06b']);
+    shape(ctx, null, p => p.ellipse(160, 300, 46, 23, 0, 0.15, Math.PI - 0.15), '#fff4e0', 7);
+    flame(ctx, 152, 256, active ? 1 + 0.08 * Math.sin(time * 14) : 1);
+    isoBox(ctx, 236, 334, 34, 34, ['#fff1a8', '#ffd23f', '#e7a92a']);
+    onRightFace(ctx, 236, () => blinkLight(ctx, 254, 316, blinking(state)));
+    if (active) {
+      for (let k = 0; k < 2; k++) {
+        const rise = ((time * 0.8) + k * 0.5) % 1;
+        puff(ctx, 252 + 10 * Math.sin(rise * 5 + k), 140 - rise * 46, 8 + rise * 8, 1 - rise);
+      }
+    }
+    ctx.restore();
   }
 
   function engineering(ctx, state) {
-    foundation(ctx, 76, ['#b5f7ff', '#70c8ff', '#4978cc']);
-    block(ctx, -29, -8, 57, 16, 13, ['#8de7ff', '#50b0ff', '#3765bb']);
-    stripes(ctx, -24, 1, 37, 4, '#ffdf56');
-    block(ctx, 15, -43, 17, 34, 9, ['#9bdbff', '#65bdff', '#3957c9']);
-    block(ctx, -29, -40, 10, 31, 8, ['#a4e4ff', '#63beff', '#4c6bc6']);
-    block(ctx, -30, -47, 61, 10, 10, ['#84dfff', '#54a9ff', '#4f53c8']);
-    stripes(ctx, -26, -45, 53, 5, '#ffe264');
-    const swing = state.active ? Math.sin(state.time * 5.8) * 7 : 0;
-    oval(ctx, 16, -33, 8, 6, '#293b92', '#8de7ff');
-    line(ctx, [[16, -33], [4 + swing, -60], [-9 + swing, -42], [-9 + swing, -22]], '#463b38', 9);
-    line(ctx, [[16, -33], [4 + swing, -60], [-9 + swing, -42], [-9 + swing, -22]], '#ffb459', 5);
-    oval(ctx, 4 + swing, -60, 6, 5.5, '#ffe263', '#da873b');
-    oval(ctx, -9 + swing, -42, 4, 4, '#fff08d', '#d99243');
-    oval(ctx, 4 + swing, -60, 2, 2, '#664b46');
-    line(ctx, [[-13 + swing, -20], [-9 + swing, -25], [-5 + swing, -20]], '#324855', 3.6);
-    block(ctx, -14, -13, 20, 11, 7, ['#c5faff', '#8ae5ff', '#4f7ba7']);
-    bolts(ctx, -10, 2, -7, '#243f60');
-    panel(ctx, 17, -19, 12, 9, '#fac074');
-    led(ctx, 24, -24, state);
-    if (state.active && Math.sin(state.time * 13) > 0.4) {
-      line(ctx, [[-8 + swing, -20], [-4 + swing, -16]], '#fff486', 2);
-      line(ctx, [[-12 + swing, -19], [-16 + swing, -15]], '#ffbb55', 1.5);
-    }
-    round(ctx, -22, -56, 17, 12, 4.5, '#fff4b2', '#35428870');
-    polygon(ctx, [[-13, -55], [-17, -50], [-13, -50], [-14, -46], [-10, -52], [-14, -52]], '#ec9228');
+    const { active, time } = state;
+    stage(ctx);
+    cartoonSlab(ctx, ['#e3ecff', '#a9b8e8', '#8a9bd2']);
+    isoBox(ctx, 200, 325, 90, 80, ['#c6d8ff', '#7da7ff', '#5a7fe0']);
+    onLeftFace(ctx, 200, 90, () => {
+      inkRect(ctx, 114, 206, 7, 68, 3.5, '#e3ecff', 0);
+      inkRect(ctx, 126, 214, 64, 66, 6, '#ffd23f');
+      for (let y = 226; y < 278; y += 11) line(ctx, [[130, y], [186, y]], '#e7a92a', 3);
+    });
+    onRightFace(ctx, 200, () => {
+      inkRect(ctx, 214, 258, 62, 44, 7, '#2d3a7a');
+      gear(ctx, 245, 280, 13, active ? time * 2 : 0, '#7de3ff');
+      blinkLight(ctx, 280, 314, blinking(state));
+    });
+
+    // Workpiece and robot arm on the roof.
+    isoBox(ctx, 160, 204, 14, 12, ['#fff4e0', '#e3ecff', '#a9b8e8'], 3);
+    isoCylinder(ctx, 238, 206, 18, 12, ['#ff8a4c', '#e05a3a', '#ffc06b']);
+    const swing = active ? Math.sin(time * 5.8) * 18 : 0;
+    const shoulder = [238, 192], elbow = [214 + swing * 0.5, 128], hand = [162 + swing, 160];
+    line(ctx, [shoulder, elbow, hand], INK, 16);
+    line(ctx, [shoulder, elbow, hand], '#ff8a4c', 9);
+    inkCircle(ctx, ...shoulder, 10, '#ffd23f', 3);
+    inkCircle(ctx, ...elbow, 9, '#ffd23f', 3);
+    line(ctx, [[hand[0] - 8, hand[1] + 14], hand, [hand[0] + 8, hand[1] + 14]], INK, 5);
+    if (active && Math.sin(time * 13) > 0.4) sparkle(ctx, hand[0], hand[1] + 22, 9, 1);
+    ctx.restore();
   }
 
   function research(ctx, state) {
-    foundation(ctx, 76, ['#fbcaff', '#cd84fd', '#8357c9']);
-    block(ctx, -29, -30, 62, 35, 14, ['#f3acff', '#b974fa', '#8550ca']);
-    round(ctx, -25, -27, 47, 28, 5, '#6036a7', '#fce2ff');
-    round(ctx, -22, -24, 41, 21, 3, gradient(ctx, -22, -24, 18, 4, [[0, '#8670e8'], [1, '#5346a7']]));
-    line(ctx, [[-20, -21], [-7, -21]], '#e8e5ff7b', 1.4);
-    line(ctx, [[4, -21], [16, -21]], '#e8e5ff52', 1.4);
-    const lift = state.active ? Math.sin(state.time * 4.5) * 1.3 : 0;
-    shape(ctx, '#a5fff7', p => {
-      p.moveTo(-8, -23 + lift);
-      p.lineTo(-1, -23 + lift);
-      p.lineTo(-1, -17 + lift);
-      p.lineTo(4, -8 + lift);
-      p.quadraticCurveTo(4, -6 + lift, 2, -6 + lift);
-      p.lineTo(-11, -6 + lift);
-      p.quadraticCurveTo(-13, -6 + lift, -13, -8 + lift);
-      p.lineTo(-8, -17 + lift);
+    const { active, time } = state;
+    stage(ctx);
+    cartoonSlab(ctx, ['#f3e8ff', '#cdb3ee', '#b097d8']);
+    isoBox(ctx, 200, 325, 90, 96, ['#f0d4ff', '#c99bff', '#a374e8']);
+    onLeftFace(ctx, 200, 90, () => {
+      inkRect(ctx, 114, 190, 7, 84, 3.5, '#f8ecff', 0);
+      inkRect(ctx, 126, 200, 64, 60, 8, '#2d3a7a');
+      const lift = active ? Math.sin(time * 4.5) * 2 : 0;
+      ctx.save();
+      ctx.translate(0, lift);
+      const flask = p => {
+        p.moveTo(152, 214);
+        p.lineTo(164, 214);
+        p.lineTo(164, 228);
+        p.lineTo(180, 252);
+        p.quadraticCurveTo(182, 256, 177, 256);
+        p.lineTo(139, 256);
+        p.quadraticCurveTo(134, 256, 136, 252);
+        p.lineTo(152, 228);
+        p.closePath();
+      };
+      shape(ctx, '#e6fbff', flask);
+      shape(ctx, '#7dffe1', p => {
+        p.moveTo(145.3, 238);
+        p.lineTo(170.7, 238);
+        p.lineTo(180, 252);
+        p.quadraticCurveTo(182, 256, 177, 256);
+        p.lineTo(139, 256);
+        p.quadraticCurveTo(134, 256, 136, 252);
+        p.closePath();
+      });
+      shape(ctx, null, flask, INK, 3.5);
+      ctx.restore();
+      if (active) {
+        for (let k = 0; k < 3; k++) {
+          const rise = ((time * 0.9) + k / 3) % 1;
+          inkCircle(ctx, 152 + k * 6, 236 - rise * 30, 3, '#ffffff', 1.5);
+        }
+      }
+      inkRect(ctx, 122, 262, 72, 7, 3.5, '#f8ecff', 3);
+    });
+    onRightFace(ctx, 200, () => {
+      inkRect(ctx, 222, 268, 30, 57, 5, '#4b45d9');
+      inkRect(ctx, 229, 276, 16, 12, 3, '#c6f4ff', 3);
+      inkRect(ctx, 260, 252, 20, 26, 4, '#c6f4ff');
+    });
+
+    // Rooftop observatory and antenna.
+    isoCylinder(ctx, 196, 196, 40, 14, ['#fff4e0', '#e8dcc8', '#ffffff']);
+    const swivel = active ? Math.sin(time * 1.6) * 0.15 : 0;
+    inked(ctx, '#fff8e8', p => {
+      p.ellipse(196, 182, 40, 40, 0, Math.PI, 0);
       p.closePath();
-    }, '#cefbf5');
-    oval(ctx, -5, -10 + lift, 3, 2, '#5fdcbd');
-    if (state.active) {
-      const bubble = (state.time * 8) % 12;
-      oval(ctx, -15, -9 - bubble, 1.9, 1.9, '#e2d2ff');
-      oval(ctx, 9, -23 + bubble, 1.5, 1.5, '#f7bfff');
-    }
-    vents(ctx, 25, -15, 1, 3);
-    led(ctx, 27, -22, state);
-    block(ctx, -28, -39, 60, 9, 14, ['#f8c6ff', '#c485ff', '#8351ca']);
-    block(ctx, 2, -49, 22, 10, 9, ['#ffe0ff', '#ee9dff', '#a054ce']);
-    antenna(ctx, 10, -50, 17, state, palette.violet);
-    badge(ctx, -11, -36, 'LAB', '#8e4ac7', 24);
+    });
+    ctx.save();
+    ctx.translate(196, 182);
+    ctx.rotate(swivel);
+    round(ctx, -6, -38, 12, 38, 6, '#2d3a7a');
+    line(ctx, [[0, -22], [26, -50]], INK, 12);
+    line(ctx, [[0, -22], [26, -50]], '#c99bff', 6);
+    ctx.restore();
+    line(ctx, [[272, 190], [272, 140]], INK, 5);
+    blinkLight(ctx, 272, 136, blinking(state, 4));
+    ctx.restore();
+  }
+
+  function trainee(ctx, x, y) {
+    inkRect(ctx, x - 28, y - 4, 12, 22, 6, '#fff4e0', 3);
+    inkRect(ctx, x + 16, y - 4, 12, 22, 6, '#fff4e0', 3);
+    inkRect(ctx, x - 18, y - 8, 36, 30, 10, '#fff4e0', 3.5);
+    inkRect(ctx, x - 18, y + 8, 36, 6, 2, '#ff6b5a', 0);
+    inkCircle(ctx, x, y - 22, 20, '#fff9ec', 3.5);
+    inked(ctx, '#4b45d9', p => p.ellipse(x + 4, y - 22, 14, 10, 0, 0, Math.PI * 2), 3);
+    oval(ctx, x + 9, y - 26, 4, 2, '#ffffffcc');
   }
 
   function academy(ctx, state) {
-    foundation(ctx, 76, ['#ffd0e8', '#ff91aa', '#c95993']);
-    cylinder(ctx, 0, 2, 29, -12, 14, ['#ffd7e8', '#ff8daf', '#d05392', '#ffc7e6']);
-    const glass = gradient(ctx, -24, -43, 22, -20, [[0, '#eaffff'], [0.22, '#91f1fc'], [1, '#4baddd']]);
-    shape(ctx, glass, p => {
-      p.moveTo(-26, -12);
-      p.bezierCurveTo(-26, -64, 26, -64, 26, -12);
-      p.bezierCurveTo(25, 2, -25, 2, -26, -12);
+    const { active, time } = state;
+    stage(ctx);
+    cartoonSlab(ctx, ['#ffe6f1', '#efb3cc', '#d896b2']);
+    isoCylinder(ctx, 200, 298, 80, 34, ['#ff8fb8', '#e0679a', '#ffc2da']);
+    inkCircle(ctx, 150, 292, 8, '#9fe8ff', 3);
+    inkCircle(ctx, 250, 292, 8, '#9fe8ff', 3);
+    star(ctx, 200, 302, 11, '#ffd23f');
+    const top = 264;
+    const bob = active ? Math.sin(time * 4) * 7 - 6 : 0;
+    trainee(ctx, 200, 252 + bob);
+    const dome = p => {
+      p.ellipse(200, top, 76, 76, 0, Math.PI, 0);
+      p.ellipse(200, top, 76, 38, 0, 0, Math.PI);
       p.closePath();
-    }, '#efffff', 1.6);
-    shape(ctx, null, p => {
-      p.moveTo(-19, -19);
-      p.quadraticCurveTo(-18, -37, -8, -43);
-    }, '#e4fff3a8', 1.7);
-    line(ctx, [[12, -39], [17, -31], [20, -25]], '#d3f5f17a', 1);
-    ctx.save();
-    ctx.translate(0, state.active ? Math.sin(state.time * 4) * 2.5 - 1 : 0);
-    round(ctx, -9, -20, 18, 15, 4, '#fff2cc', '#5aaacf');
-    round(ctx, -12, -20, 5, 11, 2.5, '#ffe4b5', '#5aaacf');
-    round(ctx, 7, -21, 5, 11, 2.5, '#ffe4b5', '#5aaacf');
-    oval(ctx, 0, -25, 9.2, 9, '#fff9e1', '#578fc7');
-    round(ctx, -5.5, -30, 11, 8, 2.7, '#344886', '#678bd2');
-    line(ctx, [[-3, -28], [2, -28]], '#92f3ff', 1.5);
-    light(ctx, 0, -14, state.active ? palette.lime : '#ff9a67', 1.2);
+    };
+    shape(ctx, '#9fe8ff73', dome, INK, 4);
+    shape(ctx, null, p => p.arc(200, top, 60, -2.7, -2.0), '#ffffff', 6);
+    line(ctx, [[278, 280], [292, 280], [292, 196]], INK, 5);
+    blinkLight(ctx, 292, 192, blinking(state));
     ctx.restore();
-    block(ctx, -36, -8, 12, 18, 9, ['#ffe0f0', '#ff9ab7', '#d25d9f']);
-    block(ctx, 18, -8, 13, 18, 9, ['#ffe0f0', '#ff9ab7', '#d25d9f']);
-    led(ctx, 24, -2, state);
-    antenna(ctx, 27, -27, 18, state, '#ff9dc4');
   }
 
   function scrap(ctx, state) {
-    foundation(ctx, 58, ['#c9ffe1', '#61d7a9', '#42989a']);
-    block(ctx, -24, -19, 43, 27, 14, ['#a1ffe2', '#53d7a0', '#238788']);
-    polygon(ctx, [[-21, -20], [-13, -31], [23, -31], [17, -20]], '#2b6870', '#d5ffd5');
-    polygon(ctx, [[-23, -21], [-15, -31], [-20, -45], [-28, -33]], '#53cbaa', '#c6ffde');
-    polygon(ctx, [[19, -21], [26, -31], [32, -43], [26, -32]], '#52d09f', '#b8f9e0');
-    stripes(ctx, -20, -8, 34, 6, '#fed45a');
-    bolts(ctx, -17, 12, 1);
-    led(ctx, 3, -14, state);
-    line(ctx, [[-8, -19], [-5, -22], [-6, -31], [-2, -36]], '#ffae6b', 3.3);
-    polygon(ctx, [[1, -21], [4, -27], [9, -26], [11, -22]], '#cf8af5', '#e7b4ff');
+    const { active, time } = state;
+    stage(ctx);
+    cartoonSlab(ctx, ['#e0fff2', '#a7dcc5', '#86c2a8'], 88, 200, 330);
+    isoBox(ctx, 200, 322, 70, 56, ['#2b4a52', '#5fd8a8', '#3fae84']);
+    inkPolygon(ctx, [[130, 231], [200, 196], [186, 160], [116, 195]], '#4fbf8f');
+    inkPolygon(ctx, [[200, 196], [270, 231], [284, 195], [214, 160]], '#3fae84');
+    const shake = active ? Math.sin(time * 18) * 1.5 : 0;
+    line(ctx, [[180 + shake, 236], [172 + shake, 206]], INK, 10);
+    line(ctx, [[180 + shake, 236], [172 + shake, 206]], '#ffb46b', 5);
+    gear(ctx, 216 - shake, 222, 11, 0.3, '#e596ff');
+    onLeftFace(ctx, 200, 70, () => {
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(134, 258, 62, 12, 3);
+      ctx.clip();
+      ctx.fillStyle = '#ffd23f';
+      ctx.fillRect(134, 258, 62, 12);
+      for (let x = 126; x < 200; x += 14) polygon(ctx, [[x, 270], [x + 7, 270], [x + 19, 258], [x + 12, 258]], INK);
+      ctx.restore();
+      inkRect(ctx, 134, 258, 62, 12, 3, null, 3);
+      inkCircle(ctx, 146, 287, 6, '#6f7aa8', 3);
+      inkCircle(ctx, 186, 287, 6, '#6f7aa8', 3);
+    });
+    onRightFace(ctx, 200, () => {
+      shape(ctx, null, p => p.arc(236, 290, 12, 0.4, 5.6), '#fff4e0', 5);
+      polygon(ctx, [[245, 276], [254, 288], [240, 289]], '#fff4e0');
+      blinkLight(ctx, 258, 270, blinking(state));
+    });
+    ctx.restore();
   }
 
   function launch(ctx, state) {
-    oval(ctx, 7, 17, 77, 24, '#71445646');
-    oval(ctx, 1, 12, 73, 23, '#7344632a');
-    cylinder(ctx, 0, 16, 68, 5, 11, ['#fff3b8', '#ffcfa1', '#d77c66', '#ffe8c4'], 22);
-    cylinder(ctx, 0, 7, 55, 0, 7, ['#8fddff', '#76bfff', '#4b71ba', '#a6e1fe'], 18);
-    oval(ctx, 0, 0, 51, 15.6, '#64a3db', '#f8ffffb3');
-    oval(ctx, 0, 0, 39, 11.8, '#4a83bb', '#ffe26c');
-    oval(ctx, 0, 0, 34, 10, '#41669d', '#94cee4');
-    line(ctx, [[-18, 0], [18, 0]], '#d7cdc287', 0.85);
-    line(ctx, [[0, -7], [0, 7]], '#d7cdc287', 0.85);
-    [[-59, 7], [-48, 13], [0, 21], [48, 13], [59, 7]].forEach(([x, y]) => {
-      round(ctx, x - 1.5, y, 3.5, 5, 1, '#476271');
-      oval(ctx, x, y, 2.2, 1.4, '#fff0bd');
-    });
-    block(ctx, -55, -6, 14, 9, 7, ['#d4f9ff', '#75cbf1', '#597bc9']);
-    block(ctx, 43, -4, 15, 8, 7, ['#ffe79f', '#ffc35c', '#bd7170']);
-    stripes(ctx, 44, -2, 12, 3);
-    light(ctx, -48, -1, state.liftoff > 0 ? '#f67759' : palette.cyan, 1.5);
-    const tower = '#548fc7';
-    line(ctx, [[34, -9], [34, -81], [45, -87], [45, -14]], '#4266af', 4.7);
-    line(ctx, [[34, -10], [34, -81], [45, -87], [45, -15]], '#92e3ff', 2.6);
-    for (let y = -28; y >= -74; y -= 13) {
-      line(ctx, [[34, y + 7], [45, y], [34, y - 7]], tower, 1.8);
-      line(ctx, [[34, y], [45, y - 5]], '#bbebff', 1.2);
+    const { time, liftoff } = state;
+    stage(ctx);
+    oval(ctx, 222, 352, 214, 66, '#2b235029');
+    isoCylinder(ctx, 200, 344, 192, 30, ['#c6d8ff', '#8a9bd2', '#e6eeff'], 62);
+    const top = 314;
+    ctx.setLineDash([22, 14]);
+    shape(ctx, null, p => p.ellipse(200, top, 150, 48, 0, 0, Math.PI * 2), '#ffd23f', 7);
+    ctx.setLineDash([]);
+    inked(ctx, '#3a4170', p => p.ellipse(200, top, 96, 31, 0, 0, Math.PI * 2));
+    line(ctx, [[150, top], [250, top]], '#6f7aa8', 3);
+    line(ctx, [[200, top - 24], [200, top + 24]], '#6f7aa8', 3);
+    for (const dx of [-150, -90, 0, 90, 150]) {
+      const y = 344 + 62 * Math.sqrt(1 - (dx / 192) ** 2) - 14;
+      const on = liftoff > 0 && Math.sin(time * 14 + dx) > 0;
+      inkCircle(ctx, 200 + dx, y, 6, on ? '#fff083' : '#ffd23f', 2.5);
     }
-    line(ctx, [[45, -86], [45, -107]], '#395a73', 2.7);
-    line(ctx, [[44, -93], [47, -93]], '#abc9ca', 3.2);
-    const beacon = state.liftoff > 0 && Math.sin(state.time * 14) > 0;
-    light(ctx, 45, -107, beacon ? '#fff083' : '#ff9366', 3.1);
-    block(ctx, 29, -44, 16, 8, 7, ['#fff2ad', '#ffd86b', '#c77b56']);
-    if (state.liftoff === 0) {
-      shape(ctx, null, p => {
-        p.moveTo(34, -43);
-        p.bezierCurveTo(25, -43, 27, -69, 13, -65);
-      }, '#16465b', 2.5);
-      oval(ctx, 13, -65, 3, 2.1, '#7c8290');
-      oval(ctx, 3, 1, 30, 9, '#1427389e');
+
+    // Service tower.
+    for (const x of [300, 334]) {
+      line(ctx, [[x, 292], [x, 60]], INK, 12);
+      line(ctx, [[x, 292], [x, 60]], '#ff6b5a', 6);
+    }
+    for (let y = 272; y > 90; y -= 38) line(ctx, [[300, y], [334, y - 19], [300, y - 38]], INK, 5);
+    inkRect(ctx, 290, 46, 54, 16, 6, '#ffd23f');
+    line(ctx, [[317, 46], [317, 16]], INK, 5);
+    const beacon = liftoff > 0 && Math.sin(time * 14) > 0;
+    inkCircle(ctx, 317, 12, 8, beacon ? '#fff083' : '#ff6b5a', 3);
+    if (liftoff === 0) inkRect(ctx, 250, 150, 52, 12, 4, '#ffd23f', 3);
+    ctx.restore();
+
+    if (liftoff > 0) {
+      for (let i = 0; i < 6; i++) {
+        const spread = (i - 2.5) * 15;
+        puff(ctx, spread, 4 + Math.abs(spread) * 0.08, 7 + 3 * Math.sin(time * 9 + i), 1);
+      }
     }
     ctx.save();
-    ctx.translate(0, -state.liftoff);
+    ctx.translate(0, -liftoff);
     rocket(ctx, state);
     ctx.restore();
   }
 
+  // The rocket is drawn in yard units so lift-off keeps its existing distance scale.
   function rocket(ctx, state) {
+    const w = 1.5;
     if (state.liftoff > 0) {
-      const length = 15 + 4 * Math.sin(state.time * 27);
-      shape(ctx, gradient(ctx, 0, 0, 0, length, [[0, '#fffbd5'], [0.31, '#ffc76e'], [1, '#f26a5580']]), p => {
-        p.moveTo(-10, -3);
-        p.quadraticCurveTo(-8, length * 0.72, 0, length);
-        p.quadraticCurveTo(8, length * 0.9, 10, -3);
+      const length = 22 + 6 * Math.sin(state.time * 27);
+      shape(ctx, '#ffd23f', p => {
+        p.moveTo(-11, -4);
+        p.quadraticCurveTo(-9, length * 0.7, 0, length);
+        p.quadraticCurveTo(9, length * 0.7, 11, -4);
+        p.closePath();
+      }, INK, w);
+      shape(ctx, '#fff4a8', p => {
+        p.moveTo(-5, -4);
+        p.quadraticCurveTo(-4, length * 0.45, 0, length * 0.62);
+        p.quadraticCurveTo(4, length * 0.45, 5, -4);
         p.closePath();
       });
     }
-    const redFin = gradient(ctx, -28, -41, -7, -8, [[0, '#ffad6c'], [0.47, '#ff674b'], [1, '#c73d64']]);
-    const rightFin = gradient(ctx, 9, -39, 35, 0, [[0, '#f0615b'], [1, '#c9486e']]);
-    shape(ctx, rightFin, p => {
+    shape(ctx, '#e0503f', p => {
       p.moveTo(10, -43);
       p.quadraticCurveTo(24, -31, 29, -6);
       p.lineTo(22, -8);
       p.lineTo(11, -20);
       p.closePath();
-    }, '#713849', 1.1);
-    shape(ctx, redFin, p => {
+    }, INK, w);
+    shape(ctx, '#ff6b5a', p => {
       p.moveTo(-12, -48);
       p.quadraticCurveTo(-28, -32, -31, -6);
       p.lineTo(-23, -7);
       p.lineTo(-10, -20);
       p.closePath();
-    }, '#883747', 1.1);
-    line(ctx, [[-25, -19], [-18, -32], [-12, -36]], '#ffba8c', 1.6);
-    const shell = gradient(ctx, -20, -77, 21, -74, [
-      [0, '#b9d7ec'], [0.16, '#e9f6f9'], [0.38, '#fffeee'], [0.68, '#f6f2ec'], [1, '#a3c2e4'],
-    ]);
-    cylinder(ctx, 0, -1, 11, -10, 9, ['#aec0c2', '#96a5ae', '#2a495e', '#8294a1']);
-    shape(ctx, shell, p => {
+    }, INK, w);
+    shape(ctx, '#6f7aa8', p => p.roundRect(-9, -12, 18, 11, 3), INK, w);
+    const body = p => {
       p.moveTo(0, -137);
       p.bezierCurveTo(-8, -136, -20, -104, -21, -75);
       p.bezierCurveTo(-22, -51, -17, -23, -12, -11);
@@ -445,78 +640,57 @@
       p.bezierCurveTo(17, -23, 22, -51, 21, -75);
       p.bezierCurveTo(20, -104, 8, -136, 0, -137);
       p.closePath();
-    }, '#476c79', 1.3);
-    const cap = gradient(ctx, -18, -130, 17, -105, [[0, '#ffb471'], [0.42, '#ff724d'], [1, '#cc385c']]);
-    shape(ctx, cap, p => {
+    };
+    shape(ctx, '#fff8e8', body);
+    ctx.save();
+    ctx.beginPath();
+    body(ctx);
+    ctx.clip();
+    ctx.fillStyle = '#e8dcc8';
+    ctx.fillRect(8, -140, 20, 140);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-16, -96, 3.5, 66);
+    ctx.restore();
+    shape(ctx, null, body, INK, w);
+    shape(ctx, '#ff6b5a', p => {
       p.moveTo(0, -137);
       p.bezierCurveTo(-5.5, -137, -13.5, -118, -17, -104);
       p.quadraticCurveTo(0, -99, 17, -104);
       p.bezierCurveTo(13.5, -118, 5.5, -137, 0, -137);
       p.closePath();
-    }, '#d95957', 0.8);
-    shape(ctx, null, p => {
-      p.moveTo(-5, -128);
-      p.quadraticCurveTo(-11, -118, -14, -108);
-    }, '#ffbc99', 1.7);
-    shape(ctx, null, p => {
-      p.moveTo(-18, -99);
-      p.quadraticCurveTo(0, -94, 18, -99);
-    }, '#fff6e6');
-    oval(ctx, -1, -80, 13.8, 14.9, '#8cb9d8', '#f6ffff');
-    oval(ctx, -1, -80, 11.5, 12.2, '#284e85', '#3e6fac');
-    const visor = gradient(ctx, -10, -91, 8, -70, [[0, '#78d2fb'], [0.55, '#438dce'], [1, '#304f9e']]);
-    oval(ctx, -1, -80.5, 9.5, 10, visor);
-    shape(ctx, null, p => {
-      p.moveTo(-7.8, -83);
-      p.quadraticCurveTo(-4.6, -88.2, 1.8, -88.8);
-    }, '#b1ebf3', 2.3);
-    oval(ctx, 5.5, -75, 1.3, 1.3, '#a0ebff');
-    boltedBand(ctx);
-    line(ctx, [[-15, -66], [-14, -48], [-11, -31]], '#fdf9e9', 1.4);
-    oval(ctx, -1, -52, 7.6, 7.6, '#fff4bb', '#93aace');
-    polygon(ctx, [[-1, -58], [0.4, -54], [4.5, -51.9], [0.6, -50.7], [-1, -46.5],
-      [-2.7, -50.8], [-6, -52], [-2.7, -54]], '#fb874d');
-    round(ctx, -3.5, -37, 7, 21, 3, '#e4535d', '#9c4968');
-    round(ctx, -2.7, -37, 2.6, 18, 1.3, '#ff966d');
-  }
-
-  function boltedBand(ctx) {
+    }, INK, w);
+    shape(ctx, '#c6d8ff', p => p.arc(-1, -80, 13, 0, Math.PI * 2), INK, w);
+    shape(ctx, '#4b45d9', p => p.arc(-1, -80, 9.5, 0, Math.PI * 2), INK, 1.1);
+    oval(ctx, -4.5, -84, 3.2, 1.8, '#ffffffcc');
     shape(ctx, null, p => {
       p.moveTo(-16, -26);
       p.quadraticCurveTo(0, -17, 16, -26);
-    }, '#8395a2', 1.05);
-    shape(ctx, null, p => {
-      p.moveTo(-15, -23);
-      p.quadraticCurveTo(0, -14, 15, -23);
-    }, '#f9f4e1', 1.2);
-    oval(ctx, -8, -22, 1.1, 1.3, '#5b6e7d');
-    oval(ctx, 7, -22, 1.1, 1.3, '#5b6e7d');
+    }, INK, w);
+    star(ctx, -1, -54, 7.5, '#ffd23f', 1.2);
+    shape(ctx, '#ff6b5a', p => p.roundRect(-3.5, -42, 7, 13, 3), INK, 1.1);
   }
 
   function gate(ctx, w) {
     const x = w / 2 - 9;
-    [-x, x].forEach(pole => {
-      oval(ctx, pole, 15, 6.5, 2.9, '#553b654f');
-      line(ctx, [[pole, 14], [pole, -1]], '#b65b63', 5.5);
-      line(ctx, [[pole - 0.7, 6], [pole - 0.7, 0]], '#ffd169', 2.6);
-      light(ctx, pole, -2, '#ffb648', 2.4);
-    });
-    shape(ctx, null, p => {
+    for (const pole of [-x, x]) {
+      oval(ctx, pole, 15, 6.5, 2.9, '#2b235033');
+      shape(ctx, '#ff6b5a', p => p.roundRect(pole - 3, -2, 6, 17, 2), INK, 1.4);
+      shape(ctx, '#ffd23f', p => p.arc(pole, -3, 3.2, 0, Math.PI * 2), INK, 1.4);
+    }
+    const chain = p => {
       p.moveTo(-x, 5);
       p.quadraticCurveTo(0, 18, x, 5);
-    }, '#d48060', 3.2);
+    };
+    shape(ctx, null, chain, INK, 3.6);
+    shape(ctx, null, chain, '#ffd23f', 1.8);
     shape(ctx, null, p => {
-      p.moveTo(-x, 4);
-      p.quadraticCurveTo(0, 17, x, 4);
-    }, '#ffe589', 1.5);
-    round(ctx, -8, 0, 16, 14, 4, '#fff0b1', '#bc755e');
-    shape(ctx, null, p => {
-      p.moveTo(-2.8, 6);
-      p.lineTo(-2.8, 4.6);
-      p.quadraticCurveTo(0, 0.8, 2.8, 4.6);
-      p.lineTo(2.8, 6);
-    }, '#a75959', 1.5);
-    round(ctx, -4, 5.5, 8, 5.1, 1.3, '#a75959');
+      p.moveTo(-3.5, 6);
+      p.lineTo(-3.5, 3.5);
+      p.arc(0, 3.5, 3.5, Math.PI, 0);
+      p.lineTo(3.5, 6);
+    }, INK, 2.4);
+    shape(ctx, '#ffcc33', p => p.roundRect(-6, 5, 12, 10, 3), INK, 1.4);
+    shape(ctx, INK, p => p.arc(0, 9.5, 1.4, 0, Math.PI * 2));
   }
 
   const machines = { ground, grant, fuel, engineering, research, academy, scrap, launch };
@@ -529,7 +703,7 @@
     const machineId = aliases[id] || id;
     const machine = machines[machineId];
     if (!machine) return;
-    const { active = false, locked = false, time = 0, liftoff = 0 } = options;
+    const { active = false, locked = false, ready = false, time = 0, liftoff = 0 } = options;
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(scale, scale);
@@ -537,7 +711,7 @@
     ctx.lineCap = 'round';
     const opacity = ctx.globalAlpha;
     if (locked) ctx.globalAlpha = opacity * 0.39;
-    machine(ctx, { active: active && !locked, time, liftoff });
+    machine(ctx, { active: active && !locked, ready: ready && !locked, time, liftoff });
     if (locked) {
       ctx.globalAlpha = opacity;
       gate(ctx, machineId === 'scrap' ? 58 : 76);
