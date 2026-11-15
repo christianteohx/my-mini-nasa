@@ -60,6 +60,9 @@
     { id: "moon", name: "Lunar Program", destination: "Moon", price: 900, missionIds: ["m5"] },
     { id: "mars", name: "Mars Program", destination: "Mars", price: 1300, missionIds: ["m6", "m7"] },
     { id: "sun", name: "Solar Program", destination: "Sun", price: 1900, missionIds: ["m8"] },
+    { id: "jupiter", name: "Jupiter Program", destination: "Jupiter", price: 2800, missionIds: ["m9"] },
+    { id: "saturn", name: "Saturn Program", destination: "Saturn", price: 3800, missionIds: ["m10"] },
+    { id: "neptune", name: "Neptune Program", destination: "Neptune", price: 5000, missionIds: ["m11"] },
   ];
 
   const MISSIONS = [
@@ -127,6 +130,30 @@
       rocket: "Solar heavy launcher", orbit: "Solar flyby", massLimit: 25, baseFuel: 3, dryFuelStep: 5,
       scienceMin: 4, scienceMax: 5, crewMin: 0, crewMax: 0, fee: 500, reward: 1600, dataMultiplier: 2.8, tipId: "sun",
     },
+    {
+      id: "m9", stage: "jupiter", name: "Jupiter Weather", destination: "Jupiter", arrival: "Jupiter orbit",
+      description: "Map the giant planet’s clouds and magnetic field from orbit.",
+      objective: "Power four instruments in an uncrewed Jupiter orbiter.",
+      perk: { id: "jupiterData", name: "Jupiter Downlink", detail: "Your yard receives 1 extra Data Cube per second." },
+      rocket: "Deep-space launcher", orbit: "Jupiter orbit", massLimit: 28, uncrewedOnly: true, baseFuel: 4, dryFuelStep: 5,
+      scienceMin: 4, scienceMax: 5, crewMin: 0, crewMax: 0, fee: 650, reward: 2200, dataMultiplier: 3.2, tipId: "jupiter",
+    },
+    {
+      id: "m10", stage: "saturn", name: "Ring Explorer", destination: "Saturn", arrival: "Saturn orbit",
+      description: "Study Saturn’s rings with a light, carefully balanced instrument package.",
+      objective: "Power five ring instruments and stay at 29 mass or less.",
+      perk: { id: "saturnData", name: "Ring Downlink", detail: "Your yard receives 1 extra Data Cube per second." },
+      rocket: "Outer-planet launcher", orbit: "Saturn orbit", massLimit: 34, threeStarMassLimit: 29, uncrewedOnly: true, baseFuel: 5, dryFuelStep: 5,
+      scienceMin: 5, scienceMax: 6, crewMin: 0, crewMax: 0, fee: 800, reward: 2900, dataMultiplier: 3.6, tipId: "saturn",
+    },
+    {
+      id: "m11", stage: "neptune", name: "Blue Horizon", destination: "Neptune", arrival: "Neptune’s cloud tops",
+      description: "Send a robotic flyby past the blue planet to study its atmosphere and moons.",
+      objective: "Reach Neptune with six powered instruments and no crew.",
+      perk: { id: "neptuneData", name: "Blue Horizon Downlink", detail: "Your yard receives 2 extra Data Cubes per second." },
+      rocket: "Deep-space heavy launcher", orbit: "Neptune flyby", massLimit: 38, uncrewedOnly: true, baseFuel: 6, dryFuelStep: 5,
+      scienceMin: 6, scienceMax: 7, crewMin: 0, crewMax: 0, fee: 1000, reward: 3800, dataMultiplier: 4, tipId: "neptune",
+    },
   ];
 
   const RECIPES = {
@@ -138,6 +165,9 @@
     m6: { price: 3100, peakOdds: 0.80, ingredients: { fuel: 4, part: 3, paper: 2, crew: 0 } },
     m7: { price: 4100, peakOdds: 0.78, ingredients: { fuel: 4, part: 5, paper: 4, crew: 0 } },
     m8: { price: 5800, peakOdds: 0.76, ingredients: { fuel: 5, part: 6, paper: 5, crew: 0 } },
+    m9: { price: 8000, peakOdds: 0.74, ingredients: { fuel: 6, part: 6, paper: 5, crew: 0 } },
+    m10: { price: 10800, peakOdds: 0.72, ingredients: { fuel: 7, part: 7, paper: 6, crew: 0 } },
+    m11: { price: 14200, peakOdds: 0.70, ingredients: { fuel: 9, part: 8, paper: 7, crew: 0 } },
   };
   const ODDS_PENALTY = { fuel: 0.12, part: 0.09, paper: 0.08, crew: 0.14 };
   const LOADABLE = [...INGREDIENTS, ...SPECIAL_ITEMS];
@@ -189,6 +219,9 @@
     moon: { text: "NASA’s Lunar Reconnaissance Orbiter maps terrain that mission planners use to choose safe landing sites.", source: "NASA · Lunar Reconnaissance Orbiter", url: "https://science.nasa.gov/mission/lro/" },
     marsOrbit: { text: "Mars Reconnaissance Orbiter gathers its own observations and relays data from rovers on the ground.", source: "NASA · Mars Relay Network", url: "https://science.nasa.gov/mars/mars-relay-network/" },
     marsLanding: { text: "Mars missions have used heat shields, parachutes, and powered descent to survive entry and landing.", source: "NASA · How We Land on Mars", url: "https://science.nasa.gov/planetary-science/programs/mars-exploration/mission-timeline/how-we-land-on-mars/" },
+    jupiter: { text: "NASA’s Juno studies Jupiter’s atmosphere, magnetic field, and interior.", source: "NASA · Juno", url: "https://science.nasa.gov/mission/juno/" },
+    saturn: { text: "Cassini studied Saturn, its rings, and its moons during 13 years in orbit.", source: "NASA · Cassini", url: "https://science.nasa.gov/mission/cassini/" },
+    neptune: { text: "Voyager 2 flew past Neptune in 1989, revealing its atmosphere, rings, and moons.", source: "NASA · Voyager", url: "https://science.nasa.gov/mission/voyager/" },
     sun: { text: "NASA’s Parker Solar Probe became the first spacecraft to fly through the Sun’s outer atmosphere.", source: "NASA · Parker Solar Probe", url: "https://science.nasa.gov/mission/parker-solar-probe/" },
   };
 
@@ -333,7 +366,7 @@
           }
         }
         if (hasThreeStars(saved, "m5")) saved.facilities.cargo.unlocked = true;
-        saved.completed = hasThreeStars(saved, "m8");
+        saved.completed = hasThreeStars(saved, "m11");
         return saved;
       }
     } catch {
@@ -365,7 +398,7 @@
 
   function getRates(state) {
     return {
-      data: 0.5 + Number(hasThreeStars(state, "m8")) + state.satellites.reduce((total, satellite) => total + satellite.output, 0),
+      data: 0.5 + Number(hasThreeStars(state, "m8")) + Number(hasThreeStars(state, "m9")) + Number(hasThreeStars(state, "m10")) + 2 * Number(hasThreeStars(state, "m11")) + state.satellites.reduce((total, satellite) => total + satellite.output, 0),
       carry: UPGRADES.carry.levels[state.upgrades.carry] + 2 * Number(hasThreeStars(state, "m4")),
       speed: UPGRADES.speed.levels[state.upgrades.speed],
       cap: UPGRADES.ground.levels[state.upgrades.ground] + 8 * Number(hasThreeStars(state, "m1")),
@@ -1418,7 +1451,7 @@
     const output = report.stars > 0 ? updateDownlink(state.satellites, {
       missionId: mission.id, name: mission.name, stars: report.stars, output: signalOutput,
     }) : 0;
-    const campaignCompleted = firstClear && mission.id === "m8";
+    const campaignCompleted = firstClear && mission.id === "m11";
     if (campaignCompleted) state.completed = true;
     if (mission.id === "m1" && firstClear && firstTip(state, "free")) report.tip = TIPS.free;
     restockTutorialPart(state);
@@ -1452,3 +1485,4 @@
     getUpgrade, buyUpgrade, getCargoCount, getShelfItem, collectCargo, interact, unlockFacility, removeItem, selectMission, inspectLaunch, evaluateLaunch, launch,
   };
 })();
+

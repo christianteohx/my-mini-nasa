@@ -1,6 +1,6 @@
 # My Mini NASA
 
-**Run a pocket-sized spaceport, build spacecraft one crate at a time, and launch missions from Earth orbit to the Sun.**
+**Run a pocket-sized spaceport, build spacecraft one crate at a time, and launch missions from Earth orbit to Neptune.**
 
 ### [▶ Play here: mymininasa.wiki](https://mymininasa.wiki)
 
@@ -42,7 +42,7 @@ Players learn the trade-offs by making them, flying the result, and reading a fl
 
 | Challenge theme | In My Mini NASA |
 | --- | --- |
-| Define a mission objective | Each of the 8 missions has a stated objective, a destination, and science and crew requirements. |
+| Define a mission objective | Each of the 11 missions has a stated objective, a destination, and science and crew requirements. |
 | Spacecraft design | Parts power the spacecraft, every instrument, and every crew member. Too few Parts means a partial mission. |
 | Scientific instruments | Research Papers are instruments. Each mission sets a minimum and a useful maximum. |
 | Launch vehicle and orbit | Each mission flies a specific rocket (from Rideshare to Solar heavy launcher) with its own mass limit. Farther destinations need more fuel. |
@@ -54,7 +54,7 @@ Players learn the trade-offs by making them, flying the result, and reading a fl
 | **Time** | Each factory needs time to produce, so planning the production line matters. |
 | Mission simulation and evaluation | Seeded launch evaluation with success odds, a 0 to 3 star rating, and a detailed flight report. |
 | Post-mission analysis | The report rates fuel, power, science, crew, and mass, explains the cause of the result, and links a NASA source. |
-| Multiple scenarios and difficulty | 8 missions across Earth, Moon, Mars, and Sun stages, plus adaptive Flight, Operations, and Research challenges. |
+| Multiple scenarios and difficulty | 11 missions across Earth, Moon, Mars, Sun, Jupiter, Saturn, and Neptune stages, plus adaptive Flight, Operations, and Research challenges. |
 | No single perfect solution | Different payload mixes can fly the same mission. A hidden optimal plan rewards experimentation. |
 | Save and compare | Progress saves in the browser, and the Flight Log keeps past reports for comparison. |
 | Educational value | NASA tips in flight reports, and a "Real NASA" photo card in every facility. |
@@ -132,7 +132,11 @@ Mission Control shows the payload as gauges for **Fuel, Power, Science, Crew, an
 | 7 | Mars Lander | Mars surface | Mars heavy launcher | 22 (18 for 3★) | 3 to 4 instruments | Factories store 2 more items |
 | 8 | Solar Probe | Solar corona | Solar heavy launcher | 25 | 4 to 5 instruments | +1 Data Cube per second |
 
-A three-star result in a stage lets you buy the next one: **Orbital Yard → Flight Annex → Lunar Program → Mars Program → Solar Program**.
+| 9 | Jupiter Weather | Jupiter orbit | Deep-space launcher | 28 | 4 to 5 instruments, no crew | +1 Data Cube per second |
+| 10 | Ring Explorer | Saturn orbit | Outer-planet launcher | 34 | 5 to 6 instruments, ≤29 mass, no crew | +1 Data Cube per second |
+| 11 | Blue Horizon | Neptune flyby | Deep-space heavy launcher | 38 | 6 to 7 instruments, no crew | +2 Data Cubes per second |
+
+A three-star result in a stage lets you buy the next one: **Orbital Yard → Flight Annex → Lunar Program → Mars Program → Solar Program → Jupiter Program → Saturn Program → Neptune Program**.
 
 <p align="center">
   <img src="assets/success.jpg" alt="A three-star Mission success flight report for First Light, with confetti, the unlocked payload plan, and the grant reward" width="90%">
@@ -153,7 +157,7 @@ A three-star result in a stage lets you buy the next one: **Orbital Yard → Fli
 
 ### The goal
 
-Earn three stars on **Solar Probe**, the final mission, flying a heat-shielded probe through the Sun's outer atmosphere. Along the way, collect every mission perk and build a fleet of satellites.
+Earn three stars on **Blue Horizon**, the final mission, sending an uncrewed flyby to Neptune. Along the way, collect every mission perk and build a fleet of satellites.
 
 ### What players learn
 
@@ -300,3 +304,4 @@ My Mini NASA is a fan-made educational project. It is not affiliated with or end
 | v3 | Full-window yard, collapsible Mission Control, mission choice, Flight Annex, and hidden recipes. |
 | v2 | Brighter yard, scientist orders, walk-up upgrades, and Cargo Runner. First public release. |
 | v1 | First playable release, with four Earth-orbit missions. |
+

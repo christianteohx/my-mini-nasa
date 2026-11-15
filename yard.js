@@ -29,6 +29,9 @@
     Moon: { sky: ['#535882', '#858ebd', '#6b80a5'], soil: ['#e1deed', '#bdbed9', '#b4bad9'], edge: '#eeebf8', wall: ['#8790bc', '#7b83ad', '#5d648f'], crater: ['#babbd7', '#cdd1e8', '#ebedfa', '#999bc2', '#acb0d0'] },
     Mars: { sky: ['#c87565', '#f6b99b', '#dea8ba'], soil: ['#ffc187', '#eeb173', '#ed9c74'], edge: '#ffdfaa', wall: ['#b97467', '#a66664', '#8c5256'], crater: ['#d4926b', '#f1af7e', '#ffca9b', '#b67966', '#d3946d'] },
     Sun: { sky: ['#4c3f7c', '#de9070', '#6061a6'], soil: ['#ebd8a2', '#d2b987', '#b8a5a1'], edge: '#fff0ac', wall: ['#947c87', '#897590', '#77607e'], crater: ['#bda48e', '#dfc58f', '#fff0b0', '#948192', '#b09e97'] },
+    Jupiter: { sky: ['#393250', '#b7918c', '#756785'], soil: ['#eacbad', '#cfad91', '#b99e92'], edge: '#ffdfc2', wall: ['#98797b', '#866b78', '#655875'], crater: ['#b89b90', '#dcc0a4', '#f7dfc2', '#9a7d7b', '#b89b8a'] },
+    Saturn: { sky: ['#323451', '#afa4c0', '#716e9d'], soil: ['#edddb4', '#cec1a2', '#b6aaa5'], edge: '#fff1cb', wall: ['#91869c', '#81768f', '#625c7a'], crater: ['#b7aaa1', '#d6c8ab', '#f6e9c4', '#918398', '#b2a7a0'] },
+    Neptune: { sky: ['#1e2d64', '#577ab0', '#6777ac'], soil: ['#c6daee', '#a3bbd7', '#91a9cc'], edge: '#e3f2ff', wall: ['#728bb0', '#627b9f', '#4b638a'], crater: ['#91a8c7', '#b9cee5', '#dbeeff', '#758db2', '#a0b8d2'] },
   };
   const START = { u: 94, v: 332 };
   const COLORS = {
@@ -283,6 +286,27 @@
   }
 
   function drawDestination(ctx, destination) {
+    if (['Jupiter', 'Saturn', 'Neptune'].includes(destination)) {
+      const neptune = destination === 'Neptune';
+      const saturn = destination === 'Saturn';
+      const colors = neptune ? ['#96dbff', '#437cdb', '#263d8b'] : saturn ? ['#fff0ba', '#d6b87d', '#927999'] : ['#ffe6be', '#d39473', '#885e74'];
+      const glow = ctx.createRadialGradient(0, 0, 55, 0, 0, 110);
+      glow.addColorStop(0, '#c9d9ff66'); glow.addColorStop(1, '#c9d9ff00');
+      oval(ctx, 0, 0, 110, 110, glow);
+      if (saturn) oval(ctx, 0, 0, 108, 29, null, '#e9dab595', 12, -0.3);
+      const disk = ctx.createRadialGradient(-22, -24, 3, 0, 0, 77);
+      colors.forEach((color, index) => disk.addColorStop(index / 2, color));
+      oval(ctx, 0, 0, 65, 65, disk, colors[0], 2);
+      ctx.save(); ctx.clip();
+      for (let y = -48; y < 64; y += 18) {
+        line(ctx, -70, y, 70, y + 7, neptune ? '#b6e6ff33' : '#fff2ce66', 7);
+      }
+      if (destination === 'Jupiter') oval(ctx, 26, 21, 18, 9, '#ad635e', '#efb48e', 2);
+      if (neptune) oval(ctx, -23, 18, 13, 5, '#244a91', null);
+      ctx.restore();
+      if (saturn) { ctx.save(); ctx.rotate(-0.3); ctx.beginPath(); ctx.ellipse(0, 0, 108, 29, 0, 0, Math.PI); ctx.strokeStyle = '#f7e7bd'; ctx.lineWidth = 10; ctx.stroke(); ctx.restore(); }
+      return;
+    }
     const moon = destination === 'Moon';
     const solar = destination === 'Sun';
     const light = solar ? '#fff2a5' : moon ? '#fff4df' : '#ffd8a8';

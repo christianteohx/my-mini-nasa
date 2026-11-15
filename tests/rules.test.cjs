@@ -13,6 +13,9 @@ const examples = [
   { loadout: { fuel: 4, part: 3, paper: 2, crew: 0 }, mass: 13, output: 2.2, fuelNeeded: 4, odds: 0.80 },
   { loadout: { fuel: 4, part: 5, paper: 4, crew: 0 }, mass: 17, output: 2.75, fuelNeeded: 4, odds: 0.78 },
   { loadout: { fuel: 5, part: 6, paper: 5, crew: 0 }, mass: 21, output: 3.5, fuelNeeded: 5, odds: 0.76 },
+  { loadout: { fuel: 6, part: 6, paper: 5, crew: 0 }, mass: 23, output: 4, fuelNeeded: 6, odds: 0.74 },
+  { loadout: { fuel: 7, part: 7, paper: 6, crew: 0 }, mass: 27, output: 4.5, fuelNeeded: 7, odds: 0.72 },
+  { loadout: { fuel: 9, part: 8, paper: 7, crew: 0 }, mass: 33, output: 5, fuelNeeded: 9, odds: 0.70 },
 ];
 
 for (const [index, example] of examples.entries()) {
@@ -157,6 +160,7 @@ test("the full campaign progresses through the normal economy and unlock actions
   const fire = () => {
     income(MISSIONS[state.missionIndex].fee);
     const missionIndex = state.missionIndex;
+    state.rngSeed = 1; // Economy path uses a successful roll; probability boundaries are tested separately.
     const report = R.launch(state);
     assert.equal(report.stars, 3, report.cause);
     assert.equal(report.recipeDiscovered, true);
@@ -228,12 +232,12 @@ test("the full campaign progresses through the normal economy and unlock actions
   assert.equal(state.history.length, MISSIONS.length);
   assert.equal(state.history.at(-1).campaignCompleted, true);
   assert.equal(state.satellites.length, MISSIONS.length);
-  assert.equal(R.inspectLaunch(state).mission.id, "m8");
+  assert.equal(R.inspectLaunch(state).mission.id, "m11");
   assert.equal(R.getExpansion(state), null);
   const restored = R.loadState({ getItem: () => JSON.stringify(state) });
   assert.equal(restored.completed, true);
-  assert.equal(R.getStage(restored).id, "sun");
-  assert.equal(restored.missionIndex, 7);
+  assert.equal(R.getStage(restored).id, "neptune");
+  assert.equal(restored.missionIndex, 10);
   assert.equal(R.selectMission(state, "m2"), true);
   state.loadout.part = 1;
   assert.equal(R.selectMission(state, "m4"), true);

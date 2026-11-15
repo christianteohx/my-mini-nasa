@@ -56,7 +56,7 @@ test("v7 flight records restore earned rewards without any extra payouts", () =>
   ];
   const restored = R.loadState({ getItem: () => JSON.stringify(old) });
   assert.equal(restored.wallet, old.wallet);
-  assert.equal(restored.completed, true);
+  assert.equal(restored.completed, false); // Solar clear is retained; outer planets are new.
   assert.equal(R.getRates(restored).carry, 6);
   assert.equal(R.getRates(restored).data, 1.5);
   assert.equal(R.getGrantPayout(restored), 10);
