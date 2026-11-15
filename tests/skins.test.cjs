@@ -63,3 +63,6 @@ test('each skin has a concise introduction, independent of unlocking or selectio
  for(const skin of [...S.ships,...S.suits]) {assert.equal(typeof skin.intro,'string');assert.ok(skin.intro.length>20&&skin.intro.length<150);}
  assert.equal(JSON.stringify(S.normalize()),before);
 });
+test('every skin links to an official NASA educational page without tracking',()=>{
+ for(const skin of [...S.ships,...S.suits]){const url=new URL(skin.learnUrl);assert.equal(url.protocol,'https:');assert.ok(['www.nasa.gov','science.nasa.gov'].includes(url.hostname));assert.equal(url.search,'');}
+});

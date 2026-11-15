@@ -31,3 +31,6 @@
 .skin-tooltip p {margin:4px 0 0;}
 .skin-tile:nth-child(2) .skin-tooltip {left:50%;transform:translateX(-50%);}
 .skin-tile:last-child .skin-tooltip {left:auto;right:5px;}
+
+#panel .skin-learn {display:inline-flex;align-items:center;gap:4px;min-height:44px;color:#334b80;font-weight:700;text-decoration:underline;text-underline-offset:3px;}
+#panel .skin-learn:focus-visible {outline:3px solid #d67e24;outline-offset:2px;border-radius:4px;}
