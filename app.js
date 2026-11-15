@@ -240,7 +240,7 @@
 
   function usePad(id, action) {
     if (flightTimer || state.report) return null;
-    if (id === 'launch') {
+    if (id === 'launch' || (id === 'cargo' && state.facilities.cargo.unlocked)) {
       openFacility(id, canvas);
       return null;
     }
@@ -259,7 +259,10 @@
     }
     const special = events.find(event => event.special);
     if (special) notify(`Picked up ${special.count} ${special.count === 1 ? labels[special.item] : R.ITEMS[special.item].plural}.`, 2.5);
-    else if (id === 'returns') {
+    else if (id === 'scrap') {
+      const count = events.reduce((total, event) => total + event.count, 0);
+      notify(`Scrapped ${count} ${count === 1 ? 'item' : 'items'}.`, 2.5);
+    } else if (id === 'returns') {
       const count = events.reduce((total, event) => total + event.count, 0);
       notify(`${count} ${count === 1 ? 'item' : 'items'} returned to stock.`, 2.5);
     } else if (cash) notify('Collected ' + money(cash.count), 1.5);
@@ -363,7 +366,7 @@
         return route('Collect Data Cubes', `${spec.name} needs ${spec.cubes} cubes to make ${label}.`, 'ground', 'output');
       }
       const detail = id === 'fuel' && yard.nearby === id
-        ? 'Step off the pad and back on to order one Fuel for $15.'
+        ? 'Step off the pad and back on to order more Fuel.'
         : `Walk onto the ${spec.name} pad to start production.`;
       return route(item === 'fuel' ? 'Order Fuel' : `Make ${label}`, detail, id);
     };
@@ -931,7 +934,7 @@
     callback?.();
   });
   dialog.addEventListener('input', event => {
-    if (activePanel !== 'facility' || facilitySelection !== 'launch' || !event.target.matches('.transfer-quantity')) return;
+    if (activePanel !== 'facility' || !['launch', 'cargo'].includes(facilitySelection) || !event.target.matches('.transfer-quantity')) return;
     event.target.dataset.edited = 'true';
     stations.refresh(panel, state, facilitySelection);
   });
@@ -1002,7 +1005,7 @@
     } else if (command === 'inspect-facility') {
       openFacility(id);
     } else if (command === 'station-transfer') {
-      if (facilitySelection !== 'launch' || yard.nearby !== 'launch') return;
+      if (!['launch', 'cargo'].includes(facilitySelection) || yard.nearby !== facilitySelection) return;
       const quantity = button.closest('[data-operation]').querySelector('input');
       const count = quantity.valueAsNumber;
       const result = R.transferAtStation(state, facilitySelection, value, count);

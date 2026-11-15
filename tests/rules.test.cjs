@@ -550,32 +550,14 @@ test("a shared factory pad deposits cubes before collecting hardware from a full
   assert.equal(state.wallet, before - 40);
 });
 
-test("Fuel Plant visits and waiting avoid an extra order when fuel is queued, processing or ready", () => {
-  const state = R.createState(1);
-  state.wallet = 100;
-  R.unlockFacility(state, "fuel");
-
-  assert.equal(R.interact(state, "fuel", "both").type, "order");
-  assert.equal(state.wallet, 45);
-  assert.equal(R.interact(state, "fuel", "both"), null);
-  R.tick(state, 1);
-  assert.equal(state.facilities.fuel.active, true);
-  assert.equal(R.interact(state, "fuel", "both"), null);
-  assert.equal(state.wallet, 45);
-
-  R.tick(state, R.getProductionCycle(state, "fuel") - 1);
-  R.interact(state, "ground", "output");
-  assert.equal(R.interact(state, "fuel", "both"), null);
-  assert.equal(state.wallet, 45);
-  R.interact(state, "grant", "input");
-  assert.equal(R.interact(state, "fuel", "both").type, "pickup");
-  assert.equal(R.interact(state, "fuel", "output"), null);
-  assert.equal(state.wallet, 45);
-
-  assert.equal(R.interact(state, "fuel", "input").type, "order");
-  assert.equal(R.interact(state, "fuel", "input").type, "order");
-  assert.equal(state.facilities.fuel.input, 2);
-  assert.equal(state.wallet, 15);
+test("Fuel Plant queues maximum affordable output and waiting never reorders", () => {
+  const state = R.createState(1); state.wallet = 100; R.unlockFacility(state, "fuel");
+  assert.equal(R.interact(state,"fuel","both").count,4);
+  assert.equal(state.wallet,0); assert.equal(state.facilities.fuel.input,4);
+  assert.equal(R.interact(state,"fuel","both"),null);
+  R.tick(state,R.getProductionCycle(state,"fuel"));
+  assert.equal(R.interact(state,"fuel","output").type,"pickup");
+  assert.equal(state.wallet,0);
 });
 
 test("selectable Ground and Grant quantities preserve leftovers and reject invalid requests", () => {

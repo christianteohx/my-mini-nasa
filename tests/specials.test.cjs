@@ -175,9 +175,7 @@ for (const [factory, item] of Object.entries(R.SPECIALS)) {
     state.facilities.scrap.unlocked = true;
     state.inventory[item] = 2;
     assert.equal(R.interact(state, 'scrap', 'input').item, item);
-    assert.equal(state.inventory[item], 1);
-    assert.equal(R.interact(state, 'scrap', 'input').item, item);
-    assert.equal(state.inventory[item], 0);
+        assert.equal(state.inventory[item], 0);
     assert.equal(R.interact(state, 'scrap', 'input'), null);
   });
 
@@ -235,14 +233,16 @@ test('specials are retained when their factory is locked, including with Cargo u
   assert.equal(state.facilities.cargo.output, 0);
 });
 
-test('Scrap retains ordinary-item priority and does not alter loaded specials', () => {
+test('Scrap clears all ordinary and special inventory without altering loaded specials', () => {
   const state = R.createState(5);
   state.facilities.scrap.unlocked = true;
   state.inventory.data = 1;
   state.inventory.prizePaper = 1;
   state.specialLoadout.primePart = 1;
-  assert.equal(R.interact(state, 'scrap', 'input').item, 'data');
-  assert.equal(R.interact(state, 'scrap', 'input').item, 'prizePaper');
+  const result = R.interact(state, 'scrap', 'input');
+  assert.equal(result.type, 'batch');
+  assert.equal(state.inventory.data, 0);
+  assert.equal(state.inventory.prizePaper, 0);
   assert.equal(R.interact(state, 'scrap', 'input'), null);
   assert.equal(state.specialLoadout.primePart, 1);
 });
