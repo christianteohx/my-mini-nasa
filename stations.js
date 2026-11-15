@@ -229,7 +229,8 @@
       const load = limits[`load:${item}`] || 0;
       const unload = limits[`unload:${item}`] || 0;
       const max = Math.max(load, unload);
-      const suggested = plan && item in plan ? plan[item] - state.loadout[item] : null;
+      const base = rules.ITEMS[item].base ?? item;
+      const suggested = plan && base in plan ? plan[base] - rules.getSupplyCount({ ...state.loadout, ...state.specialLoadout }, base) : null;
       updateText(detail, `${state.inventory[item]} in bag · ${loaded(state, item)} loaded`);
       match.hidden = suggested === null;
       if (!match.hidden) updateText(match, suggested ? `Plan calls for ${Math.abs(suggested)} ${suggested < 0 ? 'fewer' : 'more'}` : 'Plan quantity met');
