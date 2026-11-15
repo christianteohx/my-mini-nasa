@@ -49,6 +49,7 @@
   let facilitySelection = null;
   let upgradeCategory = 'crew';
   let skinCategory = 'ship';
+  let skinInfo = null;
   let skinRole = 'player';
   let pendingDialogAction = null;
   const smallScreen = window.matchMedia('(max-width: 760px)');
@@ -821,7 +822,8 @@
     const selected = ship ? state.cosmetics.ship : state.cosmetics.crew[skinRole];
     return `<div class="skin-tabs" role="group" aria-label="Appearance category">${['ship','crew'].map(id => `<button class="quiet button" data-action="skin-category" data-value="${id}" aria-pressed="${skinCategory === id}">${id === 'ship' ? 'Spaceship' : 'Crew'}</button>`).join('')}</div>
       ${ship ? '' : `<label class="skin-role">Dress<select id="skin-role">${Object.entries(S.roles).map(([id,name]) => `<option value="${id}" ${id === skinRole ? 'selected' : ''}>${name}</option>`).join('')}</select></label>`}
-      <div class="skin-grid">${(ship ? S.ships : S.suits).map(skin => `<button class="skin-card" type="button" data-action="skin-select" data-value="${skin.id}" aria-pressed="${selected === skin.id}" ${S.unlocked(state, skinCategory, skin.id) ? '' : 'disabled'}><canvas width="280" height="304" data-skin="${skin.id}" aria-hidden="true"></canvas><strong>${skin.name}</strong><small>${skin.detail}</small><span class="skin-state">${S.unlocked(state, skinCategory, skin.id) ? (selected === skin.id ? 'Equipped' : 'Equip') : 'Locked'}</span>${S.unlocked(state, skinCategory, skin.id) ? '' : `<small class="skin-requirement">${skin.requirement}</small>`}</button>`).join('')}</div>
+      <div class="skin-grid">${(ship ? S.ships : S.suits).map(skin => `<div class="skin-tile"><button class="skin-info-toggle" type="button" data-action="skin-info" data-value="${skin.id}" aria-label="About ${skin.name}" aria-expanded="${skinInfo === skin.id}" aria-controls="skin-intro"><span aria-hidden="true">!</span></button><button class="skin-card" type="button" data-action="skin-select" data-value="${skin.id}" aria-pressed="${selected === skin.id}" ${S.unlocked(state, skinCategory, skin.id) ? '' : 'disabled'}><canvas width="280" height="304" data-skin="${skin.id}" aria-hidden="true"></canvas><strong>${skin.name}</strong><small>${skin.detail}</small><span class="skin-state">${S.unlocked(state, skinCategory, skin.id) ? (selected === skin.id ? 'Equipped' : 'Equip') : 'Locked'}</span>${S.unlocked(state, skinCategory, skin.id) ? '' : `<small class="skin-requirement">${skin.requirement}</small>`}</button></div>`).join('')}</div>
+      <div id="skin-intro" class="skin-intro" aria-live="polite" ${skinInfo ? '' : 'hidden'}>${skinInfo ? `<strong>${(ship ? S.ships : S.suits).find(s => s.id === skinInfo).name}</strong><p>${(ship ? S.ships : S.suits).find(s => s.id === skinInfo).intro}</p><button class="quiet button" data-action="skin-info" data-value="${skinInfo}" aria-label="Close skin introduction">Close</button>` : ''}</div>
       <p class="skin-note">Cosmetic only. Original tributes, not official endorsements.</p>`;
   }
 
@@ -951,11 +953,15 @@
     } else if(command==='trivia-next'){
       T.next(state);store();drawPanel();(panel.querySelector('.trivia-options button')||byId('close-panel')).focus();
     }
-    else if (command === 'open-skins') {openDialog('skins');byId('close-panel').focus();}
+    else if (command === 'open-skins') {skinInfo = null;openDialog('skins');byId('close-panel').focus();}
     else if (command === 'skin-category') {
       if (!['ship','crew'].includes(value)) return;
-      skinCategory = value; drawPanel();
+      skinCategory = value; skinInfo = null; drawPanel();
       panel.querySelector(`[data-action="skin-category"][data-value="${value}"]`)?.focus({preventScroll:true});
+    } else if (command === 'skin-info') {
+      if (!(skinCategory === 'ship' ? S.ships : S.suits).some(s => s.id === value)) return;
+      skinInfo = skinInfo === value ? null : value; drawPanel();
+      panel.querySelector(`.skin-info-toggle[data-value="${value}"]`)?.focus({preventScroll:true});
     } else if (command === 'skin-select') {
       const target = skinCategory === 'ship' ? 'ship' : skinRole;
       state.cosmetics = S.select(state.cosmetics, target, value, state);
@@ -1139,4 +1145,5 @@
   }
   if (!document.hidden) animationFrame = requestAnimationFrame(frame);
 })();
+
 

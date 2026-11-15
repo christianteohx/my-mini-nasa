@@ -57,3 +57,9 @@ test('actual Lunar Relay flight awards unlocks and failed replay cannot revoke t
  state.loadout={fuel:1,part:1,paper:0,crew:0};state.rngSeed=0xffffffff;R.launch(state);
  assert.equal(S.normalize(state.cosmetics,state).ship,'artemis');
 });
+
+test('each skin has a concise introduction, independent of unlocking or selection',()=>{
+ const before=JSON.stringify(S.normalize());
+ for(const skin of [...S.ships,...S.suits]) {assert.equal(typeof skin.intro,'string');assert.ok(skin.intro.length>20&&skin.intro.length<150);}
+ assert.equal(JSON.stringify(S.normalize()),before);
+});
