@@ -326,3 +326,9 @@ dialog h2 { color: #263371; }
 @media (prefers-reduced-motion: reduce) {
   *, *::after, *::before { transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Font-independent icons retain text labels on every platform. */
+.ui-icon { display:inline-block; width:1em; height:1em; flex-shrink:0; vertical-align:-.15em; }
+.rating-star { opacity:.3; }
+.rating-star[data-earned] { opacity:1; }
+.rating-star[data-earned] .ui-icon, .report-stars [data-earned] .ui-icon { fill:currentColor; }

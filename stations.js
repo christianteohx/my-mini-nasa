@@ -90,7 +90,7 @@
           <span class="nasa-fact-tag">REAL NASA</span>
           <h3>${escapeHTML(fact.title)}</h3>
           <p>${escapeHTML(fact.text)}</p>
-          <small>${escapeHTML(fact.credit)} · <a href="${link}" target="_blank" rel="noopener">View on NASA ↗</a></small>
+          <small>${escapeHTML(fact.credit)} · <a href="${link}" target="_blank" rel="noopener">View on NASA ${window.NasaIcons.svg('arrow')}</a></small>
         </figcaption>
       </figure>`;
   }
@@ -106,7 +106,7 @@
     const item = rules.SPECIALS[id];
     if (!item) return '';
     return `<div class="special-info" data-item="${item}">
-        <span class="special-star" aria-hidden="true">★</span>
+        <span class="special-star" aria-hidden="true">${window.NasaIcons.svg('star')}</span>
         <div><strong>${escapeHTML(rules.ITEMS[item].name)}</strong><p>${specialPerks[item]}</p><p class="special-odds" data-special-text></p></div>
       </div>`;
   }
@@ -143,7 +143,7 @@
     if (id === 'ground') return `${facility.output} / ${rules.getRates(state).cap} Data Cubes ready · ${rules.getRates(state).data.toFixed(2)}/s`;
 
     const capacity = rules.getFacilityOutputCapacity(state, id);
-    const special = rules.SPECIALS[id] && facility.special ? ` + ${facility.special} ★` : '';
+    const special = rules.SPECIALS[id] && facility.special ? ` + ${facility.special} special` : '';
     const ready = id === 'grant' ? `${money(facility.output)} ready · ${facility.stock} / ${capacity} payouts` : `${facility.output} / ${capacity} ${plural(spec.item)}${special} ready`;
     const batches = Math.floor(facility.input / Math.max(1, spec.cubes)) + Number(facility.active);
     return batches ? `${ready} · ${batches} processing or queued` : ready;

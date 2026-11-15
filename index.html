@@ -8,22 +8,23 @@
   <meta name="description" content="Run a pocket-sized spaceport and launch missions to Earth orbit, the Moon, Mars, and the Sun.">
   <title>My Mini NASA</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='11' fill='%235052f4'/%3E%3Ccircle cx='20' cy='20' r='8' fill='%23eff3ff'/%3E%3Cellipse cx='20' cy='20' rx='15' ry='5' transform='rotate(-35 20 20)' fill='none' stroke='%23ffde77' stroke-width='2'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=10">
+  <link rel="stylesheet" href="style.css?v=24">
   <link rel="stylesheet" href="campaign.css?v=8">
   <link rel="stylesheet" href="stations.css?v=8">
   <link rel="stylesheet" href="upgrades.css?v=10">
   <link rel="stylesheet" href="challenges.css?v=11">
   <link rel="stylesheet" href="cartoon.css?v=21">
   <link rel="stylesheet" href="splash.css?v=1">
+  <script defer src="icons.js?v=1"></script>
   <script defer src="splash.js?v=1"></script>
   <script defer src="celebrate.js?v=1"></script>
   <script defer src="music.js?v=1"></script>
   <script defer src="rules.js?v=19"></script>
   <script defer src="challenges.js?v=11"></script>
   <script defer src="machines.js?v=23"></script>
-  <script defer src="yard.js?v=23"></script>
-  <script defer src="stations.js?v=17"></script>
-  <script defer src="app.js?v=23"></script>
+  <script defer src="yard.js?v=24"></script>
+  <script defer src="stations.js?v=24"></script>
+  <script defer src="app.js?v=24"></script>
 </head>
 <body>
   <div class="splash" id="splash" role="dialog" aria-modal="true" aria-labelledby="splash-title">
@@ -50,7 +51,7 @@
         <span class="splash-challenge" aria-hidden="true">CHALLENGE <b>2026</b></span>
       </p>
       <h2 class="splash-title" id="splash-title"><span>My</span> <span>Mini</span> <span class="splash-title-nasa">NASA</span></h2>
-      <button type="button" class="splash-start" id="splash-start"><span aria-hidden="true">▶</span> Start mission</button>
+      <button type="button" class="splash-start" id="splash-start"><span aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 3l15 9-15 9Z"/></svg></span> Start mission</button>
       <p class="splash-hint">Press Enter or tap to start</p>
     </div>
     <p class="splash-credit">by team Willis Not Sears</p>
@@ -63,10 +64,10 @@
         <strong>My Mini<span> NASA</span></strong>
       </a>
       <div class="header-actions">
-        <a class="challenge" href="https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/" target="_blank" rel="noopener">NASA SPACE APPS <span>2026</span> <b aria-hidden="true">↗</b></a>
-        <button type="button" class="quiet header-button upgrades-shortcut" data-open="upgrades" aria-label="Upgrades" title="Upgrades">↟ <span>Upgrades</span></button>
+        <a class="challenge" href="https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/" target="_blank" rel="noopener">NASA SPACE APPS <span>2026</span> <b aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></b></a>
+        <button type="button" class="quiet header-button upgrades-shortcut" data-open="upgrades" aria-label="Upgrades" title="Upgrades"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20V4M5 11l7-7 7 7"/></svg> <span>Upgrades</span></button>
         <button type="button" class="quiet header-button" data-open="guide" aria-label="Field guide">? <span>Guide</span></button>
-        <button type="button" class="quiet header-button" data-open="settings" aria-label="Settings">⚙ <span>Settings</span></button>
+        <button type="button" class="quiet header-button" data-open="settings" aria-label="Settings"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 3h6l1 3 3 1 2 5-2 5-3 1-1 3H9l-1-3-3-1-2-5 2-5 3-1ZM8 12a4 4 0 1 0 8 0 4 4 0 1 0-8 0"/></svg> <span>Settings</span></button>
       </div>
     </div>
   </header>
@@ -77,7 +78,7 @@
       <div class="telemetry" aria-label="Spaceport resources">
           <div class="stat" id="wallet-stat"><span class="stat-symbol money-symbol">$</span><div><span>CASH</span><strong id="wallet">$0</strong></div></div>
           <div class="stat"><span class="stat-symbol cube-symbol"><i></i></span><div><span>DATA INCOMING</span><strong id="rate">0.50<small>/s</small></strong></div></div>
-          <div class="stat"><span class="stat-symbol orbit-symbol">◉</span><div><span>SATELLITES</span><strong id="satellites">0</strong></div></div>
+          <div class="stat"><span class="stat-symbol orbit-symbol"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M8 12a4 4 0 1 0 8 0 4 4 0 1 0-8 0M3 5c-5 5 14 18 18 14S7 0 3 5Z"/></svg></span><div><span>SATELLITES</span><strong id="satellites">0</strong></div></div>
       </div>
     </div>
 
@@ -85,18 +86,18 @@
         <div class="stage" id="stage" aria-label="Spaceport yard">
           <canvas id="yard" width="1020" height="650" tabindex="0" aria-label="Spaceport yard. Move with WASD, arrows, or drag. You can also use the station list."></canvas>
           <div class="order-card" aria-label="Grant Bonus. Sell four Data Cubes at the Grant Office to earn three dollars extra.">
-            <div class="order-icon" aria-hidden="true">◆</div>
+            <div class="order-icon" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 2 22 7v10l-10 5-10-5V7ZM2 7l10 5 10-5M12 12v10"/></svg></div>
             <div class="order-copy"><strong>Grant Bonus</strong><span id="order-progress">0 / 4 cubes sold</span></div><span class="order-bonus" id="order-bonus">+$3</span>
           </div>
-          <div class="notice" id="notice" role="status" hidden><span aria-hidden="true">✦</span><div id="notice-text"></div></div>
-          <button type="button" class="map-button quiet" id="directory-toggle" aria-haspopup="dialog" data-open="stations"><span aria-hidden="true">⌘</span> Stations</button>
-          <button type="button" id="yard-launch" class="yard-launch" hidden>▲ Launch mission</button>
+          <div class="notice" id="notice" role="status" hidden><span aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 2 15 8.5 22 9.5 17 14.5 18 22 12 18.5 6 22 7 14.5 2 9.5 9 8.5Z"/></svg></span><div id="notice-text"></div></div>
+          <button type="button" class="map-button quiet" id="directory-toggle" aria-haspopup="dialog" data-open="stations"><span aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 5l7-3 6 3 7-3v17l-7 3-6-3-7 3ZM9 2v17M15 5v17"/></svg></span> Stations</button>
+          <button type="button" id="yard-launch" class="yard-launch" hidden><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20V4M5 11l7-7 7 7"/></svg> Launch mission</button>
         </div>
       <section class="game" aria-label="Spaceport controls">
         <section class="directive" aria-label="Current objective">
-          <div class="directive-icon" aria-hidden="true">↗</div>
+          <div class="directive-icon" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></div>
           <div class="directive-copy"><span class="eyebrow">NEXT TASK <span aria-hidden="true">·</span> <span id="yard-tier">ORBITAL YARD</span></span><strong id="objective">Collect Data Cubes</strong><p id="objective-detail">Select Ground Station to see what it produces.</p></div>
-          <button class="quiet button locate" id="locate" type="button" aria-label="Walk to objective">Go there <span aria-hidden="true">→</span></button>
+          <button class="quiet button locate" id="locate" type="button" aria-label="Walk to objective">Go there <span aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 12h16M13 5l7 7-7 7"/></svg></span></button>
         </section>
         <div class="yard-bar">
           <div class="inventory-summary" id="inventory-summary"><span class="eyebrow">CARRYING</span><strong id="carry">0 / 4</strong></div>
@@ -108,35 +109,35 @@
       <aside class="mission" id="mission-control" aria-label="Mission Control">
         <div class="mission-strip">
           <span class="eyebrow"><i></i> Mission Control</span>
-          <button type="button" class="quiet board-button" id="mission-board" data-open="missions">Choose mission <span aria-hidden="true">↗</span></button>
-          <button type="button" class="quiet mission-toggle" id="mission-toggle" aria-expanded="true" aria-controls="mission-content mission-primary" aria-label="Collapse Mission Control"><span aria-hidden="true">−</span></button>
+          <button type="button" class="quiet board-button" id="mission-board" data-open="missions">Choose mission <span aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></span></button>
+          <button type="button" class="quiet mission-toggle" id="mission-toggle" aria-expanded="true" aria-controls="mission-content mission-primary" aria-label="Collapse Mission Control"><span aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 12h16"/></svg></span></button>
         </div>
         <div class="mission-content" id="mission-content">
-          <div class="mission-heading"><h2 id="mission-title">First Light</h2><p id="mission-description" hidden>Put your first CubeSat in orbit.</p><div class="mission-chips"><span class="mission-tag" id="mission-tag">EARTH ORBIT</span><span class="vehicle-chip"><span class="vehicle-icon" aria-hidden="true">↟</span><strong id="rocket">Rideshare</strong><span id="rocket-limit">max 6 mass</span></span></div></div>
-          <div class="mission-perk" id="mission-perk" hidden><span aria-hidden="true">✦</span><div><strong id="mission-perk-title"></strong><small id="mission-perk-detail"></small></div></div>
+          <div class="mission-heading"><h2 id="mission-title">First Light</h2><p id="mission-description" hidden>Put your first CubeSat in orbit.</p><div class="mission-chips"><span class="mission-tag" id="mission-tag">EARTH ORBIT</span><span class="vehicle-chip"><span class="vehicle-icon" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20V4M5 11l7-7 7 7"/></svg></span><strong id="rocket">Rideshare</strong><span id="rocket-limit">max 6 mass</span></span></div></div>
+          <div class="mission-perk" id="mission-perk" hidden><span aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 2 15 8.5 22 9.5 17 14.5 18 22 12 18.5 6 22 7 14.5 2 9.5 9 8.5Z"/></svg></span><div><strong id="mission-perk-title"></strong><small id="mission-perk-detail"></small></div></div>
           <div class="odds-panel">
             <div class="odds-summary"><span>Success chance</span><strong id="launch-odds">—</strong></div>
             <div class="odds-meter" aria-hidden="true"><span id="odds-fill"></span></div>
             <p class="status-line" id="status-line"></p>
             <p class="special-bonus" id="special-bonus" hidden></p>
           </div>
-          <div class="gauge-top"><span class="eyebrow">Payload</span><span id="manifest-note">PLAN LOCKED</span><button type="button" id="manifest-button" class="manifest-button" data-open="manifest" hidden>Manage ↗</button></div>
+          <div class="gauge-top"><span class="eyebrow">Payload</span><span id="manifest-note">PLAN LOCKED</span><button type="button" id="manifest-button" class="manifest-button" data-open="manifest" hidden>Manage <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></button></div>
           <div class="gauges" id="gauges"></div>
-          <button type="button" class="quiet expansion-button" id="expansion-button" data-open="missions" hidden><span>Next destination</span><strong id="expansion-label"></strong><span aria-hidden="true">↗</span></button>
-          <div class="mission-actions"><button type="button" class="quiet button challenge-entry" data-open="challenges" aria-describedby="challenge-summary"><span aria-hidden="true">★</span> Challenges<small id="challenge-summary" hidden>Pick a focus</small></button><button class="quiet button" type="button" data-open="log"><span aria-hidden="true">≡</span> Flight log</button></div>
+          <button type="button" class="quiet expansion-button" id="expansion-button" data-open="missions" hidden><span>Next destination</span><strong id="expansion-label"></strong><span aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></span></button>
+          <div class="mission-actions"><button type="button" class="quiet button challenge-entry" data-open="challenges" aria-describedby="challenge-summary"><span aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 2 15 8.5 22 9.5 17 14.5 18 22 12 18.5 6 22 7 14.5 2 9.5 9 8.5Z"/></svg></span> Challenges<small id="challenge-summary" hidden>Pick a focus</small></button><button class="quiet button" type="button" data-open="log"><span aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span> Flight log</button></div>
         </div>
         <div class="mission-primary" id="mission-primary">
-          <button class="launch button" type="button" id="launch" disabled><span class="launch-icon" aria-hidden="true">▲</span><strong id="launch-label">Launch mission</strong><small id="launch-fee">FREE</small></button>
+          <button class="launch button" type="button" id="launch" disabled><span class="launch-icon" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20V4M5 11l7-7 7 7"/></svg></span><strong id="launch-label">Launch mission</strong><small id="launch-fee">FREE</small></button>
           <button type="button" class="quiet recipe-button" id="recipe-button" data-open="recipe"><strong>Payload plan</strong><small id="recipe-price"></small></button>
         </div>
       </aside>
     </div>
 
-    <footer class="foot"><span><span class="signal"></span> <span id="save-status">PROGRESS SAVED ON THIS DEVICE</span></span><a href="https://www.nasa.gov/wp-content/uploads/2025/04/250323-design-and-develop-science-mission.pdf" target="_blank" rel="noopener">MISSION DESIGN RESOURCES <b aria-hidden="true">↗</b></a></footer>
+    <footer class="foot"><span><span class="signal"></span> <span id="save-status">PROGRESS SAVED ON THIS DEVICE</span></span><a href="https://www.nasa.gov/wp-content/uploads/2025/04/250323-design-and-develop-science-mission.pdf" target="_blank" rel="noopener">MISSION DESIGN RESOURCES <b aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M5 5h14v14"/></svg></b></a></footer>
   </main>
 
   <dialog id="panel" aria-labelledby="panel-title">
-    <div class="panel-top"><span id="panel-kicker" class="eyebrow">SPACEPORT OPERATIONS</span><button type="button" class="quiet close" id="close-panel" aria-label="Close panel" autofocus>×</button></div>
+    <div class="panel-top"><span id="panel-kicker" class="eyebrow">SPACEPORT OPERATIONS</span><button type="button" class="quiet close" id="close-panel" aria-label="Close panel" autofocus><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 5l14 14M19 5 5 19"/></svg></button></div>
     <h2 id="panel-title"></h2>
     <div id="panel-content"></div>
   </dialog>

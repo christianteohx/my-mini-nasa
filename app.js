@@ -1,6 +1,7 @@
 (() => {
   'use strict';
 
+  const I = window.NasaIcons;
   const R = window.SpaceportRules;
   const C = window.SpaceportChallenges;
   const stations = window.SpaceportStations;
@@ -17,7 +18,7 @@
   const specialKeys = R.SPECIAL_ITEMS;
   const labels = {data:'Data Cube', fuel:'Fuel', part:'Part', paper:'Research Paper', crew:'Astronaut', mass:'Mass',
     primePart:'Prime Part', prizePaper:'Prize Paper', eliteCrew:'Elite Astronaut'};
-  const symbols = {data:'◆', fuel:'◒', part:'✚', paper:'▤', crew:'♟', mass:'◈', primePart:'✦', prizePaper:'✪', eliteCrew:'★'};
+  const symbols = Object.fromEntries(Object.entries({data:'cube', fuel:'fuel', part:'part', paper:'paper', crew:'crew', mass:'cube', primePart:'star', prizePaper:'star', eliteCrew:'star'}).map(([key, name]) => [key, I.svg(name)]));
   const production = {fuel:'fuel', part:'engineering', paper:'research', crew:'academy'};
   const nasaMissionDesign = 'https://www.nasa.gov/wp-content/uploads/2025/04/250323-design-and-develop-science-mission.pdf';
   const resultLabels = {failed:'Launch failed', partial:'Partial success', success:'Mission success'};
@@ -196,7 +197,7 @@
     onSpecial(id) {
       const item = R.SPECIALS[id];
       if (!item) return;
-      notify(`★ ${labels[item]} made at ${R.FACILITIES[id].name}!`, 3);
+      notify(`${labels[item]} made at ${R.FACILITIES[id].name}!`, 3);
       chirp('unlock');
     },
     onUpgrade(id) {
@@ -252,7 +253,7 @@
       }
     }
     const special = events.find(event => event.special);
-    if (special) notify(`★ Picked up ${special.count} ${special.count === 1 ? labels[special.item] : R.ITEMS[special.item].plural}.`, 2.5);
+    if (special) notify(`Picked up ${special.count} ${special.count === 1 ? labels[special.item] : R.ITEMS[special.item].plural}.`, 2.5);
     else if (id === 'returns') {
       const count = events.reduce((total, event) => total + event.count, 0);
       notify(`${count} ${count === 1 ? 'item' : 'items'} returned to stock.`, 2.5);
@@ -280,7 +281,7 @@
     missionControl.dataset.collapsed = String(!open);
     missionToggle.setAttribute('aria-expanded', String(open));
     missionToggle.setAttribute('aria-label', `${open ? 'Collapse' : 'Expand'} Mission Control`);
-    missionToggle.querySelector('span').textContent = open ? '−' : '+';
+    missionToggle.querySelector('span').innerHTML = I.svg(open ? 'minus' : 'plus');
     yard.setPanelOpen?.(open, missionControl.offsetWidth, missionControl.offsetHeight);
   }
 
@@ -424,7 +425,7 @@
     byId('mission-perk').hidden = !perk;
     if (perk) {
       byId('mission-perk').dataset.earned = perk.earned;
-      setText('mission-perk-title', `${perk.earned ? 'Earned' : '★★★'} · ${perk.name}`);
+      setText('mission-perk-title', `${perk.earned ? 'Earned' : '3 stars'} · ${perk.name}`);
       byId('mission-perk').title = perk.detail;
       setText('mission-perk-detail', perk.detail);
     }
@@ -477,11 +478,11 @@
     if (bonus?.downlink) perks.push(`+${percent(bonus.downlink)} data`);
     if (bonus?.cash && mission) perks.push(`+${money(Math.round(mission.reward * bonus.cash))} on success`);
     byId('special-bonus').hidden = !perks.length;
-    setText('special-bonus', perks.length ? `★ Specials ${perks.join(' · ')}` : '');
+    setText('special-bonus', perks.length ? `Specials ${perks.join(' · ')}` : '');
     byId('launch').disabled = !info.ready || Boolean(flightTimer);
     byId('yard-launch').hidden = yard.nearby !== 'launch' || !info.ready || Boolean(flightTimer);
     setText('launch-label', flightTimer ? 'Launching…' : 'Launch mission');
-    setText('launch-fee', mission?.fee ? money(mission.fee) : mission ? 'FREE' : '✓');
+    setText('launch-fee', mission?.fee ? money(mission.fee) : mission ? 'FREE' : 'READY');
     byId('recipe-button').hidden = !recipe;
     byId('recipe-button').setAttribute('aria-label', recipe?.known ? 'View payload plan' : 'View locked payload plan');
     setText('recipe-price', recipe?.known ? 'KNOWN' : recipe ? money(recipe.price) : '');
@@ -498,7 +499,7 @@
       const locate = byId('locate');
       locate.hidden = !next.id && !next.panelName;
       const label = next.panelName === 'missions' ? 'Mission board' : next.panelName === 'manifest' ? 'Manage loadout' : 'Go to pad';
-      locate.innerHTML = label + ' <span aria-hidden="true">→</span>';
+      locate.innerHTML = label + ' ' + I.svg('right');
       locate.setAttribute('aria-label', next.panelName ? label : 'Walk to objective');
       yard.setGuide(next.id || null, next.zone);
     }
@@ -518,9 +519,9 @@
   }
 
   const crewCards = {
-    intern: {glyph:'◆', detail:'Takes Data Cubes to the Grant Office.'},
-    runner: {glyph:'▦', detail:'Moves finished supplies to the Cargo Shelf.'},
-    materials: {glyph:'✚', detail:'Supplies factories and saves cash for launch.'},
+    intern: {glyph:I.svg('cube'), detail:'Takes Data Cubes to the Grant Office.'},
+    runner: {glyph:I.svg('bag'), detail:'Moves finished supplies to the Cargo Shelf.'},
+    materials: {glyph:I.svg('part'), detail:'Supplies factories and saves cash for launch.'},
     clerk: {glyph:'$', detail:'Collects grants and adds them to your wallet.'}
   };
   const upgradeTabs = {crew:'Crew', machines:'Machines', player:'Player'};
@@ -533,7 +534,7 @@
     const maxLevel = item.maxLevel + 1;
     const current = item.id === 'runnerCarry' && item.current === 1 ? '1 supply' : item.currentLabel;
     let purchase = '<span class="upgrade-unavailable">Build first</span>';
-    const extra = item.items ? ` + ${item.items.count} ${symbols[item.items.item]}` : '';
+    const extra = item.items ? ` + ${item.items.count} ${labels[item.items.item]}` : '';
     if (item.maxed) purchase = '<span class="upgrade-unavailable">Max level</span>';
     else if (item.unlocked) purchase = action(`Upgrade · ${money(item.cost)}${extra}`, 'upgrade', value, !item.affordable, true);
     const needs = [];
@@ -542,14 +543,14 @@
       needs.push(`<span class="upgrade-need" data-met="${met}">${icon(special)} ${count} ${escapeHTML(count === 1 ? labels[special] : R.ITEMS[special].plural)} <small>(have ${have})</small></span>`);
     }
     if (!item.maxed && item.requirement) {
-      needs.push(`<span class="upgrade-need" data-met="${item.requirement.met}"><span aria-hidden="true">${item.requirement.met ? '✓' : '✕'}</span> 3★ ${escapeHTML(item.requirement.mission)}</span>`);
+      needs.push(`<span class="upgrade-need" data-met="${item.requirement.met}"><span aria-hidden="true">${I.svg(item.requirement.met ? 'check' : 'close')}</span> 3 stars ${escapeHTML(item.requirement.mission)}</span>`);
     }
     return `<div class="upgrade-stat">
       <div class="upgrade-stat-copy">
         <div class="upgrade-stat-heading"><span class="upgrade-stat-name">${name}</span><span class="upgrade-level">Lv. ${level}/${maxLevel}</span>
           <progress value="${level}" max="${maxLevel}" aria-label="${name} level"></progress></div>
         <p class="upgrade-values"><strong>${escapeHTML(current)}</strong>${item.unlocked && item.nextLabel ? `
-          <span class="upgrade-next"><span aria-hidden="true">→</span> <b>${escapeHTML(item.nextLabel)}</b></span>` : ''}</p>
+          <span class="upgrade-next"><span aria-hidden="true">${I.svg('right')}</span> <b>${escapeHTML(item.nextLabel)}</b></span>` : ''}</p>
         ${needs.length && item.unlocked ? `<p class="upgrade-needs"><span>Needs</span>${needs.join('')}</p>` : ''}
       </div>${purchase}
     </div>`;
@@ -574,17 +575,17 @@
       const stats = worker.upgradeIds.map(key => upgradeLine(R.getUpgrade(state, key), key.endsWith('Speed') ? 'Speed' : 'Stack size')).join('');
       return upgradeCard(glyph, worker.name, detail, stats, status);
     }).join('') : upgradeCategory === 'machines' ? [
-      upgradeCard('◆', 'Ground Station', '', upgradeLine(R.getUpgrade(state, 'ground'), 'Cube storage')),
+      upgradeCard(I.svg('cube'), 'Ground Station', '', upgradeLine(R.getUpgrade(state, 'ground'), 'Cube storage')),
       ...['grant','fuel','engineering','research','academy'].map(id => {
         const spec = R.FACILITIES[id];
         const special = R.SPECIALS[id];
         const lines = upgradeLine(R.getUpgrade(state, 'facility', id), 'Cycle time')
           + (special ? upgradeLine(R.getUpgrade(state, 'quality', id), `${labels[special]} chance`) : '');
-        return upgradeCard(id === 'grant' ? '$' : symbols[spec.item], spec.name, special ? `Sometimes makes ★ ${R.ITEMS[special].plural}` : '', lines);
+        return upgradeCard(id === 'grant' ? '$' : symbols[spec.item], spec.name, special ? `Sometimes makes ${R.ITEMS[special].plural}` : '', lines);
       })
     ].join('') : [
-      upgradeCard('▦', 'Backpack', '', upgradeLine(R.getUpgrade(state, 'carry'), 'Carry capacity')),
-      upgradeCard('↗', 'Boots', '', upgradeLine(R.getUpgrade(state, 'speed'), 'Walk speed'))
+      upgradeCard(I.svg('bag'), 'Backpack', '', upgradeLine(R.getUpgrade(state, 'carry'), 'Carry capacity')),
+      upgradeCard(I.svg('arrow'), 'Boots', '', upgradeLine(R.getUpgrade(state, 'speed'), 'Walk speed'))
     ].join('');
     return `<div class="upgrades-toolbar"><div class="upgrade-tabs" role="group" aria-label="Upgrade categories">${Object.entries(upgradeTabs).map(([id, name]) =>
       `<button type="button" data-action="upgrade-category" data-value="${id}" aria-pressed="${upgradeCategory === id}">${name}</button>`).join('')}</div>
@@ -605,10 +606,10 @@
         const grant = R.getMissionGrant(state, mission.id);
         const grantLabel = grant.remaining ? `Up to ${money(grant.remaining)} in grants` : 'Full grant paid';
         return `<article class="mission-offer">
-          <div class="offer-top"><h3>${escapeHTML(mission.name)}</h3><span class="offer-stars" aria-label="${stars} best stars">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</span></div>
+          <div class="offer-top"><h3>${escapeHTML(mission.name)}</h3><span class="offer-stars" role="img" aria-label="${stars} best stars">${Array.from({length:3}, (_, i) => `<span class="rating-star"${i < stars ? ' data-earned' : ''}>${I.svg('star')}</span>`).join('')}</span></div>
           <p>${escapeHTML(mission.objective || mission.description)}</p>
           <div class="offer-terms"><span>${escapeHTML(mission.arrival || mission.orbit || mission.destination)}</span><span>Launch ${mission.fee ? money(mission.fee) : 'free'}</span><span>${grantLabel}</span></div>
-          ${perk ? `<div class="mission-perk" data-earned="${perk.earned}"><span aria-hidden="true">${perk.earned ? '✓' : '✦'}</span><div><strong>${perk.earned ? 'Earned' : '3-star reward'} · ${escapeHTML(perk.name)}</strong><small>${escapeHTML(perk.detail)}</small></div></div>` : ''}
+          ${perk ? `<div class="mission-perk" data-earned="${perk.earned}"><span aria-hidden="true">${I.svg(perk.earned ? 'check' : 'star')}</span><div><strong>${perk.earned ? 'Earned' : '3-star reward'} · ${escapeHTML(perk.name)}</strong><small>${escapeHTML(perk.detail)}</small></div></div>` : ''}
           ${locked ? '' : `<div class="offer-actions">${action(recipe.known ? 'View payload plan' : 'Plan ' + money(recipe.price), 'recipe-info', mission.id)}
           ${action(selected ? 'Keep selected' : 'Select mission', 'mission', mission.id, false, !selected)}</div>`}
         </article>`;
@@ -622,7 +623,7 @@
       return `<section class="board-stage"><div class="board-heading"><h3>${escapeHTML(stage.name)}</h3><span>${escapeHTML(stage.destination || 'Earth').toUpperCase()} · ${locked ? 'LOCKED' : 'OPEN'}</span></div>${unlock}<div class="mission-offers">${offers}</div></section>`;
     }).join('');
     const loaded = Object.values(state.loadout).some(Boolean);
-    return `<p class="dialog-lead">${loaded ? 'Supplies already on the launch pad stay loaded when you change missions.' : 'Improve your best result to earn the remaining grant. Three stars earn a lasting spaceport upgrade.'}</p><div class="challenge-board-link">${action('Challenges ↗', 'open-challenges')}</div>${stages}`;
+    return `<p class="dialog-lead">${loaded ? 'Supplies already on the launch pad stay loaded when you change missions.' : 'Improve your best result to earn the remaining grant. Three stars earn a lasting spaceport upgrade.'}</p><div class="challenge-board-link">${action('Challenges', 'open-challenges')}</div>${stages}`;
   }
 
   function challengesPanel() {
@@ -661,7 +662,7 @@
         <div class="recipe-peak"><strong>${percent(recipe.peakOdds)}</strong><span>Best chance to reach the destination</span></div>
         <div class="dialog-bottom">${action('Mission board', 'back-to-board')}</div>`;
     }
-    return `<div class="recipe-hidden"><span aria-hidden="true">▤</span><div><h3>Payload plan locked</h3><p>Earn three stars to unlock the best payload for free. Flying the exact payload also unlocks it, even on a failed launch.</p></div></div>
+    return `<div class="recipe-hidden"><span aria-hidden="true">${I.svg('paper')}</span><div><h3>Payload plan locked</h3><p>Earn three stars to unlock the best payload for free. Flying the exact payload also unlocks it, even on a failed launch.</p></div></div>
       <p class="dialog-lead recipe-funds">Available cash <strong>${money(state.wallet)}</strong></p>
       <div class="dialog-bottom">${action('Buy plan · ' + money(recipe.price), 'buy-recipe', recipe.mission.id, !recipe.affordable, true)}
       ${action('Mission board', 'back-to-board')}</div>`;
@@ -702,14 +703,14 @@
     byId('panel-kicker').textContent = title.toUpperCase() + ' / FLIGHT REPORT';
     byId('panel-title').textContent = resultLabels[report.status] || 'Flight report';
     dialog.dataset.result = report.stars === 3 ? 'success' : report.stars ? 'partial' : 'failed';
-    const starMarks = [0, 1, 2].map(i => `<span${i < report.stars ? ' data-earned' : ''}>${i < report.stars ? '★' : '☆'}</span>`).join('');
-    return `<div class="report-stars" aria-label="${report.stars} out of 3 stars">${starMarks}</div>
+    const starMarks = [0, 1, 2].map(i => `<span${i < report.stars ? ' data-earned' : ''}>${I.svg('star')}</span>`).join('');
+    return `<div class="report-stars" role="img" aria-label="${report.stars} out of 3 stars">${starMarks}</div>
       <p class="dialog-lead">${escapeHTML(report.cause)}</p>
       ${typeof report.odds === 'number' ? `<div class="report-chance"><strong>${percent(report.odds)}</strong> chance to reach the destination</div>` : ''}
       ${report.campaignCompleted ? '<div class="report-discovery"><strong>Campaign complete</strong> Solar Probe completed its flyby.</div>' : ''}
-      ${report.unlockedReward ? `<div class="mission-perk report-perk" data-earned="true"><span aria-hidden="true">✦</span><div><strong>${escapeHTML(report.unlockedReward.name)} unlocked</strong><small>${escapeHTML(report.unlockedReward.detail)}</small></div></div>` : ''}
+      ${report.unlockedReward ? `<div class="mission-perk report-perk" data-earned="true"><span aria-hidden="true">${I.svg('star')}</span><div><strong>${escapeHTML(report.unlockedReward.name)} unlocked</strong><small>${escapeHTML(report.unlockedReward.detail)}</small></div></div>` : ''}
       ${report.recipeDiscovered ? `<div class="report-discovery"><strong>Payload plan unlocked for free</strong>${payloadChips(report.discoveredPlan || report.loadout)}</div>` : ''}
-      <div class="report-reward">${report.grant ? `<span>+${money(report.grant)} GRANT</span>` : ''}${report.output ? `<span>+${decimal(report.output)} CUBES/S</span>` : ''}${report.feeRefund ? `<span>+${money(report.feeRefund)} FEE REFUND</span>` : ''}${report.specialCash ? `<span class="special-reward">★ +${money(report.specialCash)} ELITE BONUS</span>` : ''}${report.stars && report.specialBonus?.downlink ? `<span class="special-reward">★ +${percent(report.specialBonus.downlink)} PRIZE DATA</span>` : ''}${report.specialBonus?.odds ? `<span class="special-reward">★ +${percent(report.specialBonus.odds)} PRIME ODDS</span>` : ''}</div>
+      <div class="report-reward">${report.grant ? `<span>+${money(report.grant)} GRANT</span>` : ''}${report.output ? `<span>+${decimal(report.output)} CUBES/S</span>` : ''}${report.feeRefund ? `<span>+${money(report.feeRefund)} FEE REFUND</span>` : ''}${report.specialCash ? `<span class="special-reward">${I.svg('star')} +${money(report.specialCash)} ELITE BONUS</span>` : ''}${report.stars && report.specialBonus?.downlink ? `<span class="special-reward">${I.svg('star')} +${percent(report.specialBonus.downlink)} PRIZE DATA</span>` : ''}${report.specialBonus?.odds ? `<span class="special-reward">${I.svg('star')} +${percent(report.specialBonus.odds)} PRIME ODDS</span>` : ''}</div>
       ${report.stars && !report.grant && typeof report.signalOutput === 'number' ? '<p class="inline-note">Your best grant for this mission has already been paid.</p>' : ''}
       ${report.challengeNote ? `<p class="challenge-report">${escapeHTML(report.challengeNote)}</p>` : ''}
       ${afterSuccessfulFlight(report)}
@@ -718,7 +719,7 @@
         if (!gauge) return '';
         return row(gauge.label, gauge.message, `<span class="verdict" data-tone="${gauge.status}">${verdicts[gauge.status] || 'Good'}</span>`, gaugeItems[key]);
       }).join('')}</div>
-      ${report.tip ? `<div class="report-tip">${escapeHTML(report.tip.text || report.tip)}${report.tip.url ? ` <a href="${escapeHTML(report.tip.url)}" target="_blank" rel="noopener">${escapeHTML(report.tip.source || 'NASA resource')} ↗</a>` : ''}</div>` : ''}
+      ${report.tip ? `<div class="report-tip">${escapeHTML(report.tip.text || report.tip)}${report.tip.url ? ` <a href="${escapeHTML(report.tip.url)}" target="_blank" rel="noopener">${escapeHTML(report.tip.source || 'NASA resource')} ${I.svg('arrow')}</a>` : ''}</div>` : ''}
       ${report === state.report && report.stars === 3 ? '' : `<div class="dialog-bottom">${action('Back to spaceport', 'close', '', false, true)}</div>`}`;
   }
 
@@ -744,7 +745,7 @@
         ${row('Improve on a mission', 'Beat your best result to earn the rest of its grant. Only your strongest downlink for each mission supplies Data Cubes.')}
         ${row('Pick a challenge', 'Choose Flight, Operations, or Research for optional goals that grow tougher as you complete them.')}
         ${row('Unlock a payload plan', 'Earn three stars or fly the exact payload to get its plan for free. Extra and missing supplies lower launch odds.', '', 'fuel')}
-        </div><p class="report-tip">The flight model uses game units for mass, power and data. <a href="${nasaMissionDesign}" target="_blank" rel="noopener">NASA’s guide to designing science missions ↗</a></p>`;
+        </div><p class="report-tip">The flight model uses game units for mass, power and data. <a href="${nasaMissionDesign}" target="_blank" rel="noopener">NASA’s guide to designing science missions ${I.svg('arrow')}</a></p>`;
     } else if (activePanel === 'missions') {
       panel.innerHTML = missionBoard();
     } else if (activePanel === 'recipe') {

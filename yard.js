@@ -598,13 +598,13 @@
 
   function drawResourceTag(ctx, tag) {
     const { x, y, width, height, direction, items } = tag;
-    const input = direction === '↓';
+    const input = direction === 'input';
     const background = input ? '#fbf3d0' : '#28456b';
     const ink = input ? '#354d6a' : '#fffbe7';
     round(ctx, x + 1, y + 2, width, height, 6, 'rgba(44,64,81,.23)');
     round(ctx, x, y, width, height, 6, background, input ? '#957a4f' : '#fff6cc', 1.35);
     round(ctx, x + 2, y + 2, 13, 16, 4, input ? '#efcf83' : '#46638c');
-    type(ctx, direction, x + 8.5, y + 10, 12.5, ink, 900, 'center');
+    window.NasaIcons.draw(ctx, input ? 'down' : 'up', x + 8.5, y + 10, 12.5, ink);
     let offset = x + 17;
     for (const { id, text, width: itemWidth } of items) {
       const itemY = y + (id === 'fuel' ? 15.9 : id === 'cash' ? 11.5 : 14);
@@ -637,7 +637,7 @@
     const active = expansion.affordable || focused;
     if (active) oval(ctx, x, y, 43 + Math.sin(time * 4) * 3, 20, '#b5e8ff90', '#e2fbff', 2);
     terrainTile(ctx, x, y, 33, active ? '#8ab8ff' : '#bbc9ec', '#647db4');
-    type(ctx, '↗', x, y - 1, 19, '#273f82', 900, 'center');
+    window.NasaIcons.draw(ctx, 'arrow', x, y - 1, 19, '#273f82');
     const colors = active ? ['#e4f8ff', '#547ed8', '#223875'] : ['#f0f3ff', '#8f9fcc', '#45598a'];
     badge(ctx, `EXPAND $${expansion.cost}`, x, y - 25, colors, 11);
   }
@@ -685,7 +685,7 @@
       const entries = [[cubes ? 'data' : 'fuel', queue]];
       if (cash) entries.unshift(['cash', `$${cash}`]);
       if (cubes > 1) entries.unshift(['data', `×${cubes}`]);
-      tags.push(resourceTag(x - 36, y + 23, '↓', entries));
+      tags.push(resourceTag(x - 36, y + 23, 'input', entries));
     }
     if (hasOutput && (!isLocked || facility.output > 0)) {
       const limit = pad.id === 'ground' ? rules.getRates(state).cap
@@ -694,14 +694,14 @@
       const stock = station.item === 'cash' ? facility.stock ?? Math.floor(facility.output / 10) : facility.output;
       const entries = [[station.item || 'crate', `${stock}/${limit}`]];
       if (station.item === 'cash') entries[0][1] = `$${facility.output} · ${stock}/${limit}`;
-      tags.push(resourceTag(x + (shared && !isLocked ? 62 : 0), y + 23, '↑', entries));
+      tags.push(resourceTag(x + (shared && !isLocked ? 62 : 0), y + 23, 'output', entries));
     }
     if (pad.id === 'launch') {
       const recipe = rules.getRecipe(state);
       if (recipe?.mission) {
         const payload = rules.INGREDIENTS.map(id => [id, `${state.loadout[id]}/${recipe.ingredients?.[id] ?? '?'}`]);
-        tags.push(resourceTag(x - 94, y - 75, '↓', payload.slice(0, 2)));
-        tags.push(resourceTag(x - 94, y - 49, '↓', payload.slice(2)));
+        tags.push(resourceTag(x - 94, y - 75, 'input', payload.slice(0, 2)));
+        tags.push(resourceTag(x - 94, y - 49, 'input', payload.slice(2)));
       }
     }
     return { facility, isLocked, shared, acceptsInput, hasOutput, building, x, y, width, height, build, tags };
@@ -733,9 +733,10 @@
       ctx.stroke();
     }
     if (!hasOutput || facility.output <= 0) {
-      const mark = pad.id === 'scrap' ? '×' : pad.id === 'returns' ? '↩' : '';
+      const mark = pad.id === 'scrap' ? 'close' : pad.id === 'returns' ? 'return' : '';
       const glyph = isLocked ? (canGuide ? '+' : '·') : mark;
-      if (glyph) type(ctx, glyph, x, y + 0.3, 17, '#365470', 900, 'center', true);
+      if (glyph && !isLocked) window.NasaIcons.draw(ctx, glyph, x, y + 0.3, 17, '#365470');
+      else if (glyph) type(ctx, glyph, x, y + 0.3, 17, '#365470', 900, 'center', true);
     }
     if (build) {
       const colors = state.wallet >= next.unlock ? ['#fff2a0', '#e6a443', '#6e4424'] : ['#fbf7da', '#b5a982', '#766443'];
@@ -922,7 +923,7 @@
     polygon(ctx, [[x + 25, y - 31], [x + 34, y - 40], [x + 34, y - 9], [x + 25, y]], '#4b9f81', '#396e5e', 1.6);
     polygon(ctx, [[x - 26, y - 32], [x + 25, y - 31], [x + 35, y - 40], [x - 17, y - 43]], '#b8edab', '#4b8a6a', 1.5);
     round(ctx, x - 14, y - 27, 29, 20, 4, '#eaf7c4', '#479265', 1.2);
-    type(ctx, '↩', x, y - 16, 18, '#2b7658', 900, 'center');
+    window.NasaIcons.draw(ctx, 'return', x, y - 16, 18, '#2b7658');
   }
 
   function helperPosition(home, destination, progress, facing) {
