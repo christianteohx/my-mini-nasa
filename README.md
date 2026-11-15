@@ -2,6 +2,8 @@
 
 A single-player browser game for the 2026 NASA Space Apps **Space Mission Design Game** challenge. Collect satellite data, trade it for grants, make spacecraft supplies, and carry them to the launch pad. Successful satellites send back more data.
 
+Check out the link: https://my-mini-nasa.vercel.app/
+
 ## Play
 
 Open `index.html` in a browser, or serve this directory with any static web server. There are no runtime packages to install. The game saves your progress in the current browser. An HTTP server gives the game a stable browser origin for saving.
