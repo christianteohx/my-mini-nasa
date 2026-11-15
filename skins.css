@@ -13,3 +13,7 @@
 .skin-state {font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#435bb1;}
 .skin-note {font-size:12px;color:#61718b;margin:16px 0 0;line-height:1.5;}
 @media(max-width:440px){.skin-grid{gap:7px}.skin-card{padding:10px 4px}.skin-card canvas{height:132px}.skin-card strong{font-size:14px}.skin-card small{font-size:10px}}
+
+#panel .skin-card:disabled {opacity:1;cursor:not-allowed;background:#f0f1f4;border-color:#c9ced8;color:#697080;}
+#panel .skin-card:disabled canvas {opacity:.65;}
+.skin-requirement {font-weight:700;max-width:140px;}

@@ -3,23 +3,27 @@
   // Original illustrated tributes, not official spacecraft art or astronaut likenesses.
   const ships = [
     {id:'classic', name:'Classic', detail:'Spaceport original'},
-    {id:'apollo', name:'Apollo', detail:'Saturn V inspired'},
-    {id:'artemis', name:'Artemis', detail:'SLS inspired'},
+    {id:'apollo', name:'Apollo', detail:'Saturn V inspired', mission:'m5', stars:1, requirement:'Reach lunar orbit · Lunar Relay'},
+    {id:'artemis', name:'Artemis', detail:'SLS inspired', mission:'m5', stars:3, requirement:'3-star Lunar Relay'},
   ];
   const suits = [
     {id:'classic', name:'Classic', detail:'Your role colors'},
-    {id:'armstrong', name:'Armstrong', detail:'Apollo moonwalk suit', accent:'#f3eee2', dark:'#aaaeb8', visor:'#a87524', shine:'#ffe1a0', outline:'#35465d'},
-    {id:'ride', name:'Ride', detail:'Shuttle flight suit', accent:'#5093d8', dark:'#235b98', visor:'#28465c', shine:'#bedaf1', outline:'#253e62'},
+    {id:'armstrong', name:'Armstrong', detail:'Apollo moonwalk suit', mission:'m5', stars:3, requirement:'3-star Lunar Relay', accent:'#f3eee2', dark:'#aaaeb8', visor:'#a87524', shine:'#ffe1a0', outline:'#35465d'},
+    {id:'ride', name:'Ride', detail:'Shuttle flight suit', mission:'m4', stars:3, requirement:'3-star Station Science', accent:'#5093d8', dark:'#235b98', visor:'#28465c', shine:'#bedaf1', outline:'#253e62'},
   ];
   const roles = {player:'You', intern:'Grant intern', runner:'Cargo runner', materials:'Materials intern', clerk:'Credit clerk'};
-  function normalize(value) {
-    const valid = (list, id) => list.some(skin => skin.id === id) ? id : 'classic';
+  function unlocked(state, group, id) {
+    const skin = (group === 'ship' ? ships : suits).find(s => s.id === id);
+    return Boolean(skin && (!skin.mission || Number(state?.bestStars?.[skin.mission] || 0) >= skin.stars));
+  }
+  function normalize(value, state) {
+    const valid = (list, id) => list.some(skin => skin.id === id) && unlocked(state, list === ships ? 'ship' : 'crew', id) ? id : 'classic';
     return {ship:valid(ships, value?.ship), crew:Object.fromEntries(Object.keys(roles).map(role => [role,valid(suits, value?.crew?.[role])]))};
   }
-  function select(value, target, id) {
-    const next = normalize(value);
-    if (target === 'ship' && ships.some(s => s.id === id)) next.ship = id;
-    else if (Object.hasOwn(roles, target) && suits.some(s => s.id === id)) next.crew[target] = id;
+  function select(value, target, id, state) {
+    const next = normalize(value, state);
+    if (target === 'ship' && unlocked(state, 'ship', id)) next.ship = id;
+    else if (Object.hasOwn(roles, target) && unlocked(state, 'crew', id)) next.crew[target] = id;
     return next;
   }
   function suit(id, fallback) { return suits.find(s => s.id === id && s.id !== 'classic') || fallback; }
@@ -54,5 +58,5 @@
     }
     return true;
   }
-  globalThis.SpaceportSkins = Object.freeze({ships,suits,roles,normalize,select,suit,rocket});
+  globalThis.SpaceportSkins = Object.freeze({ships,suits,roles,unlocked,normalize,select,suit,rocket});
 })();

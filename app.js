@@ -25,7 +25,7 @@
   const resultLabels = {failed:'Launch failed', partial:'Partial success', success:'Mission success'};
   let state = R.loadState() || R.createState();
   state.challenge = C.normalize(state.challenge);
-  state.cosmetics = S.normalize(state.cosmetics);
+  state.cosmetics = S.normalize(state.cosmetics, state);
   let objective;
   let activePanel = '';
   let loadedReport;
@@ -799,12 +799,12 @@
   }
 
   function skinsPanel() {
-    state.cosmetics = S.normalize(state.cosmetics);
+    state.cosmetics = S.normalize(state.cosmetics, state);
     const ship = skinCategory === 'ship';
     const selected = ship ? state.cosmetics.ship : state.cosmetics.crew[skinRole];
     return `<div class="skin-tabs" role="group" aria-label="Appearance category">${['ship','crew'].map(id => `<button class="quiet button" data-action="skin-category" data-value="${id}" aria-pressed="${skinCategory === id}">${id === 'ship' ? 'Spaceship' : 'Crew'}</button>`).join('')}</div>
       ${ship ? '' : `<label class="skin-role">Dress<select id="skin-role">${Object.entries(S.roles).map(([id,name]) => `<option value="${id}" ${id === skinRole ? 'selected' : ''}>${name}</option>`).join('')}</select></label>`}
-      <div class="skin-grid">${(ship ? S.ships : S.suits).map(skin => `<button class="skin-card" type="button" data-action="skin-select" data-value="${skin.id}" aria-pressed="${selected === skin.id}"><canvas width="280" height="304" data-skin="${skin.id}" aria-hidden="true"></canvas><strong>${skin.name}</strong><small>${skin.detail}</small><span class="skin-state">${selected === skin.id ? 'Equipped' : 'Equip'}</span></button>`).join('')}</div>
+      <div class="skin-grid">${(ship ? S.ships : S.suits).map(skin => `<button class="skin-card" type="button" data-action="skin-select" data-value="${skin.id}" aria-pressed="${selected === skin.id}" ${S.unlocked(state, skinCategory, skin.id) ? '' : 'disabled'}><canvas width="280" height="304" data-skin="${skin.id}" aria-hidden="true"></canvas><strong>${skin.name}</strong><small>${skin.detail}</small><span class="skin-state">${S.unlocked(state, skinCategory, skin.id) ? (selected === skin.id ? 'Equipped' : 'Equip') : 'Locked'}</span>${S.unlocked(state, skinCategory, skin.id) ? '' : `<small class="skin-requirement">${skin.requirement}</small>`}</button>`).join('')}</div>
       <p class="skin-note">Cosmetic only. Original tributes, not official endorsements.</p>`;
   }
 
@@ -933,7 +933,7 @@
       panel.querySelector(`[data-action="skin-category"][data-value="${value}"]`)?.focus({preventScroll:true});
     } else if (command === 'skin-select') {
       const target = skinCategory === 'ship' ? 'ship' : skinRole;
-      state.cosmetics = S.select(state.cosmetics, target, value);
+      state.cosmetics = S.select(state.cosmetics, target, value, state);
       store(); drawPanel();
       panel.querySelector(`[data-action="skin-select"][data-value="${value}"]`)?.focus({preventScroll:true});
     } else if (command === 'goto') {
