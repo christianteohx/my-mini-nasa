@@ -6,8 +6,8 @@
 .cargo-need b {font-size:20px}
 .cargo-need[data-state="needed"] {background:#fff1d9;color:#7c4700;box-shadow:inset 0 0 0 1px #eac890}
 .cargo-need[data-state="ready"] {background:#e2f4e9;color:#236641}
-.station-action[data-needed="true"] {background:#fff9ed;border-color:#eac890}
-.station-action[data-needed="true"] [data-value^="take:"] {background:#293370;color:white}
+dialog[data-panel="facility"] .station-action[data-needed="true"] {background:#fff9ed;border-color:#eac890}
+dialog[data-panel="facility"] .station-action[data-needed="true"] [data-value^="take:"] {background:#293370;color:white}
 @media(max-width:460px) {
  .cargo-mission {align-items:flex-start;flex-direction:column;gap:2px}
  .cargo-needs {grid-template-columns:repeat(2,minmax(0,1fr))}

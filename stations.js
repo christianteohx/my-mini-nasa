@@ -160,7 +160,7 @@
       <div class="row-copy"><h3>${label}</h3><p data-action-detail></p><p class="station-match" data-recommendation hidden></p></div>
       <div class="station-controls">
         <button type="button" class="button quiet" data-action="station-transfer" data-value="${take}:${item}" aria-label="${takeLabel} ${label}">${takeLabel}</button>
-        <input class="transfer-quantity" type="number" inputmode="numeric" min="1" step="1" aria-label="${label} quantity">
+        <input class="transfer-quantity" type="number" inputmode="numeric" min="1" step="1" value="1" aria-label="${label} quantity">
         <button type="button" class="button primary" data-action="station-transfer" data-value="${store}:${item}" aria-label="${storeLabel} ${label}">${storeLabel}</button>
       </div>
     </div>`;
