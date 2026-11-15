@@ -45,6 +45,7 @@ test("a safe weather payload, an uncrewed relay, and a lighter lander earn full 
 test("v7 flight records restore earned rewards without any extra payouts", () => {
   const old = R.createState(1);
   old.stageIndex = 4;
+  delete old.campaignOrder;
   delete old.bestStars;
   old.history = [
     { mission: { id: "m2" }, stars: 3 },
@@ -56,7 +57,7 @@ test("v7 flight records restore earned rewards without any extra payouts", () =>
   ];
   const restored = R.loadState({ getItem: () => JSON.stringify(old) });
   assert.equal(restored.wallet, old.wallet);
-  assert.equal(restored.completed, false); // Solar clear is retained; outer planets are new.
+  assert.equal(restored.completed, true);
   assert.equal(R.getRates(restored).carry, 6);
   assert.equal(R.getRates(restored).data, 1.5);
   assert.equal(R.getGrantPayout(restored), 10);

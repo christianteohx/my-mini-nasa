@@ -1,6 +1,6 @@
 # My Mini NASA
 
-**Run a pocket-sized spaceport, build spacecraft one crate at a time, and launch missions from Earth orbit to Neptune.**
+**Run a pocket-sized spaceport, build spacecraft one crate at a time, and launch missions from Earth orbit to the Sun.**
 
 ### [▶ Play here: mymininasa.wiki](https://mymininasa.wiki)
 
@@ -130,13 +130,13 @@ Mission Control shows the payload as gauges for **Fuel, Power, Science, Crew, an
 | 5 | Lunar Relay | Lunar orbit | Lunar launcher | 16 | 1 to 2 instruments, uncrewed | Opens the Cargo Shelf |
 | 6 | Mars Surveyor | Mars orbit | Mars launcher | 18 | 2 instruments | Failed launches refund half the fee |
 | 7 | Mars Lander | Mars surface | Mars heavy launcher | 22 (18 for 3★) | 3 to 4 instruments | Factories store 2 more items |
-| 8 | Solar Probe | Solar corona | Solar heavy launcher | 25 | 4 to 5 instruments | +1 Data Cube per second |
 
-| 9 | Jupiter Weather | Jupiter orbit | Deep-space launcher | 28 | 4 to 5 instruments, no crew | +1 Data Cube per second |
-| 10 | Ring Explorer | Saturn orbit | Outer-planet launcher | 34 | 5 to 6 instruments, ≤29 mass, no crew | +1 Data Cube per second |
-| 11 | Blue Horizon | Neptune flyby | Deep-space heavy launcher | 38 | 6 to 7 instruments, no crew | +2 Data Cubes per second |
+| 8 | Jupiter Weather | Jupiter orbit | Deep-space launcher | 28 | 4 to 5 instruments, no crew | +1 Data Cube per second |
+| 9 | Ring Explorer | Saturn orbit | Outer-planet launcher | 34 | 5 to 6 instruments, ≤29 mass, no crew | +1 Data Cube per second |
+| 10 | Blue Horizon | Neptune flyby | Deep-space heavy launcher | 38 | 6 to 7 instruments, no crew | +2 Data Cubes per second |
+| 11 | Solar Probe | Solar corona | Solar heavy launcher | 25 | 4 to 5 instruments | +1 Data Cube per second |
 
-A three-star result in a stage lets you buy the next one: **Orbital Yard → Flight Annex → Lunar Program → Mars Program → Solar Program → Jupiter Program → Saturn Program → Neptune Program**.
+A three-star result in a stage lets you buy the next one: **Orbital Yard → Flight Annex → Lunar Program → Mars Program → Jupiter Program → Saturn Program → Neptune Program → Solar Program**.
 
 <p align="center">
   <img src="assets/success.jpg" alt="A three-star Mission success flight report for First Light, with confetti, the unlocked payload plan, and the grant reward" width="90%">
@@ -157,7 +157,7 @@ A three-star result in a stage lets you buy the next one: **Orbital Yard → Fli
 
 ### The goal
 
-Earn three stars on **Blue Horizon**, the final mission, sending an uncrewed flyby to Neptune. Along the way, collect every mission perk and build a fleet of satellites.
+Earn three stars on **Solar Probe**, the final mission, flying through the Sun’s outer atmosphere. Along the way, collect every mission perk and build a fleet of satellites.
 
 ### What players learn
 

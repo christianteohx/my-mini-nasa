@@ -59,10 +59,10 @@
     { id: "expansion", name: "Flight Annex", destination: "Earth", price: 700, missionIds: ["m3", "m4"] },
     { id: "moon", name: "Lunar Program", destination: "Moon", price: 900, missionIds: ["m5"] },
     { id: "mars", name: "Mars Program", destination: "Mars", price: 1300, missionIds: ["m6", "m7"] },
-    { id: "sun", name: "Solar Program", destination: "Sun", price: 1900, missionIds: ["m8"] },
     { id: "jupiter", name: "Jupiter Program", destination: "Jupiter", price: 2800, missionIds: ["m9"] },
     { id: "saturn", name: "Saturn Program", destination: "Saturn", price: 3800, missionIds: ["m10"] },
     { id: "neptune", name: "Neptune Program", destination: "Neptune", price: 5000, missionIds: ["m11"] },
+    { id: "sun", name: "Solar Program", destination: "Sun", price: 1900, missionIds: ["m8"] },
   ];
 
   const MISSIONS = [
@@ -123,14 +123,6 @@
       scienceMin: 3, scienceMax: 4, crewMin: 0, crewMax: 0, fee: 350, reward: 1100, dataMultiplier: 2.2, tipId: "marsLanding",
     },
     {
-      id: "m8", stage: "sun", name: "Solar Probe", destination: "Sun", arrival: "the solar corona",
-      description: "Fly a heat-shielded probe through the Sun’s outer atmosphere to study the solar wind.",
-      objective: "Sample the solar wind with four working instruments during a close flyby.",
-      perk: { id: "solarData", name: "Solar Downlink", detail: "Your yard receives 1 extra Data Cube per second." },
-      rocket: "Solar heavy launcher", orbit: "Solar flyby", massLimit: 25, baseFuel: 3, dryFuelStep: 5,
-      scienceMin: 4, scienceMax: 5, crewMin: 0, crewMax: 0, fee: 500, reward: 1600, dataMultiplier: 2.8, tipId: "sun",
-    },
-    {
       id: "m9", stage: "jupiter", name: "Jupiter Weather", destination: "Jupiter", arrival: "Jupiter orbit",
       description: "Map the giant planet’s clouds and magnetic field from orbit.",
       objective: "Power four instruments in an uncrewed Jupiter orbiter.",
@@ -153,6 +145,14 @@
       perk: { id: "neptuneData", name: "Blue Horizon Downlink", detail: "Your yard receives 2 extra Data Cubes per second." },
       rocket: "Deep-space heavy launcher", orbit: "Neptune flyby", massLimit: 38, uncrewedOnly: true, baseFuel: 6, dryFuelStep: 5,
       scienceMin: 6, scienceMax: 7, crewMin: 0, crewMax: 0, fee: 1000, reward: 3800, dataMultiplier: 4, tipId: "neptune",
+    },
+    {
+      id: "m8", stage: "sun", name: "Solar Probe", destination: "Sun", arrival: "the solar corona",
+      description: "Fly a heat-shielded probe through the Sun’s outer atmosphere to study the solar wind.",
+      objective: "Sample the solar wind with four working instruments during a close flyby.",
+      perk: { id: "solarData", name: "Solar Downlink", detail: "Your yard receives 1 extra Data Cube per second." },
+      rocket: "Solar heavy launcher", orbit: "Solar flyby", massLimit: 25, baseFuel: 3, dryFuelStep: 5,
+      scienceMin: 4, scienceMax: 5, crewMin: 0, crewMax: 0, fee: 500, reward: 1600, dataMultiplier: 2.8, tipId: "sun",
     },
   ];
 
@@ -274,6 +274,7 @@
 
     return {
       version: 1,
+      campaignOrder: "sun-finale",
       wallet: 20,
       inventory: { data: 0, ...emptyLoadout(), ...emptySpecials() },
       loadout: emptyLoadout(),
@@ -311,6 +312,19 @@
       const raw = (storage ?? globalThis.localStorage).getItem(SAVE_KEY);
       const saved = JSON.parse(raw);
       if (saved?.version === 1 && saved.facilities && Array.isArray(saved.satellites)) {
+        if (saved.campaignOrder !== "sun-finale") {
+          // Mission IDs remain stable; only positional indices change. Preserve every
+          // previously purchased destination, including the original Solar finale.
+          const oldStages = ["yard", "expansion", "moon", "mars", "sun", "jupiter", "saturn", "neptune"];
+          const oldMissions = ["m1", "m2", "m3", "m4", "m5", "m6", "m7", "m8", "m9", "m10", "m11"];
+          const oldStage = oldStages[saved.stageIndex];
+          const oldMission = oldMissions[saved.missionIndex];
+          if (oldStage) saved.stageIndex = STAGES.findIndex(stage => stage.id === oldStage);
+          if (oldMission) saved.missionIndex = MISSIONS.findIndex(mission => mission.id === oldMission);
+          // Early outer-planets previews had Solar already open before Jupiter.
+          if (oldStage && ["jupiter", "saturn", "neptune"].includes(oldStage)) saved.stageIndex = STAGES.length - 1;
+          saved.campaignOrder = "sun-finale";
+        }
         saved.history ??= saved.report ? [saved.report] : [];
         saved.customers ??= makeCustomers();
         saved.customers.bonus = GRANT_BONUS;
@@ -366,7 +380,7 @@
           }
         }
         if (hasThreeStars(saved, "m5")) saved.facilities.cargo.unlocked = true;
-        saved.completed = hasThreeStars(saved, "m11");
+        saved.completed = hasThreeStars(saved, "m8");
         return saved;
       }
     } catch {
@@ -1451,7 +1465,7 @@
     const output = report.stars > 0 ? updateDownlink(state.satellites, {
       missionId: mission.id, name: mission.name, stars: report.stars, output: signalOutput,
     }) : 0;
-    const campaignCompleted = firstClear && mission.id === "m11";
+    const campaignCompleted = firstClear && mission.id === "m8";
     if (campaignCompleted) state.completed = true;
     if (mission.id === "m1" && firstClear && firstTip(state, "free")) report.tip = TIPS.free;
     restockTutorialPart(state);

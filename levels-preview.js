@@ -9,7 +9,7 @@
     state.stageIndex = R.STAGES.findIndex(stage => stage.missionIds.includes(id));
     state.wallet = 30000;
     Object.values(state.facilities).forEach(f => { f.unlocked = true; });
-    for (const mission of R.MISSIONS.slice(0,8)) state.bestStars[mission.id] = 3;
+    for (const mission of R.MISSIONS.filter(m => R.STAGES.findIndex(stage => stage.id === m.stage) < state.stageIndex)) state.bestStars[mission.id] = 3;
     R.selectMission(state, id);
     state.recipes[id] = 'preview';
     state.loadout = {...R.getRecipe(state).ingredients};
