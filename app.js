@@ -614,13 +614,13 @@
   function nextGoalCard() {
     const goal = J.nextGoal(state, R);
     const progress = goal.kind === 'mission'
-      ? `<span class="journey-progress">${goal.stars} / 3 stars</span>`
+      ? `<span class="journey-progress" aria-label="${goal.stars} of 3 stars">${[0,1,2].map(i=>`<span${i < goal.stars ? ' data-earned' : ''}>${I.svg('star')}</span>`).join('')}</span>`
       : goal.kind === 'expansion'
       ? `<progress value="${goal.saved}" max="${goal.cost}" aria-label="Next destination savings"></progress><span>${money(goal.saved)} / ${money(goal.cost)}</span>` : '';
     const button = goal.kind === 'mission' ? action('Select mission', 'mission', goal.id, false, true)
       : goal.kind === 'expansion' ? action('Expand', 'expansion', '', !goal.ready, true)
       : action('Choose a challenge', 'open-challenges', '', false, true);
-    return `<section class="journey-card" aria-label="Next goal"><span class="eyebrow">NEXT GOAL</span><h3>${escapeHTML(goal.title)}</h3><p>${escapeHTML(goal.detail)}</p>${progress}${button}</section>`;
+    return `<section class="journey-card" aria-label="Next goal"><span class="eyebrow">NEXT GOAL</span><h3>${escapeHTML(goal.title)}</h3>${goal.kind !== 'mission' ? `<p>${escapeHTML(goal.detail)}</p>` : ''}${progress}${button}</section>`;
   }
 
   function missionBoard() {
@@ -653,7 +653,7 @@
       return `<section class="board-stage"><div class="board-heading"><h3>${escapeHTML(stage.name)}</h3><span>${escapeHTML(stage.destination || 'Earth').toUpperCase()} · ${locked ? 'LOCKED' : 'OPEN'}</span></div>${unlock}<div class="mission-offers">${offers}</div></section>`;
     }).join('');
     const loaded = Object.values(state.loadout).some(Boolean);
-    return `${nextGoalCard()}<p class="dialog-lead">${loaded ? 'Supplies already on the launch pad stay loaded when you change missions.' : 'Improve your best result to earn the remaining grant. Three stars earn a lasting spaceport upgrade.'}</p><div class="challenge-board-link">${action('Challenges', 'open-challenges')}</div>${stages}`;
+    return `${nextGoalCard()}${loaded ? '<p class="dialog-lead">Loaded supplies stay when you change missions.</p>' : ''}<div class="challenge-board-link">${action('Challenges', 'open-challenges')}</div>${stages}`;
   }
 
   function challengesPanel() {

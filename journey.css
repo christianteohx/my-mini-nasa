@@ -1,3 +1,6 @@
 .journey-card{padding:18px;border:1px solid #bac9ee;border-radius:18px;background:#f1f5ff;display:grid;gap:10px;margin:0 0 18px;color:#263453}
 .journey-card h3,.journey-card p{margin:0}.journey-card h3{font-size:1.15rem}.journey-card p{line-height:1.45}.journey-card .button{justify-self:start}.journey-card progress{width:100%;accent-color:#514cdf}.journey-progress{font-weight:750;color:#514cdf}.journey-card .recipe-items{margin:0}
 @media(max-width:480px){.journey-card{padding:14px}.journey-card .button{width:100%}}
+
+.journey-card{grid-template-columns:1fr auto;gap:8px 16px}.journey-card .eyebrow{grid-column:1 / -1}.journey-card h3{align-self:center}.journey-card>p,.journey-card>progress{grid-column:1 / -1}.journey-card>.button{grid-column:2;grid-row:2 / span 2;align-self:center}.journey-progress{display:flex;gap:5px}.journey-progress .ui-icon{width:18px;height:18px;color:#7f8b9e}.journey-progress [data-earned] .ui-icon{color:#5646d5;fill:#d6d2ff}
+@media(max-width:480px){.journey-card .button{width:auto;font-size:12px;padding:10px}}
