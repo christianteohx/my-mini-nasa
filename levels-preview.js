@@ -6,7 +6,7 @@
   const id = ['m9','m10','m11'].includes(params.get('mission')) ? params.get('mission') : 'm9';
   const seed = () => {
     const state = R.createState(1);
-    state.stageIndex = R.STAGES.length - 1;
+    state.stageIndex = R.STAGES.findIndex(stage => stage.missionIds.includes(id));
     state.wallet = 30000;
     Object.values(state.facilities).forEach(f => { f.unlocked = true; });
     for (const mission of R.MISSIONS.slice(0,8)) state.bestStars[mission.id] = 3;
