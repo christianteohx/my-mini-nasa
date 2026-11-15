@@ -647,11 +647,11 @@
   function triviaPanel() {
     const {data,question:q,complete}=T.current(state);
     const last=data.last;
-    if(complete) return `<div class="trivia"><p class="eyebrow">6 / 6 COMPLETE</p><h3>Nice exploring!</h3><p>You earned ${money(T.QUESTIONS.length*T.REWARD)}. Each question pays once.</p>${action('Back to missions','back-to-board')}</div>`;
+    if(complete && !last) return `<div class="trivia"><p class="eyebrow">6 / 6 COMPLETE</p><h3>Nice exploring!</h3><p>You earned ${money(T.QUESTIONS.length*T.REWARD)}. Each question pays once.</p>${action('Back to missions','back-to-board')}</div>`;
     return `<div class="trivia"><div class="trivia-meta"><span>${data.claimed.length} / ${T.QUESTIONS.length} rewards earned</span><strong>+${money(T.REWARD)}</strong></div>
       <h3>${escapeHTML(q.prompt)}</h3>
-      <div class="trivia-options">${q.options.map((option,i)=>`<button class="quiet button" data-action="trivia-answer" data-value="${q.id}:${i}" ${last?'disabled':''}>${escapeHTML(option)}${last&&i===q.answer?' · Correct':''}${last&&i===last.choice&&i!==q.answer?' · Your answer':''}</button>`).join('')}</div>
-      ${last?`<div class="trivia-result" role="status" tabindex="-1"><strong>${last.choice===q.answer?'Correct · +'+money(T.REWARD):'Not quite. No penalty.'}</strong><p>${escapeHTML(q.fact)}</p><a href="${q.source}" target="_blank" rel="noopener">NASA source</a></div><div class="dialog-bottom">${action('Next question','trivia-next','',false,true)}</div>`:'<p class="challenge-note">Optional · $10 per question, once. No timer.</p>'}</div>`;
+      <div class="trivia-options">${q.options.map((option,i)=>`<button class="quiet button${last ? (i === q.answer ? ' trivia-correct' : i === last.choice ? ' trivia-wrong' : '') : ''}" data-action="trivia-answer" data-value="${q.id}:${i}" ${last?'disabled':''}>${escapeHTML(option)}${last&&i===q.answer?' · Correct':''}${last&&i===last.choice&&i!==q.answer?' · Your answer (incorrect)':''}</button>`).join('')}</div>
+      ${last?`<div class="trivia-result" role="status" tabindex="-1"><strong>${last.choice===q.answer?'Correct · +'+money(T.REWARD):'Not quite. No penalty.'}</strong><p>${escapeHTML(q.fact)}</p><a href="${q.source}" target="_blank" rel="noopener">NASA source</a></div><div class="dialog-bottom">${complete?action('Back to missions','back-to-board','',false,true):action('Next question','trivia-next','',false,true)}</div>`:'<p class="challenge-note">Optional · $10 per question, once. No timer.</p>'}</div>`;
   }
 
   function challengesPanel() {
