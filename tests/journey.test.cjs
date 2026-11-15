@@ -1,0 +1,6 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');
+require('../rules.js');require('../journey.js');const R=globalThis.SpaceportRules,J=globalThis.SpaceportJourney;
+test('new player gets a reachable selected goal without state mutation',()=>{const s=R.createState();const before=JSON.stringify(s);const g=J.nextGoal(s,R);assert.equal(g.id,'m1');assert.equal(g.stars,0);assert.equal(JSON.stringify(s),before)});
+test('finished mission advances goal, but does not auto-select it',()=>{const s=R.createState();s.bestStars.m1=3;const g=J.nextGoal(s,R);assert.notEqual(g.id,'m1');assert.equal(s.missionIndex,0)});
+test('expansion savings are bounded and readiness follows actual rules',()=>{const s=R.createState();R.MISSIONS.filter(m=>R.isMissionAvailable(s,m.id)).forEach(m=>s.bestStars[m.id]=3);s.wallet=1;let g=J.nextGoal(s,R);assert.equal(g.kind,'expansion');assert.equal(g.saved,1);assert.equal(g.ready,false);s.wallet=1e9;g=J.nextGoal(s,R);assert.equal(g.saved,g.cost);assert.equal(g.ready,true)});
+test('fully mastered campaign offers optional challenges',()=>{const s=R.createState();s.stageIndex=R.STAGES.length-1;s.furthestMissionIndex=R.MISSIONS.length-1;R.MISSIONS.forEach(m=>s.bestStars[m.id]=3);assert.equal(J.nextGoal(s,R).kind,'complete')});
