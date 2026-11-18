@@ -615,8 +615,22 @@
       <div class="upgrade-cards" data-category="${upgradeCategory}">${cards}</div>`;
   }
 
+  function missionHistory(name, history, url, label = 'Mission history') {
+    if (!history) return '';
+    return `<details class="mission-history">
+      <summary aria-label="${escapeHTML(label === 'Mission history' ? `${label}: ${name}` : label)}"><span class="mission-info-icon" aria-hidden="true">i</span><span>${escapeHTML(label)}</span></summary>
+      <div class="mission-history-body">
+        <p class="mission-history-date">${escapeHTML(history.date)}</p>
+        <p>${escapeHTML(history.story)}</p>
+        <a class="mission-source" href="${escapeHTML(url)}" target="_blank" rel="noopener">Read about ${escapeHTML(name)} at NASA ${I.svg('arrow')}</a>
+        ${history.extraSource ? `<a class="mission-source" href="${escapeHTML(history.extraSource.url)}" target="_blank" rel="noopener">${escapeHTML(history.extraSource.name)} ${I.svg('arrow')}</a>` : ''}
+      </div>
+    </details>`;
+  }
+
   function missionBoard() {
     const expansion = R.getExpansion(state);
+    const historyData = globalThis.SpaceportMissionHistory;
     const stages = R.STAGES.map(stage => {
       const missions = R.MISSIONS.filter(mission => mission.stage === stage.id);
       const locked = !R.isMissionAvailable(state, missions[0].id);
@@ -629,12 +643,12 @@
         const grantLabel = grant.remaining ? `Up to ${money(grant.remaining)} in grants` : 'Full grant paid';
         return `<article class="mission-offer">
           <div class="offer-top"><h3>${escapeHTML(mission.name)}</h3><span class="offer-stars" role="img" aria-label="${stars} best stars">${Array.from({length:3}, (_, i) => `<span class="rating-star"${i < stars ? ' data-earned' : ''}>${I.svg('star')}</span>`).join('')}</span></div>
-          <p>${escapeHTML(mission.description)} <a class="mission-source" href="${escapeHTML(mission.historyUrl)}" target="_blank" rel="noopener" aria-label="${escapeHTML(mission.name)} NASA history">NASA history</a></p>
           <p class="mission-game-objective"><strong>In game:</strong> ${escapeHTML(mission.objective)}</p>
           <div class="offer-terms"><span>${escapeHTML(mission.arrival || mission.orbit || mission.destination)}</span><span>Launch ${mission.fee ? money(mission.fee) : 'free'}</span><span>${grantLabel}</span></div>
           ${perk ? `<div class="mission-perk" data-earned="${perk.earned}"><span aria-hidden="true">${I.svg(perk.earned ? 'check' : 'star')}</span><div><strong>${perk.earned ? 'Earned' : '3-star reward'} · ${escapeHTML(perk.name)}</strong><small>${escapeHTML(perk.detail)}</small></div></div>` : ''}
           ${locked ? '' : `<div class="offer-actions">${action(recipe.known ? 'View payload plan' : 'Plan ' + money(recipe.price), 'recipe-info', mission.id)}
           ${action(selected ? 'Keep selected' : 'Select mission', 'mission', mission.id, false, !selected)}</div>`}
+          ${missionHistory(mission.name, historyData.missions[mission.id], mission.historyUrl)}
         </article>`;
       }).join('');
       const unlock = locked && expansion?.stage.id === stage.id ? `<div class="expansion-card">
@@ -643,8 +657,9 @@
         ${action(`Expand for ${money(expansion.cost)}`, 'expansion', '', !expansion.available || !expansion.affordable, true)}
         ${expansion.available ? `<div class="stage-savings"><span>${money(Math.min(expansion.cost, state.wallet))} / ${money(expansion.cost)}</span><progress value="${Math.min(expansion.cost, state.wallet)}" max="${expansion.cost}" aria-label="Cash saved for the expansion"></progress></div>` : ''}
         </div>` : '';
-      const history = stage.id === 'moon' ? `<aside class="mission-history-note"><strong>From orbit to landing: Apollo 11</strong>
-        <p>Lunar Orbiter helped scout landing sites. Apollo 11 later landed the first humans on the Moon. <a class="mission-source" href="https://www.nasa.gov/mission/apollo-11/" target="_blank" rel="noopener">Apollo 11 history</a></p>
+      const apollo = historyData.apollo;
+      const history = stage.id === 'moon' ? `<aside class="mission-history-note">
+        ${missionHistory(apollo.name, apollo, apollo.historyUrl, 'Bonus history: Apollo 11')}
         </aside>` : '';
       return `<section class="board-stage"><div class="board-heading"><h3>${escapeHTML(stage.name)}</h3><span>${escapeHTML(stage.destination || 'Earth').toUpperCase()} · ${locked ? 'LOCKED' : 'OPEN'}</span></div>${unlock}<div class="mission-offers">${offers}</div>${history}</section>`;
     }).join('');

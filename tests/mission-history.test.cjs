@@ -3,6 +3,7 @@ const { test } = require("node:test");
 const fs = require("node:fs");
 const path = require("node:path");
 require("../rules.js");
+require("../mission-history.js");
 
 const R = globalThis.SpaceportRules;
 
@@ -48,7 +49,26 @@ test("mission cards and reports mark historical sources separately from game goa
   const app = fs.readFileSync(path.join(__dirname, "../app.js"), "utf8");
   assert.match(app, /Inspired by real NASA missions/);
   assert.match(app, /In game:<\/strong> \$\{escapeHTML\(mission\.objective\)\}/);
-  assert.match(app, /stage.id === 'moon'[^]*Apollo 11 history/);
+  assert.match(app, /stage.id === 'moon'[^]*Bonus history: Apollo 11/);
+  assert.match(app, /<details class="mission-history">/);
+  assert.match(app, /<summary aria-label=/);
+  assert.match(app, /missionHistory\(mission.name, historyData.missions\[mission.id\], mission.historyUrl\)/);
+  const html = fs.readFileSync(path.join(__dirname, "../index.html"), "utf8");
+  assert.ok(html.indexOf('src="mission-history.js?') > 0 && html.indexOf('src="mission-history.js?') < html.indexOf('src="app.js?'));
   assert.match(app, /const mission = reportMission\(report\)/);
   assert.match(app, /row\(reportMission\(report\)\?\.name/);
+});
+
+test("every playable mission has a dated story; Apollo 11 stays a historical extra", () => {
+  const { missions, apollo } = globalThis.SpaceportMissionHistory;
+  assert.deepEqual(Object.keys(missions).sort(), R.MISSIONS.map(mission => mission.id).sort());
+  for (const [id, history] of Object.entries(missions)) {
+    assert.match(history.date, /\d{4}/, id);
+    assert.ok(history.story.length >= 100 && history.story.length <= 270, id);
+    if (history.extraSource) assert.equal(new URL(history.extraSource.url).origin, "https://science.nasa.gov");
+  }
+  assert.equal(apollo.name, "Apollo 11");
+  assert.match(apollo.date, /1969/);
+  assert.equal(new URL(apollo.historyUrl).origin, "https://www.nasa.gov");
+  assert.equal(R.MISSIONS.some(m => m.name === apollo.name), false);
 });

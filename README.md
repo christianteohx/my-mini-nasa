@@ -121,7 +121,7 @@ Mission Control shows the payload as gauges for **Fuel, Power, Science, Crew, an
 
 ### Missions
 
-The campaign is inspired by real NASA missions, with simplified equipment and flight rules. Find an official NASA history link on each mission card. Apollo 11 appears as historical context in the Lunar Program, not as a separate launch.
+The campaign is inspired by real NASA missions, with simplified equipment and flight rules. Open **Mission history** on any mission card for the real flight’s date, story, and official NASA links. Apollo 11 appears as historical context in the Lunar Program, not as a separate launch.
 
 | # | Mission | Destination | Rocket | Mass limit | Needs | First 3-star perk |
 | --- | --- | --- | --- | --- | --- | --- |
