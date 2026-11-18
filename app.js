@@ -615,22 +615,139 @@
       <div class="upgrade-cards" data-category="${upgradeCategory}">${cards}</div>`;
   }
 
-  function missionHistory(name, history, url, label = 'Mission history') {
-    if (!history) return '';
-    return `<details class="mission-history">
-      <summary aria-label="${escapeHTML(label === 'Mission history' ? `${label}: ${name}` : label)}"><span class="mission-info-icon" aria-hidden="true">i</span><span>${escapeHTML(label)}</span></summary>
-      <div class="mission-history-body">
-        <p class="mission-history-date">${escapeHTML(history.date)}</p>
-        <p>${escapeHTML(history.story)}</p>
-        <a class="mission-source" href="${escapeHTML(url)}" target="_blank" rel="noopener">Read about ${escapeHTML(name)} at NASA ${I.svg('arrow')}</a>
-        ${history.extraSource ? `<a class="mission-source" href="${escapeHTML(history.extraSource.url)}" target="_blank" rel="noopener">${escapeHTML(history.extraSource.name)} ${I.svg('arrow')}</a>` : ''}
-      </div>
-    </details>`;
+  const historyPopup = byId('mission-history-popup');
+  let historyTrigger = null;
+  let historyPinned = false;
+  let historyHideTimer = 0;
+
+  function historyButton(id, name) {
+    return `<button type="button" class="mission-history-trigger" data-history-id="${escapeHTML(id)}" aria-label="About ${escapeHTML(name)}" aria-haspopup="dialog" aria-expanded="false" aria-controls="mission-history-popup"><span aria-hidden="true">!</span></button>`;
   }
+
+  function hideMissionHistory(restoreFocus = false) {
+    clearTimeout(historyHideTimer);
+    const trigger = historyTrigger;
+    if (!trigger) return;
+    historyTrigger = null;
+    historyPinned = false;
+    trigger.setAttribute('aria-expanded', 'false');
+    if (historyPopup.hidePopover && historyPopup.matches(':popover-open')) historyPopup.hidePopover();
+    historyPopup.hidden = true;
+    if (restoreFocus && trigger.isConnected) trigger.focus({preventScroll: true});
+  }
+
+  function positionMissionHistory() {
+    if (!historyTrigger?.isConnected || historyPopup.hidden) return;
+    const viewport = window.visualViewport;
+    const bounds = {
+      x: viewport?.offsetLeft ?? 0, y: viewport?.offsetTop ?? 0,
+      width: viewport?.width ?? window.innerWidth, height: viewport?.height ?? window.innerHeight,
+    };
+    const {position, verticalSpace} = globalThis.SpaceportMissionHistory;
+    const anchor = historyTrigger.getBoundingClientRect();
+    // On hover, leave the trigger uncovered so it can still be clicked to pin.
+    const maxHeight = historyPinned ? bounds.height - 24 : verticalSpace(anchor, bounds);
+    historyPopup.style.maxHeight = Math.max(0, maxHeight) + 'px';
+    historyPopup.style.width = Math.max(0, Math.min(330, bounds.width - 24)) + 'px';
+    const rect = historyPopup.getBoundingClientRect();
+    const {x, y} = position(anchor, rect, bounds);
+    historyPopup.style.left = x + 'px';
+    historyPopup.style.top = y + 'px';
+  }
+
+  function showMissionHistory(trigger, pinned) {
+    clearTimeout(historyHideTimer);
+    const {missions, apollo, images} = globalThis.SpaceportMissionHistory;
+    const id = trigger.dataset.historyId;
+    const mission = id === 'apollo' ? apollo : R.MISSIONS.find(item => item.id === id);
+    const history = id === 'apollo' ? apollo : missions[id];
+    if (!mission || !history) return;
+    if (historyTrigger !== trigger) {
+      hideMissionHistory();
+      historyTrigger = trigger;
+      trigger.setAttribute('aria-expanded', 'true');
+      const image = images?.[id];
+      historyPopup.innerHTML = `<figure class="nasa-fact mission-history-fact">
+        <div class="mission-history-photo">
+          ${image ? `<img src="assets/mission-history/${escapeHTML(image.file)}" alt="${escapeHTML(image.alt)}" decoding="async" width="640" height="360">` : ''}
+          <button type="button" class="mission-history-close" aria-label="Close mission history">${I.svg('close')}</button>
+        </div>
+        <figcaption>
+          <span class="nasa-fact-tag">REAL NASA</span>
+          <h3 id="mission-history-title">${escapeHTML(mission.name)}</h3>
+          <p class="mission-history-date">${escapeHTML(history.date)}</p>
+          <p>${escapeHTML(history.story)}</p>
+          ${image ? `<small>${escapeHTML(image.caption)} <a href="${escapeHTML(image.source)}" target="_blank" rel="noopener">${escapeHTML(image.credit)} · Image source</a></small>` : ''}
+          <a class="mission-history-learn" href="${escapeHTML(mission.historyUrl)}" target="_blank" rel="noopener">Read about ${escapeHTML(mission.name)} at NASA ${I.svg('arrow')}</a>
+          ${history.extraSource ? `<a class="mission-history-learn" href="${escapeHTML(history.extraSource.url)}" target="_blank" rel="noopener">${escapeHTML(history.extraSource.name)} ${I.svg('arrow')}</a>` : ''}
+        </figcaption>
+      </figure>`;
+      historyPopup.hidden = false;
+      if (historyPopup.showPopover) historyPopup.showPopover();
+      else historyPopup.removeAttribute('popover');
+      historyPopup.scrollTop = 0;
+    }
+    historyPinned = pinned;
+    positionMissionHistory();
+    if (pinned) historyPopup.querySelector('.mission-history-close').focus({preventScroll: true});
+  }
+
+  function scheduleHistoryHide() {
+    if (historyPinned || !historyTrigger) return;
+    clearTimeout(historyHideTimer);
+    historyHideTimer = setTimeout(() => {
+      if (!historyPinned && !historyPopup.matches(':hover') && !historyTrigger?.matches(':hover') && !historyPopup.contains(document.activeElement)) hideMissionHistory();
+    }, 240);
+  }
+
+  dialog.addEventListener('pointerover', event => {
+    if (event.pointerType !== 'mouse') return;
+    if (historyPopup.contains(event.target)) clearTimeout(historyHideTimer);
+    const trigger = event.target.closest('.mission-history-trigger');
+    if (trigger && !historyPinned) showMissionHistory(trigger, false);
+  });
+  dialog.addEventListener('pointerout', event => {
+    if (event.pointerType !== 'mouse' || !historyTrigger) return;
+    if (historyTrigger.contains(event.target) || historyPopup.contains(event.target)) scheduleHistoryHide();
+  });
+  dialog.addEventListener('pointerdown', event => {
+    if (historyTrigger && !historyPopup.contains(event.target) && !event.target.closest('.mission-history-trigger')) hideMissionHistory();
+  });
+  dialog.addEventListener('focusout', event => {
+    if (historyPopup.contains(event.target) && !historyPopup.contains(event.relatedTarget) && event.relatedTarget !== historyTrigger) hideMissionHistory();
+  });
+  dialog.addEventListener('click', event => {
+    const trigger = event.target.closest('.mission-history-trigger');
+    if (trigger) {
+      if (historyTrigger === trigger && historyPinned) hideMissionHistory(true);
+      else showMissionHistory(trigger, true);
+    } else if (event.target.closest('.mission-history-close')) {
+      hideMissionHistory(true);
+    } else if (historyPopup.contains(event.target)) {
+      clearTimeout(historyHideTimer);
+    }
+  });
+  dialog.addEventListener('keydown', event => {
+    if (!historyTrigger) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      hideMissionHistory(historyPinned || historyPopup.contains(document.activeElement));
+    } else if (event.key === 'Tab' && historyPopup.contains(document.activeElement)) {
+      const controls = historyPopup.querySelectorAll('button, a[href]');
+      if ((event.shiftKey && document.activeElement === controls[0]) || (!event.shiftKey && document.activeElement === controls[controls.length - 1])) {
+        event.preventDefault();
+        hideMissionHistory(true);
+      }
+    }
+  });
+  dialog.addEventListener('scroll', positionMissionHistory);
+  window.addEventListener('resize', positionMissionHistory);
+  window.visualViewport?.addEventListener('resize', positionMissionHistory);
+  window.visualViewport?.addEventListener('scroll', positionMissionHistory);
 
   function missionBoard() {
     const expansion = R.getExpansion(state);
-    const historyData = globalThis.SpaceportMissionHistory;
     const stages = R.STAGES.map(stage => {
       const missions = R.MISSIONS.filter(mission => mission.stage === stage.id);
       const locked = !R.isMissionAvailable(state, missions[0].id);
@@ -642,13 +759,12 @@
         const grant = R.getMissionGrant(state, mission.id);
         const grantLabel = grant.remaining ? `Up to ${money(grant.remaining)} in grants` : 'Full grant paid';
         return `<article class="mission-offer">
-          <div class="offer-top"><h3>${escapeHTML(mission.name)}</h3><span class="offer-stars" role="img" aria-label="${stars} best stars">${Array.from({length:3}, (_, i) => `<span class="rating-star"${i < stars ? ' data-earned' : ''}>${I.svg('star')}</span>`).join('')}</span></div>
+          <div class="offer-top"><div class="mission-offer-heading">${historyButton(mission.id, mission.name)}<h3>${escapeHTML(mission.name)}</h3></div><span class="offer-stars" role="img" aria-label="${stars} best stars">${Array.from({length:3}, (_, i) => `<span class="rating-star"${i < stars ? ' data-earned' : ''}>${I.svg('star')}</span>`).join('')}</span></div>
           <p class="mission-game-objective"><strong>In game:</strong> ${escapeHTML(mission.objective)}</p>
           <div class="offer-terms"><span>${escapeHTML(mission.arrival || mission.orbit || mission.destination)}</span><span>Launch ${mission.fee ? money(mission.fee) : 'free'}</span><span>${grantLabel}</span></div>
           ${perk ? `<div class="mission-perk" data-earned="${perk.earned}"><span aria-hidden="true">${I.svg(perk.earned ? 'check' : 'star')}</span><div><strong>${perk.earned ? 'Earned' : '3-star reward'} · ${escapeHTML(perk.name)}</strong><small>${escapeHTML(perk.detail)}</small></div></div>` : ''}
           ${locked ? '' : `<div class="offer-actions">${action(recipe.known ? 'View payload plan' : 'Plan ' + money(recipe.price), 'recipe-info', mission.id)}
           ${action(selected ? 'Keep selected' : 'Select mission', 'mission', mission.id, false, !selected)}</div>`}
-          ${missionHistory(mission.name, historyData.missions[mission.id], mission.historyUrl)}
         </article>`;
       }).join('');
       const unlock = locked && expansion?.stage.id === stage.id ? `<div class="expansion-card">
@@ -657,9 +773,8 @@
         ${action(`Expand for ${money(expansion.cost)}`, 'expansion', '', !expansion.available || !expansion.affordable, true)}
         ${expansion.available ? `<div class="stage-savings"><span>${money(Math.min(expansion.cost, state.wallet))} / ${money(expansion.cost)}</span><progress value="${Math.min(expansion.cost, state.wallet)}" max="${expansion.cost}" aria-label="Cash saved for the expansion"></progress></div>` : ''}
         </div>` : '';
-      const apollo = historyData.apollo;
       const history = stage.id === 'moon' ? `<aside class="mission-history-note">
-        ${missionHistory(apollo.name, apollo, apollo.historyUrl, 'Bonus history: Apollo 11')}
+        ${historyButton('apollo', 'Apollo 11')}<span>Bonus history: <strong>Apollo 11</strong></span>
         </aside>` : '';
       return `<section class="board-stage"><div class="board-heading"><h3>${escapeHTML(stage.name)}</h3><span>${escapeHTML(stage.destination || 'Earth').toUpperCase()} · ${locked ? 'LOCKED' : 'OPEN'}</span></div>${unlock}<div class="mission-offers">${offers}</div>${history}</section>`;
     }).join('');
@@ -782,6 +897,7 @@
   }
 
   function drawPanel() {
+    hideMissionHistory();
     byId('panel-kicker').textContent = 'SPACEPORT OPERATIONS';
     const headings = {guide:'Field guide', stations:'Facilities', settings:'Settings', skins:'Appearance', trivia:'Space quiz', upgrades:'Upgrades', challenges:'Challenges', log:'Flight log', missions:'Choose a mission', recipe:'Payload plan'};
     byId('panel-title').textContent = headings[activePanel] || '';
@@ -985,6 +1101,7 @@
   });
   byId('close-panel').addEventListener('click', () => dialog.close());
   dialog.addEventListener('close', () => {
+    hideMissionHistory();
     if (activePanel === 'report' && state.report) {
       state.report = null;
       store();

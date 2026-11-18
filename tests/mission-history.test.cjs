@@ -49,11 +49,14 @@ test("mission cards and reports mark historical sources separately from game goa
   const app = fs.readFileSync(path.join(__dirname, "../app.js"), "utf8");
   assert.match(app, /Inspired by real NASA missions/);
   assert.match(app, /In game:<\/strong> \$\{escapeHTML\(mission\.objective\)\}/);
-  assert.match(app, /stage.id === 'moon'[^]*Bonus history: Apollo 11/);
-  assert.match(app, /<details class="mission-history">/);
-  assert.match(app, /<summary aria-label=/);
-  assert.match(app, /missionHistory\(mission.name, historyData.missions\[mission.id\], mission.historyUrl\)/);
+  assert.match(app, /stage.id === 'moon'[^]*Bonus history:/);
+  assert.match(app, /aria-haspopup="dialog" aria-expanded="false" aria-controls="mission-history-popup"/);
+  assert.match(app, /historyButton\(mission.id, mission.name\)/);
+  assert.match(app, /class="nasa-fact mission-history-fact"/);
+  assert.match(app, /if \(event.key === 'Escape'\)/);
+  assert.match(app, /historyPopup.contains\(event.target\)\) clearTimeout\(historyHideTimer\)/);
   const html = fs.readFileSync(path.join(__dirname, "../index.html"), "utf8");
+  assert.match(html, /id="mission-history-popup"[^>]*role="dialog"[^>]* hidden/);
   assert.ok(html.indexOf('src="mission-history.js?') > 0 && html.indexOf('src="mission-history.js?') < html.indexOf('src="app.js?'));
   assert.match(app, /const mission = reportMission\(report\)/);
   assert.match(app, /row\(reportMission\(report\)\?\.name/);
@@ -71,4 +74,31 @@ test("every playable mission has a dated story; Apollo 11 stays a historical ext
   assert.match(apollo.date, /1969/);
   assert.equal(new URL(apollo.historyUrl).origin, "https://www.nasa.gov");
   assert.equal(R.MISSIONS.some(m => m.name === apollo.name), false);
+});
+
+test("all histories have unique packaged archival images and attribution", () => {
+  const { images } = globalThis.SpaceportMissionHistory;
+  assert.deepEqual(Object.keys(images).sort(), [...R.MISSIONS.map(mission => mission.id), "apollo"].sort());
+  assert.equal(new Set(Object.values(images).map(image => image.file)).size, 12);
+  for (const image of Object.values(images)) {
+    const bytes = fs.readFileSync(path.join(__dirname, "../assets/mission-history", image.file));
+    assert.equal(bytes.toString("ascii", 0, 4), "RIFF");
+    assert.equal(bytes.toString("ascii", 8, 12), "WEBP");
+    assert.ok(bytes.length < 190_000, image.file);
+    assert.ok(image.credit && image.caption && image.alt);
+    const source = new URL(image.source);
+    assert.equal(source.protocol, "https:");
+    assert.ok(source.hostname.endsWith(".nasa.gov"));
+  }
+});
+
+test("history popup anchors below or above and clamps to the visual viewport", () => {
+  const { position, verticalSpace } = globalThis.SpaceportMissionHistory;
+  const card = { width: 320, height: 330 };
+  const viewport = { x: 0, y: 0, width: 390, height: 820 };
+  assert.deepEqual(position({left: 20, top: 60, bottom: 104}, card, viewport), {x: 20, y: 110});
+  assert.equal(verticalSpace({top: 390, bottom: 434}, viewport), 372);
+  assert.deepEqual(position({left: 360, top: 740, bottom: 784}, card, viewport), {x: 58, y: 404});
+  assert.deepEqual(position({left: -20, top: 210, bottom: 254}, {width: 220, height: 306},
+    {x: 20, y: 30, width: 244, height: 330}), {x: 32, y: 42});
 });

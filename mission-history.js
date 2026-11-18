@@ -57,5 +57,93 @@
     historyUrl: "https://www.nasa.gov/mission/apollo-11/",
   };
 
-  globalThis.SpaceportMissionHistory = { missions, apollo };
+  const images = {
+    m1: {
+      file: "explorer.webp", alt: "Grainy black-and-white image of clouds over the Pacific",
+      caption: "Explorer 6’s first photograph of Earth from orbit, August 1959.", credit: "NASA",
+      source: "https://science.nasa.gov/image-detail/amf-b3a0d8d2-2e9c-41d5-aa65-630b0d751fab/",
+    },
+    m2: {
+      file: "landsat.webp", alt: "False-color satellite image of Los Angeles and surrounding mountains",
+      caption: "Landsat 1’s false-color view of Los Angeles, June 1974.", credit: "NASA/JPL",
+      source: "https://science.nasa.gov/photojournal/early-landsat-view-of-los-angeles-and-vicinity/",
+    },
+    m3: {
+      file: "tiros.webp", alt: "Early television image of cloud bands over Earth",
+      caption: "TIROS-1’s first television image of Earth, April 1960.", credit: "NASA",
+      source: "https://science.nasa.gov/resource/tv-debut/",
+    },
+    m4: {
+      file: "skylab.webp", alt: "Skylab in orbit, with a sunshade and solar panels visible",
+      caption: "The Skylab 2 crew photographed the station after leaving it in June 1973.", credit: "NASA",
+      source: "https://heasarc.gsfc.nasa.gov/docs/heasarc/missions/images/skylab_images.html",
+    },
+    m5: {
+      file: "lunar.webp", alt: "Partly lit Earth above the Moon’s gray horizon",
+      caption: "Lunar Orbiter 1’s view of Earth from the Moon’s vicinity, August 1966.", credit: "NASA",
+      source: "https://science.nasa.gov/resource/first-view-of-earth-from-the-moon-and-oblique-view-of-the-lunar-surface/",
+    },
+    m6: {
+      file: "mariner.webp", alt: "Summit and crater of an ancient Martian volcano emerging above haze",
+      caption: "Mariner 9 saw the summit of Ascraeus Mons above a vast dust storm in 1971.", credit: "NASA/JPL",
+      source: "https://science.nasa.gov/photojournal/mariner-9-views-ascraeus-mons-standing-above-the-martian-dust-storm/",
+    },
+    m7: {
+      file: "viking.webp", alt: "Black-and-white view of Martian rocks and a Viking lander footpad",
+      caption: "Viking 1’s first photograph from the surface of Mars, July 1976.", credit: "NASA/JPL",
+      source: "https://science.nasa.gov/photojournal/first-photograph-taken-on-mars-surface/",
+    },
+    m9: {
+      file: "juno.webp", alt: "Jupiter’s curved southern edge and swirling bands of cloud",
+      caption: "JunoCam’s view of Jupiter’s south polar region.", credit: "NASA/JPL-Caltech/SwRI/MSSS",
+      source: "https://science.nasa.gov/photojournal/jupiter-down-under/",
+    },
+    m10: {
+      file: "cassini.webp", alt: "Bright crescent of Enceladus with faint plumes extending into space",
+      caption: "Cassini’s backlit view of icy plumes rising from Enceladus.", credit: "NASA/JPL/Space Science Institute",
+      source: "https://science.nasa.gov/photojournal/plumes-and-a-crescent/",
+    },
+    m11: {
+      file: "voyager.webp", alt: "Full disk of blue Neptune with a prominent dark storm",
+      caption: "Processed view of Neptune from Voyager 2’s 1989 encounter.", credit: "NASA/JPL",
+      source: "https://science.nasa.gov/photojournal/neptune-full-disk/",
+    },
+    m8: {
+      file: "parker.webp", alt: "A bright rocket plume lights the sky before dawn",
+      caption: "Parker Solar Probe’s launch in August 2018.", credit: "NASA/Bill Ingalls",
+      source: "https://science.nasa.gov/resource/parker-solar-probe-launch/",
+    },
+    apollo: {
+      file: "apollo.webp", alt: "Buzz Aldrin in a white spacesuit near the lunar module Eagle",
+      caption: "Neil Armstrong photographed Buzz Aldrin near Eagle in July 1969.", credit: "NASA",
+      source: "https://science.nasa.gov/resource/apollo-11-buzz-aldrin/",
+    },
+  };
+
+  const popupInset = 12;
+  const popupGap = 6;
+
+  function verticalSpace(anchor, viewport) {
+    const top = viewport.y + popupInset;
+    const bottom = viewport.y + viewport.height - popupInset;
+    return Math.min(bottom - top, Math.max(anchor.top - popupGap - top, bottom - anchor.bottom - popupGap));
+  }
+
+  function position(anchor, card, viewport) {
+    const inset = popupInset;
+    const gap = popupGap;
+    const minX = viewport.x + inset;
+    const minY = viewport.y + inset;
+    const maxX = Math.max(minX, viewport.x + viewport.width - inset - card.width);
+    const maxY = Math.max(minY, viewport.y + viewport.height - inset - card.height);
+    const below = anchor.bottom + gap;
+    const above = anchor.top - gap - card.height;
+    const y = below <= maxY ? below : above >= minY ? above : below;
+    return {
+      x: Math.max(minX, Math.min(maxX, anchor.left)),
+      y: Math.max(minY, Math.min(maxY, y)),
+    };
+  }
+
+  globalThis.SpaceportMissionHistory = { missions, apollo, images, position, verticalSpace };
 })();

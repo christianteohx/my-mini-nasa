@@ -9,7 +9,7 @@
   <title>My Mini NASA</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='11' fill='%235052f4'/%3E%3Ccircle cx='20' cy='20' r='8' fill='%23eff3ff'/%3E%3Cellipse cx='20' cy='20' rx='15' ry='5' transform='rotate(-35 20 20)' fill='none' stroke='%23ffde77' stroke-width='2'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css?v=24">
-  <link rel="stylesheet" href="campaign.css?v=mission-history-1">
+  <link rel="stylesheet" href="campaign.css?v=mission-history-2">
   <link rel="stylesheet" href="stations.css?v=8">
   <link rel="stylesheet" href="upgrades.css?v=10">
   <link rel="stylesheet" href="challenges.css?v=11">
@@ -31,8 +31,8 @@
   <script defer src="stations-preview.js?v=1"></script>
   <script defer src="cargo-preview.js?v=1"></script>
   <link rel="stylesheet" href="cargo-guidance.css?v=1">
-  <script defer src="mission-history.js?v=1"></script>
-  <script defer src="app.js?v=mission-history-1"></script>
+  <script defer src="mission-history.js?v=2"></script>
+  <script defer src="app.js?v=mission-history-2"></script>
   <link rel="stylesheet" href="trivia.css?v=1">
 </head>
 <body>
@@ -149,6 +149,7 @@
     <div class="panel-top"><span id="panel-kicker" class="eyebrow">SPACEPORT OPERATIONS</span><button type="button" class="quiet close" id="close-panel" aria-label="Close panel" autofocus><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 5l14 14M19 5 5 19"/></svg></button></div>
     <h2 id="panel-title"></h2>
     <div id="panel-content"></div>
+    <div id="mission-history-popup" class="mission-history-popup" popover="manual" role="dialog" aria-labelledby="mission-history-title" hidden></div>
   </dialog>
 </body>
 </html>
