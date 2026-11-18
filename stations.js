@@ -128,7 +128,7 @@
     const spec = rules.FACILITIES[id];
     if (!facility.unlocked) {
       const next = rules.getUnlock(state);
-      if (id === 'cargo') return 'Hire a Cargo Runner or earn three stars on Lunar Relay to open this shelf.';
+      if (id === 'cargo') return 'Hire a Cargo Runner or earn three stars on Lunar Orbiter 1 to open this shelf.';
       if (id === 'scrap') return 'Build the Research Lab to open this station.';
       if (id === 'academy' && rules.getExpansion(state)?.stage.id === 'expansion') return 'Open the Flight Annex before building the Academy.';
       if (next?.id === id) return `Construction costs ${money(spec.unlock)}. You have ${money(state.wallet)}.`;

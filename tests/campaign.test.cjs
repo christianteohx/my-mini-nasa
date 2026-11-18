@@ -29,7 +29,7 @@ test("first three-star reward changes Ground Station capacity once", () => {
   assert.equal(R.getRates(state).cap, 28);
 });
 
-test("a safe weather payload, an uncrewed relay, and a lighter lander earn full credit", () => {
+test("a safe weather payload, an uncrewed lunar orbiter, and a lighter lander earn full credit", () => {
   const byId = (id) => R.MISSIONS.find((mission) => mission.id === id);
   const storm = R.evaluateLaunch({ fuel: 3, part: 4, paper: 3 }, byId("m3"), () => 0);
   assert.equal(storm.stars, 2);
@@ -79,7 +79,7 @@ test("v7 flight records restore earned rewards without any extra payouts", () =>
   assert.equal(R.transferAtStation(restored, "grant", "collect:cash", 1).count, 43);
 });
 
-test("flight insurance refunds half the fee on failures after the first Mars Surveyor clear", () => {
+test("flight insurance refunds half the fee on failures after the first Mariner 9 clear", () => {
   const state = R.createState(1);
   state.stageIndex = 3;
   state.wallet = 500;

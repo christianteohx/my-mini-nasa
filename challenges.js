@@ -105,7 +105,7 @@
     } else {
       const instruments = target === 1 ? "one working instrument" : `${target} working instruments`;
       objective = `Fly ${instruments} on missions that earn at least two stars.`;
-      hint = "Choose a science mission like Earth Watch. Build Research Papers and load enough Parts to power them.";
+      hint = "Choose a science mission like Landsat 1. Build Research Papers and load enough Parts to power them.";
     }
 
     const distinct = sources.length;

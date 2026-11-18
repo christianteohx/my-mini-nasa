@@ -3,12 +3,12 @@
   // Original illustrated tributes, not official spacecraft art or astronaut likenesses.
   const ships = [
     {id:'classic', name:'Classic', detail:'Spaceport original', learnUrl:'https://www.nasa.gov/space-launch-system-sls/', intro:'The original Spaceport rocket. Your familiar launch-day look.'},
-    {id:'apollo', name:'Apollo', detail:'Saturn V inspired', learnUrl:'https://science.nasa.gov/resource/apollo-11-launch/', intro:'Inspired by Saturn V, the rocket that launched Apollo crews toward the Moon.', mission:'m5', stars:1, requirement:'Reach lunar orbit · Lunar Relay'},
-    {id:'artemis', name:'Artemis', detail:'SLS inspired', learnUrl:'https://www.nasa.gov/space-launch-system-sls/', intro:'Inspired by NASA’s Space Launch System, built to send Orion on Artemis missions to the Moon.', mission:'m5', stars:3, requirement:'3-star Lunar Relay'},
+    {id:'apollo', name:'Apollo', detail:'Saturn V inspired', learnUrl:'https://science.nasa.gov/resource/apollo-11-launch/', intro:'Inspired by Saturn V, the rocket that launched Apollo crews toward the Moon.', mission:'m5', stars:1, requirement:'Reach lunar orbit · Lunar Orbiter 1'},
+    {id:'artemis', name:'Artemis', detail:'SLS inspired', learnUrl:'https://www.nasa.gov/space-launch-system-sls/', intro:'Inspired by NASA’s Space Launch System, built to send Orion on Artemis missions to the Moon.', mission:'m5', stars:3, requirement:'3-star Lunar Orbiter 1'},
   ];
   const suits = [
     {id:'classic', name:'Classic', detail:'Your role colors', learnUrl:'https://www.nasa.gov/humans-in-space/astronauts/', intro:'The original crew suits. Each role keeps its own color.'},
-    {id:'armstrong', name:'Armstrong', detail:'Apollo moonwalk suit', learnUrl:'https://www.nasa.gov/humans-in-space/astronauts/former-astronauts/former-astronaut-neil-a-armstrong/', intro:'A tribute to Neil Armstrong, the first person to walk on the Moon during Apollo 11 in 1969.', mission:'m5', stars:3, requirement:'3-star Lunar Relay', accent:'#f3eee2', dark:'#aaaeb8', visor:'#a87524', shine:'#ffe1a0', outline:'#35465d'},
+    {id:'armstrong', name:'Armstrong', detail:'Apollo moonwalk suit', learnUrl:'https://www.nasa.gov/humans-in-space/astronauts/former-astronauts/former-astronaut-neil-a-armstrong/', intro:'A tribute to Neil Armstrong, the first person to walk on the Moon during Apollo 11 in 1969.', mission:'m5', stars:3, requirement:'3-star Lunar Orbiter 1', accent:'#f3eee2', dark:'#aaaeb8', visor:'#a87524', shine:'#ffe1a0', outline:'#35465d'},
     {id:'ride', name:'Ride', detail:'Shuttle flight suit', learnUrl:'https://www.nasa.gov/former-astronaut-sally-ride/', intro:'A tribute to Sally Ride, the first American woman in space. She flew aboard Challenger in 1983.', mission:'m4', stars:3, requirement:'3-star Station Science', accent:'#5093d8', dark:'#235b98', visor:'#28465c', shine:'#bedaf1', outline:'#253e62'},
   ];
   const roles = {player:'You', intern:'Grant intern', runner:'Cargo runner', materials:'Materials intern', clerk:'Credit clerk'};

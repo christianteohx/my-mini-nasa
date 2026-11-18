@@ -629,7 +629,8 @@
         const grantLabel = grant.remaining ? `Up to ${money(grant.remaining)} in grants` : 'Full grant paid';
         return `<article class="mission-offer">
           <div class="offer-top"><h3>${escapeHTML(mission.name)}</h3><span class="offer-stars" role="img" aria-label="${stars} best stars">${Array.from({length:3}, (_, i) => `<span class="rating-star"${i < stars ? ' data-earned' : ''}>${I.svg('star')}</span>`).join('')}</span></div>
-          <p>${escapeHTML(mission.objective || mission.description)}</p>
+          <p>${escapeHTML(mission.description)} <a class="mission-source" href="${escapeHTML(mission.historyUrl)}" target="_blank" rel="noopener" aria-label="${escapeHTML(mission.name)} NASA history">NASA history</a></p>
+          <p class="mission-game-objective"><strong>In game:</strong> ${escapeHTML(mission.objective)}</p>
           <div class="offer-terms"><span>${escapeHTML(mission.arrival || mission.orbit || mission.destination)}</span><span>Launch ${mission.fee ? money(mission.fee) : 'free'}</span><span>${grantLabel}</span></div>
           ${perk ? `<div class="mission-perk" data-earned="${perk.earned}"><span aria-hidden="true">${I.svg(perk.earned ? 'check' : 'star')}</span><div><strong>${perk.earned ? 'Earned' : '3-star reward'} · ${escapeHTML(perk.name)}</strong><small>${escapeHTML(perk.detail)}</small></div></div>` : ''}
           ${locked ? '' : `<div class="offer-actions">${action(recipe.known ? 'View payload plan' : 'Plan ' + money(recipe.price), 'recipe-info', mission.id)}
@@ -642,10 +643,13 @@
         ${action(`Expand for ${money(expansion.cost)}`, 'expansion', '', !expansion.available || !expansion.affordable, true)}
         ${expansion.available ? `<div class="stage-savings"><span>${money(Math.min(expansion.cost, state.wallet))} / ${money(expansion.cost)}</span><progress value="${Math.min(expansion.cost, state.wallet)}" max="${expansion.cost}" aria-label="Cash saved for the expansion"></progress></div>` : ''}
         </div>` : '';
-      return `<section class="board-stage"><div class="board-heading"><h3>${escapeHTML(stage.name)}</h3><span>${escapeHTML(stage.destination || 'Earth').toUpperCase()} · ${locked ? 'LOCKED' : 'OPEN'}</span></div>${unlock}<div class="mission-offers">${offers}</div></section>`;
+      const history = stage.id === 'moon' ? `<aside class="mission-history-note"><strong>From orbit to landing: Apollo 11</strong>
+        <p>Lunar Orbiter helped scout landing sites. Apollo 11 later landed the first humans on the Moon. <a class="mission-source" href="https://www.nasa.gov/mission/apollo-11/" target="_blank" rel="noopener">Apollo 11 history</a></p>
+        </aside>` : '';
+      return `<section class="board-stage"><div class="board-heading"><h3>${escapeHTML(stage.name)}</h3><span>${escapeHTML(stage.destination || 'Earth').toUpperCase()} · ${locked ? 'LOCKED' : 'OPEN'}</span></div>${unlock}<div class="mission-offers">${offers}</div>${history}</section>`;
     }).join('');
     const loaded = Object.values(state.loadout).some(Boolean);
-    return `<p class="dialog-lead">${loaded ? 'Supplies already on the launch pad stay loaded when you change missions.' : 'Improve your best result to earn the remaining grant. Three stars earn a lasting spaceport upgrade.'}</p><div class="challenge-board-link">${action('Challenges', 'open-challenges')}${action('Space quiz', 'open-trivia')}</div>${stages}`;
+    return `<p class="dialog-lead">${loaded ? 'Supplies already on the launch pad stay loaded when you change missions.' : 'Improve your best result to earn the remaining grant. Three stars earn a lasting spaceport upgrade.'}</p><p class="mission-history-intro">Inspired by real NASA missions. Payloads and launch rules are simplified for play.</p><div class="challenge-board-link">${action('Challenges', 'open-challenges')}${action('Space quiz', 'open-trivia')}</div>${stages}`;
   }
 
   function triviaPanel() {
@@ -730,9 +734,14 @@
     </section>`;
   }
 
+  function reportMission(report) {
+    return R.MISSIONS.find(mission => mission.id === report.mission?.id) ?? report.mission;
+  }
+
   function renderReport(report) {
     const verdicts = {low:'Too low', high:'Too high', risk:'Thin margin', good:'Good'};
-    const title = report.mission?.name || 'Mission';
+    const mission = reportMission(report);
+    const title = mission?.name || 'Mission';
     byId('panel-kicker').textContent = title.toUpperCase() + ' / FLIGHT REPORT';
     byId('panel-title').textContent = resultLabels[report.status] || 'Flight report';
     dialog.dataset.result = report.stars === 3 ? 'success' : report.stars ? 'partial' : 'failed';
@@ -740,7 +749,8 @@
     return `<div class="report-stars" role="img" aria-label="${report.stars} out of 3 stars">${starMarks}</div>
       <p class="dialog-lead">${escapeHTML(report.cause)}</p>
       ${typeof report.odds === 'number' ? `<div class="report-chance"><strong>${percent(report.odds)}</strong> chance to reach the destination</div>` : ''}
-      ${report.campaignCompleted ? '<div class="report-discovery"><strong>Campaign complete</strong> Solar Probe completed its flyby.</div>' : ''}
+      ${mission?.historyUrl ? `<p class="inline-note"><a class="mission-source" href="${escapeHTML(mission.historyUrl)}" target="_blank" rel="noopener">Read the real ${escapeHTML(mission.name)} mission</a></p>` : ''}
+      ${report.campaignCompleted ? `<div class="report-discovery"><strong>Campaign complete</strong> ${escapeHTML(title)} completed its flyby.</div>` : ''}
       ${report.unlockedReward ? `<div class="mission-perk report-perk" data-earned="true"><span aria-hidden="true">${I.svg('star')}</span><div><strong>${escapeHTML(report.unlockedReward.name)} unlocked</strong><small>${escapeHTML(report.unlockedReward.detail)}</small></div></div>` : ''}
       ${report.recipeDiscovered ? `<div class="report-discovery"><strong>Payload plan unlocked for free</strong>${payloadChips(report.discoveredPlan || report.loadout)}</div>` : ''}
       <div class="report-reward">${report.grant ? `<span>+${money(report.grant)} GRANT</span>` : ''}${report.output ? `<span>+${decimal(report.output)} CUBES/S</span>` : ''}${report.feeRefund ? `<span>+${money(report.feeRefund)} FEE REFUND</span>` : ''}${report.specialCash ? `<span class="special-reward">${I.svg('star')} +${money(report.specialCash)} ELITE BONUS</span>` : ''}${report.stars && report.specialBonus?.downlink ? `<span class="special-reward">${I.svg('star')} +${percent(report.specialBonus.downlink)} PRIZE DATA</span>` : ''}${report.specialBonus?.odds ? `<span class="special-reward">${I.svg('star')} +${percent(report.specialBonus.odds)} PRIME ODDS</span>` : ''}</div>
@@ -798,7 +808,7 @@
       panel.innerHTML = challengesPanel();
     } else if (activePanel === 'log') {
       const entries = state.history || [];
-      const flights = entries.slice().reverse().slice(0, 15).map((report, index) => row(report.mission?.name || 'Mission', report.cause, action('Report', 'past-report', String(entries.length - 1 - index)))).join('');
+      const flights = entries.slice().reverse().slice(0, 15).map((report, index) => row(reportMission(report)?.name || 'Mission', report.cause, action('Report', 'past-report', String(entries.length - 1 - index)))).join('');
       panel.innerHTML = flights ? '<div class="dialog-list">' + flights + '</div>' : '<p class="dialog-lead">Your first report will appear after launch.</p>';
     } else if (activePanel === 'skins') {
       panel.innerHTML = skinsPanel();
@@ -809,7 +819,7 @@
         ${row('Appearance', 'Spaceship & crew skins', action('Customize', 'open-skins'))}
         ${row('Music', 'Play the background theme. It changes for each destination.', action(music ? 'On' : 'Off', 'music'))}
         ${row('Sound effects', 'Play short sounds for collecting, building and launching.', action(sound ? 'On' : 'Off', 'sound'))}
-        ${row('Start a new spaceport', confirmReset ? 'This will erase the flight history and upgrades on this device.' : 'Erase the local save and begin with First Light.', action(confirmReset ? 'Erase and restart' : 'New game', 'reset', '', false, confirmReset))}
+        ${row('Start a new spaceport', confirmReset ? 'This will erase the flight history and upgrades on this device.' : 'Erase the local save and begin with Explorer 6.', action(confirmReset ? 'Erase and restart' : 'New game', 'reset', '', false, confirmReset))}
         </div>${confirmReset ? '<p class="inline-note danger">The previous save will be removed.</p>' : ''}`;
     } else if (activePanel === 'report' && loadedReport) {
       panel.innerHTML = renderReport(loadedReport);

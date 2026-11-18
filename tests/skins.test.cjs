@@ -46,7 +46,7 @@ test('locked selections are rejected and old mission saves receive earned skins 
  const chosen=S.select(null,'ship','artemis',loaded);assert.equal(chosen.ship,'artemis');
  loaded.bestStars.m5=Math.max(loaded.bestStars.m5,0);assert.equal(S.normalize(chosen,loaded).ship,'artemis');
 });
-test('actual Lunar Relay flight awards unlocks and failed replay cannot revoke them',()=>{
+test('actual Lunar Orbiter 1 flight awards unlocks and failed replay cannot revoke them',()=>{
  const state=R.createState(1);state.stageIndex=2;state.wallet=10000;
  assert.equal(R.selectMission(state,'m5'),true);state.loadout={fuel:3,part:3,paper:2,crew:0};
  assert.equal(S.unlocked(state,'ship','apollo'),false);

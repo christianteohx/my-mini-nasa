@@ -121,20 +121,21 @@ Mission Control shows the payload as gauges for **Fuel, Power, Science, Crew, an
 
 ### Missions
 
+The campaign is inspired by real NASA missions, with simplified equipment and flight rules. Find an official NASA history link on each mission card. Apollo 11 appears as historical context in the Lunar Program, not as a separate launch.
+
 | # | Mission | Destination | Rocket | Mass limit | Needs | First 3-star perk |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | First Light | Earth orbit | Rideshare | 6 | A powered CubeSat | Ground Station holds 8 more cubes |
-| 2 | Earth Watch | Earth orbit | Small | 10 | 1 to 2 instruments | +$2 per Data Cube |
-| 3 | Storm Tracker | Earth orbit | Medium | 14 (12 for 3★) | 2 to 3 instruments | Fuel Plant 25% faster |
-| 4 | Station Science | Earth orbit | Heavy | 20 | 1 astronaut, 1 to 2 instruments | Bag holds 2 more items |
-| 5 | Lunar Relay | Lunar orbit | Lunar launcher | 16 | 1 to 2 instruments, uncrewed | Opens the Cargo Shelf |
-| 6 | Mars Surveyor | Mars orbit | Mars launcher | 18 | 2 instruments | Failed launches refund half the fee |
-| 7 | Mars Lander | Mars surface | Mars heavy launcher | 22 (18 for 3★) | 3 to 4 instruments | Factories store 2 more items |
-
-| 8 | Jupiter Weather | Jupiter orbit | Deep-space launcher | 28 | 4 to 5 instruments, no crew | +1 Data Cube per second |
-| 9 | Ring Explorer | Saturn orbit | Outer-planet launcher | 34 | 5 to 6 instruments, ≤29 mass, no crew | +1 Data Cube per second |
-| 10 | Blue Horizon | Neptune flyby | Deep-space heavy launcher | 38 | 6 to 7 instruments, no crew | +2 Data Cubes per second |
-| 11 | Solar Probe | Solar corona | Solar heavy launcher | 25 | 4 to 5 instruments | +1 Data Cube per second |
+| 1 | Explorer 6 | Earth orbit | Rideshare | 6 | A powered satellite | Ground Station holds 8 more cubes |
+| 2 | Landsat 1 | Earth orbit | Small | 10 | 1 to 2 instruments | +$2 per Data Cube |
+| 3 | TIROS-1 | Earth orbit | Medium | 14 (12 for 3★) | 2 to 3 instruments | Fuel Plant 25% faster |
+| 4 | Skylab 2 | Earth orbit | Heavy | 20 | 1 astronaut, 1 to 2 instruments | Bag holds 2 more items |
+| 5 | Lunar Orbiter 1 | Lunar orbit | Lunar launcher | 16 | 1 to 2 instruments, uncrewed | Opens the Cargo Shelf |
+| 6 | Mariner 9 | Mars orbit | Mars launcher | 18 | 2 instruments | Failed launches refund half the fee |
+| 7 | Viking 1 | Mars surface | Mars heavy launcher | 22 (18 for 3★) | 3 to 4 instruments | Factories store 2 more items |
+| 8 | Juno | Jupiter orbit | Deep-space launcher | 28 | 4 to 5 instruments, no crew | +1 Data Cube per second |
+| 9 | Cassini | Saturn orbit | Outer-planet launcher | 34 | 5 to 6 instruments, ≤29 mass, no crew | +1 Data Cube per second |
+| 10 | Voyager 2 | Neptune flyby | Deep-space heavy launcher | 38 | 6 to 7 instruments, no crew | +2 Data Cubes per second |
+| 11 | Parker Solar Probe | Solar corona | Solar heavy launcher | 25 | 4 to 5 instruments | +1 Data Cube per second |
 
 A three-star result in a stage lets you buy the next one: **Orbital Yard → Flight Annex → Lunar Program → Mars Program → Jupiter Program → Saturn Program → Neptune Program → Solar Program**.
 
@@ -157,7 +158,7 @@ A three-star result in a stage lets you buy the next one: **Orbital Yard → Fli
 
 ### The goal
 
-Earn three stars on **Solar Probe**, the final mission, flying through the Sun’s outer atmosphere. Along the way, collect every mission perk and build a fleet of satellites.
+Earn three stars on **Parker Solar Probe**, the final mission, flying through the Sun’s outer atmosphere. Along the way, collect every mission perk and build a fleet of satellites.
 
 ### What players learn
 

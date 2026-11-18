@@ -38,7 +38,7 @@ test("the special chance upgrade needs cash and a cleared mission", () => {
   const before = R.getUpgrade(state, "quality", "engineering");
   assert.equal(before.currentLabel, "10% chance");
   assert.equal(before.nextLabel, "20% chance");
-  assert.deepEqual(before.requirement, { mission: "Earth Watch", met: false });
+  assert.deepEqual(before.requirement, { mission: "Landsat 1", met: false });
   assert.equal(R.buyUpgrade(state, "quality", "engineering"), false);
 
   state.bestStars.m2 = 3;
