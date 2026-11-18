@@ -102,3 +102,21 @@ test("history popup anchors below or above and clamps to the visual viewport", (
   assert.deepEqual(position({left: -20, top: 210, bottom: 254}, {width: 220, height: 306},
     {x: 20, y: 30, width: 244, height: 330}), {x: 32, y: 42});
 });
+
+test("dismissing a popup ignores same-trigger hover until real pointer movement leaves it", () => {
+  const { createHoverLatch } = globalThis.SpaceportMissionHistory;
+  const latch = createHoverLatch();
+  const trigger = { getBoundingClientRect: () => ({left: 20, right: 64, top: 100, bottom: 144}) };
+  const other = {};
+  assert.equal(latch.allows(trigger), true);
+  latch.dismiss(trigger);
+  assert.equal(latch.allows(trigger), false, "synthetic hover after Escape stays suppressed");
+  assert.equal(latch.allows(other), true, "other missions can still be previewed");
+  latch.pointerMoved(23, 141);
+  assert.equal(latch.allows(trigger), false, "movement inside trigger must not reopen it");
+  latch.pointerMoved(64, 141);
+  assert.equal(latch.allows(trigger), true, "real exit enables future hover");
+  latch.dismiss(trigger);
+  latch.reset();
+  assert.equal(latch.allows(trigger), true, "closing the board discards stale suppression");
+});

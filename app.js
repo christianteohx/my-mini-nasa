@@ -619,6 +619,7 @@
   let historyTrigger = null;
   let historyPinned = false;
   let historyHideTimer = 0;
+  const historyHover = globalThis.SpaceportMissionHistory.createHoverLatch();
 
   function historyButton(id, name) {
     return `<button type="button" class="mission-history-trigger" data-history-id="${escapeHTML(id)}" aria-label="About ${escapeHTML(name)}" aria-haspopup="dialog" aria-expanded="false" aria-controls="mission-history-popup"><span aria-hidden="true">!</span></button>`;
@@ -634,6 +635,11 @@
     if (historyPopup.hidePopover && historyPopup.matches(':popover-open')) historyPopup.hidePopover();
     historyPopup.hidden = true;
     if (restoreFocus && trigger.isConnected) trigger.focus({preventScroll: true});
+  }
+
+  function dismissMissionHistory(restoreFocus = false) {
+    if (historyTrigger) historyHover.dismiss(historyTrigger);
+    hideMissionHistory(restoreFocus);
   }
 
   function positionMissionHistory() {
@@ -704,7 +710,12 @@
     if (event.pointerType !== 'mouse') return;
     if (historyPopup.contains(event.target)) clearTimeout(historyHideTimer);
     const trigger = event.target.closest('.mission-history-trigger');
-    if (trigger && !historyPinned) showMissionHistory(trigger, false);
+    if (trigger && !historyPinned && historyHover.allows(trigger)) showMissionHistory(trigger, false);
+  });
+  // Layout and focus changes can fire pointerover without actual mouse motion.
+  // Keep a dismissed trigger muted until the pointer physically leaves it.
+  document.addEventListener('pointermove', event => {
+    if (event.pointerType === 'mouse') historyHover.pointerMoved(event.clientX, event.clientY);
   });
   dialog.addEventListener('pointerout', event => {
     if (event.pointerType !== 'mouse' || !historyTrigger) return;
@@ -719,10 +730,10 @@
   dialog.addEventListener('click', event => {
     const trigger = event.target.closest('.mission-history-trigger');
     if (trigger) {
-      if (historyTrigger === trigger && historyPinned) hideMissionHistory(true);
+      if (historyTrigger === trigger && historyPinned) dismissMissionHistory(true);
       else showMissionHistory(trigger, true);
     } else if (event.target.closest('.mission-history-close')) {
-      hideMissionHistory(true);
+      dismissMissionHistory(true);
     } else if (historyPopup.contains(event.target)) {
       clearTimeout(historyHideTimer);
     }
@@ -732,12 +743,12 @@
     if (event.key === 'Escape') {
       event.preventDefault();
       event.stopPropagation();
-      hideMissionHistory(historyPinned || historyPopup.contains(document.activeElement));
+      dismissMissionHistory(historyPinned || historyPopup.contains(document.activeElement));
     } else if (event.key === 'Tab' && historyPopup.contains(document.activeElement)) {
       const controls = historyPopup.querySelectorAll('button, a[href]');
       if ((event.shiftKey && document.activeElement === controls[0]) || (!event.shiftKey && document.activeElement === controls[controls.length - 1])) {
         event.preventDefault();
-        hideMissionHistory(true);
+        dismissMissionHistory(true);
       }
     }
   });
@@ -898,6 +909,7 @@
 
   function drawPanel() {
     hideMissionHistory();
+    historyHover.reset();
     byId('panel-kicker').textContent = 'SPACEPORT OPERATIONS';
     const headings = {guide:'Field guide', stations:'Facilities', settings:'Settings', skins:'Appearance', trivia:'Space quiz', upgrades:'Upgrades', challenges:'Challenges', log:'Flight log', missions:'Choose a mission', recipe:'Payload plan'};
     byId('panel-title').textContent = headings[activePanel] || '';
@@ -1102,6 +1114,7 @@
   byId('close-panel').addEventListener('click', () => dialog.close());
   dialog.addEventListener('close', () => {
     hideMissionHistory();
+    historyHover.reset();
     if (activePanel === 'report' && state.report) {
       state.report = null;
       store();

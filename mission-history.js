@@ -145,5 +145,19 @@
     };
   }
 
-  globalThis.SpaceportMissionHistory = { missions, apollo, images, position, verticalSpace };
+  function createHoverLatch() {
+    let dismissed = null;
+    return {
+      dismiss(trigger) { dismissed = trigger; },
+      allows(trigger) { return trigger !== dismissed; },
+      pointerMoved(x, y) {
+        if (!dismissed) return;
+        const { left, right, top, bottom } = dismissed.getBoundingClientRect();
+        if (x < left || x >= right || y < top || y >= bottom) dismissed = null;
+      },
+      reset() { dismissed = null; },
+    };
+  }
+
+  globalThis.SpaceportMissionHistory = { missions, apollo, images, position, verticalSpace, createHoverLatch };
 })();
