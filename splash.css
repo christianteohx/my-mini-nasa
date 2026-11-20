@@ -128,6 +128,7 @@
   color: #ffffff;
   -webkit-text-stroke: .1em #12183d;
   paint-order: stroke fill;
+  letter-spacing: normal;
   text-shadow: 0 .08em 0 #12183d;
 }
 .splash-title span { display: inline-block; animation: splash-pop .7s cubic-bezier(.2, 1.6, .45, 1) both; }
@@ -137,6 +138,13 @@
 .splash-title .splash-title-nasa { color: #ffd23f; }
 @keyframes splash-pop { from { opacity: 0; transform: translateY(-60%) scale(.4) rotate(-8deg); } to { opacity: 1; transform: none; } }
 @keyframes splash-drop { from { opacity: 0; transform: translateY(-40px); } to { opacity: 1; transform: none; } }
+
+.splash-intro {
+  max-width: 42rem;
+  margin: 0;
+  color: #edf0ff;
+  font: 500 clamp(15px, 2.6vmin, 19px)/1.45 var(--sans, sans-serif);
+}
 
 .splash-start {
   min-height: 60px;
@@ -171,6 +179,13 @@
 @media (max-width: 560px) {
   .splash-planet { right: -20vmin; bottom: -18vmin; width: 62vmin; }
   .splash-rocket { left: 4%; }
+}
+
+@media (max-height: 520px) {
+  .splash { padding: 12px 16px 34px; }
+  .splash-content { gap: 10px; }
+  .splash-title { font-size: clamp(44px, 12vmin, 62px); }
+  .splash-start { min-height: 48px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
